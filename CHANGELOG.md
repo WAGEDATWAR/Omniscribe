@@ -19,8 +19,22 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - 68 unit tests (168 in all), including a 4,000-case fuzz test of hostile formulas and a 300-value,
   500-row performance test (about 17 ms).
 
+- Character sheets: a `sheet` record pinned to a game system (schema migration 3), store actions with undo,
+  a versioned system registry stored per version, and `subFormats` so a modifier reads `+3`.
+- The Sheet page (`#/character/<id>/sheet`): a system picker, typed inputs that explain a refusal and never
+  store it, derived values, pools as numbers or tickable boxes, row tables with grouping and use counters,
+  conditions, kept-aside values, rest buttons with Undo, errors beside the value, and change system.
+- The Game systems page (`#/systems`, `Alt+4`) and editor (`#/systems/<id>`): built-ins are read-only; new
+  systems start from a base or empty; derive, import, export and delete; a JSON editor with live validation
+  by path, a summary and a test evaluation, saving each change as a new version so characters keep the
+  version they use. Deferral DEF-078 tracks a visual editor.
+- 23 more unit tests (191), 12 browser scenarios (39 in all) and 14 accessibility states (40 in all, zero
+  violations).
+
 ### Fixed
 
+- A PDF page race: the empty state waited on an asynchronous file check before drawing; it now draws
+  immediately and is refined afterwards. It caused one CI failure.
 - Derivation: a derived system file's own description overrode an overlay `meta` operation; the overlay
   now wins.
 

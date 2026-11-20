@@ -10,7 +10,7 @@ const STATE_LABELS = {
   paused: "Saving paused"
 };
 
-const PAGE_TITLES = { library: "Library", data: "Data", settings: "Settings" };
+const PAGE_TITLES = { library: "Library", data: "Data", settings: "Settings", systems: "Game systems", system: "Game system" };
 
 function isTextTarget(target) {
   if (!(target instanceof HTMLElement)) {

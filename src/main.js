@@ -13,6 +13,7 @@ import { initSettings } from "./app/settings.js";
 import { initShell } from "./app/shell.js";
 import { initShortcuts } from "./app/shortcuts.js";
 import { initSync } from "./app/sync.js";
+import { initSystems } from "./app/systems.js";
 import { applyTheme } from "./app/theme.js";
 import { createAutosave } from "./autosave.js";
 import { loadPrefs, savePrefs } from "./settings.js";
@@ -145,6 +146,7 @@ async function boot() {
   initLibrary(ctx);
   initCharacter(ctx);
   initSheet(ctx);
+  initSystems(ctx);
   initDocuments(ctx);
   initData(ctx);
   initSettings(ctx);

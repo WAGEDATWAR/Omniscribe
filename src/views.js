@@ -1,3 +1,4 @@
+import { ID_PATTERN as SYSTEM_ID_PATTERN } from "./sheet/template.js";
 import { isValidId } from "./utils.js";
 
 /**
@@ -8,7 +9,8 @@ import { isValidId } from "./utils.js";
 export const VIEWS = Object.freeze([
   { id: "library", label: "Library", shortcut: "Alt+1", key: "1", description: "Your characters." },
   { id: "data", label: "Data", shortcut: "Alt+2", key: "2", description: "Storage, backup and files." },
-  { id: "settings", label: "Settings", shortcut: "Alt+3", key: "3", description: "Appearance, shortcuts and about." }
+  { id: "settings", label: "Settings", shortcut: "Alt+3", key: "3", description: "Appearance, shortcuts and about." },
+  { id: "systems", label: "Game systems", shortcut: "Alt+4", key: "4", description: "Create, derive, import and export game systems." }
 ]);
 
 export const DEFAULT_VIEW = "library";
@@ -43,6 +45,10 @@ export function parseRoute(hash) {
     return { view: head, id: null, sub: null };
   }
 
+  if (head === "systems" && parts.length === 2 && SYSTEM_ID_PATTERN.test(id)) {
+    return { view: "system", id, sub: null };
+  }
+
   if (head === "character" && isValidId(id)) {
     if (parts.length === 2) {
       return { view: "character", id, sub: "overview" };
@@ -59,6 +65,10 @@ export function parseRoute(hash) {
 export function routeHref(view, id = null, sub = "overview") {
   if (view === "character" && id) {
     return sub && sub !== "overview" && SUB_IDS.has(sub) ? `#/character/${id}/${sub}` : `#/character/${id}`;
+  }
+
+  if (view === "system" && id) {
+    return `#/systems/${id}`;
   }
 
   return `#/${isHubView(view) ? view : DEFAULT_VIEW}`;

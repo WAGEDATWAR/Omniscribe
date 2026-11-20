@@ -100,3 +100,21 @@ test("systems persist per version in storage", async () => {
   const registry = createRegistry({ builtins: [generic], custom: await storage.listSystems() });
   assert.equal(registry.has("test-d20", 2), true);
 });
+
+test("check validates a candidate without adding it and latestFile returns the newest version", () => {
+  const registry = createRegistry({ builtins: [generic], custom: [core] });
+  const good = registry.check({ ...core, version: 2, name: "Renamed" });
+
+  assert.equal(good.ok, true);
+  assert.equal(good.template.name, "Renamed");
+  assert.equal(registry.has("test-d20", 2), false);
+
+  const bad = registry.check({ ...core, version: 2, fields: [...core.fields, { key: "x", label: "X", type: "derived", formula: "@x" }] });
+  assert.equal(bad.ok, false);
+  assert.equal(registry.check({ nope: 1 }).ok, false);
+
+  assert.equal(registry.latestFile("test-d20").version, 1);
+  registry.add({ ...core, version: 3 });
+  assert.equal(registry.latestFile("test-d20").version, 3);
+  assert.equal(registry.latestFile("missing"), null);
+});

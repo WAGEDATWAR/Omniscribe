@@ -5,7 +5,7 @@ value-based sheet the program can compute with, inventory, familiars, relations,
 dice table that rolls with a character's own values. No account, no backend; your browser is the
 database.
 
-**Status:** P1 built: a library of characters with portraits, PDF sheets with an in-app viewer, autosave, undo, a command palette and local storage. Value sheets and game systems are next, then dice and campaigns. See `TODO.md`.
+**Status:** P1 built: a library of characters with portraits, PDF sheets with an in-app viewer, autosave, undo, a command palette and local storage. Value sheets and a game system editor are in progress (P2), then dice and campaigns. See `TODO.md`.
 
 ## Run it
 

@@ -33,8 +33,124 @@ async function uploadSample(page) {
   await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
 }
 
+async function openSheetPicker(page) {
+  await addSample(page);
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=sheet]")');
+  await page.click('.subnav-link[data-page="sheet"]');
+  await page.waitFor('document.querySelector("#sheet-picker")');
+}
+
+async function startSheet(page) {
+  await openSheetPicker(page);
+  await page.click("#system-generic");
+  await page.click("#sheet-picker-confirm");
+  await page.waitFor('document.querySelector("#sheet-f-might")');
+}
+
+async function fillSheet(page) {
+  await page.click("#sheet-add-abilities");
+  await page.waitFor('document.querySelectorAll("[data-collection=abilities] .sheet-row").length === 1');
+  await page.click("#sheet-add-attacks");
+  await page.waitFor('document.querySelectorAll("[data-collection=attacks] .sheet-row").length === 1');
+  await page.click(".cond:not(.is-on)");
+  await page.waitFor('document.querySelectorAll(".cond.is-on").length === 1');
+  await page.evaluate('document.querySelectorAll("[data-key=energy] .box")[3].click(); true');
+  await page.waitFor('document.querySelectorAll("[data-key=energy] .box[aria-pressed=true]").length === 4');
+}
+
+async function createSystem(page) {
+  await openPage(page, "#/systems", "#systems-title");
+  await page.click("#new-system-btn");
+  await page.waitFor('document.querySelector("#new-system-dialog").open');
+  await page.evaluate(`(() => {
+    const input = document.querySelector("#new-system-name");
+    input.value = "House Rules";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  })()`);
+  await page.click("#new-system-create");
+  await page.waitFor('location.hash === "#/systems/house-rules"');
+  await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+}
+
 /* Every new dialog or page joins this list in the same change (U-3). */
 const states = [
+  { name: "game systems page", setup: async (page) => openPage(page, "#/systems", "#systems-title") },
+  { name: "new game system dialog", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.click("#new-system-btn");
+    await page.waitFor('document.querySelector("#new-system-dialog").open');
+  } },
+  { name: "new game system dialog with an error", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.click("#new-system-btn");
+    await page.waitFor('document.querySelector("#new-system-dialog").open');
+    await page.evaluate('document.querySelector("#new-system-name").value = ""; true');
+    await page.click("#new-system-create");
+    await page.waitFor('!document.querySelector("#new-system-error").hidden');
+  } },
+  { name: "game system editor, built in", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.click('.system-item a[aria-label^="View"]');
+    await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+  } },
+  { name: "game system editor, valid", setup: async (page) => createSystem(page) },
+  { name: "game system editor with errors", setup: async (page) => {
+    await createSystem(page);
+    await page.evaluate(`(() => {
+      const area = document.querySelector("#system-json");
+      const file = JSON.parse(area.value);
+      file.overlay.push({ op: "add", target: "field", key: "luck", value: { label: "Luck", type: "derived", formula: "@ghost + 1" } });
+      area.value = JSON.stringify(file, null, 2);
+      area.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    await page.waitFor('document.querySelector("#system-status")?.textContent.includes("problem")');
+  } },
+  { name: "mobile game systems page", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openPage(page, "#/systems", "#systems-title");
+  } },
+  { name: "mobile game system editor", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await createSystem(page);
+  } },
+  { name: "light game system editor", setup: async (page) => {
+    await page.evaluate('document.documentElement.dataset.theme = "light"; true');
+    await createSystem(page);
+  } },
+  { name: "sheet, choosing a system", setup: async (page) => openSheetPicker(page) },
+  { name: "sheet, started", setup: async (page) => startSheet(page) },
+  { name: "sheet with rows, a condition and a ticked pool", setup: async (page) => {
+    await startSheet(page);
+    await fillSheet(page);
+  } },
+  { name: "sheet with a refused value", setup: async (page) => {
+    await startSheet(page);
+    await page.evaluate(`(() => {
+      const input = document.querySelector("#sheet-f-might");
+      input.value = "99";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    await page.waitFor('!document.querySelector("#sheet-f-might-error").hidden');
+  } },
+  { name: "sheet, changing system", setup: async (page) => {
+    await startSheet(page);
+    await page.click("#sheet-change");
+    await page.waitFor('document.querySelector("#sheet-picker-confirm")');
+  } },
+  { name: "mobile sheet", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await startSheet(page);
+    await fillSheet(page);
+  } },
+  { name: "light sheet", setup: async (page) => {
+    await page.evaluate('document.documentElement.dataset.theme = "light"; true');
+    await startSheet(page);
+    await fillSheet(page);
+  } },
   { name: "character pdf sheets, empty", setup: async (page) => openPdfPage(page) },
   { name: "character pdf sheets with a rendered document", setup: async (page) => {
     await openPdfPage(page);

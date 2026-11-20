@@ -107,3 +107,20 @@ brand shows only its mark and the facts lists stack. Tiles reflow with `auto-fil
 may also compile WebAssembly for the PDF decoders, P-18), images from the app, `blob:` and `data:`, no
 objects and no inline script or style. A policy violation is a
 console error, which the browser scenarios treat as a failure.
+
+## 8. The Sheet page and Game systems (P2)
+
+- **Sheet** (`#/character/<id>/sheet`): with no sheet the page shows a system picker. Once started it shows
+  the sections the system defines. Authored values are typed inputs; a value the system refuses is
+  explained under the field and not stored. Derived values and modifiers are read-outs, a marker such as a
+  dagger is shown beside them, and a formula that fails shows its message in place of the value while the
+  rest of the sheet keeps working. Pools show a number with a maximum or tickable boxes, rows live in
+  tables (grouped, with use counters), conditions are toggle buttons, and each rest the system defines is a
+  button with Undo. Values that no field matches are listed as kept aside. Change system asks first and
+  can be undone.
+- **Game systems** (`#/systems`, `Alt+4`): every system with its version, what it derives from and how many
+  characters use it. Built-ins can be viewed, derived and exported. Your own can also be edited and deleted
+  (never while a character follows that version).
+- **System editor** (`#/systems/<id>`): the whole system file as JSON, checked as you type, with problems
+  listed by path, a summary and a test evaluation. Saving never alters a version in use; it adds a new one.
+- Button names contain their visible text, and every control in a table carries the row name.

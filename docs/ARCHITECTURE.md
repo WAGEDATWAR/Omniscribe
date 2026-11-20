@@ -52,7 +52,7 @@ index.html
 | `#/library` (home) | characters and campaigns as tiles |
 | `#/data` | backup, restore, import, export, storage, integrity |
 | `#/settings` | theme, density, shortcuts, guide |
-| `#/systems` | game systems: built-in, custom and derived; create, derive, edit, import, export |
+| `#/systems` | game systems: built-in, custom and derived; create, derive, edit, import, export (`Alt+4`) |
 | `#/systems/<id>` | the system editor |
 | `#/dice` | the dice table: roller, presets, log, character picker |
 | `#/character/<id>` | character overview; sub-pages `/pdf` (built), then `/sheet`, `/inventory`, `/abilities`, `/familiars`, `/relations`, `/journal`, `/rolls` as their phases land. The pages are a link bar under the header (U-11) |

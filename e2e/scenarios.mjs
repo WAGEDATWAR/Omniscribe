@@ -80,6 +80,35 @@ function samplePixels(page) {
   })()`);
 }
 
+async function sheetPage(page) {
+  await page.click("#sample-btn");
+  await page.waitFor('document.querySelectorAll(".tile").length === 1');
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=sheet]")');
+  await page.click('.subnav-link[data-page="sheet"]');
+  await page.waitFor('!document.querySelector("#character-sheet").hidden && document.querySelector("#sheet-picker")');
+}
+
+async function startGeneric(page) {
+  await sheetPage(page);
+  await page.click("#system-generic");
+  await page.click("#sheet-picker-confirm");
+  await page.waitFor('document.querySelector("#sheet-f-might")');
+}
+
+async function installTestSystem(page, context) {
+  await page.evaluate(`(async () => {
+    const file = await (await fetch("/test/fixtures/systems/d20-core.json")).json();
+    const { openStorage } = await import("/src/storage.js");
+    const storage = await openStorage();
+    await storage.putSystem(file);
+    storage.close();
+    return true;
+  })()`);
+  await page.reload();
+  await page.waitFor('document.querySelector("#library-title")');
+}
+
 function assertClean(page) {
   assert.deepEqual(page.errors, [], `uncaught errors: ${page.errors.join("; ")}`);
   assert.deepEqual(page.consoleErrors, [], `console errors: ${page.consoleErrors.join("; ")}`);
@@ -708,6 +737,309 @@ export const scenarios = [
       await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
       await page.click('.subnav-link[data-page="pdf"]');
       await page.waitFor('document.querySelector("#pdf-empty").textContent.includes("No PDF sheets yet")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a sheet starts from a chosen system and computes derived values and modifiers",
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might").value'), "10");
+      await type(page, "#sheet-f-might", "16");
+      await type(page, "#sheet-f-agility", "14");
+      await page.waitFor('document.querySelector("[data-key=defense] .derived-value").textContent === "12"');
+
+      assert.match(await page.evaluate('document.querySelector("[data-key=might] .subs").textContent'), /mod\s*\+3/);
+      assert.equal(await page.evaluate('document.querySelector("input[aria-label=\\"Health current\\"]").value'), "14");
+      assert.match(await page.evaluate('document.querySelector(".sheet-system").textContent'), /Following Generic, version 1/);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-problems").children.length'), 0);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a bad sheet value is refused beside its field and never stored",
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+
+      await type(page, "#sheet-f-might", "99");
+      await page.waitFor('!document.querySelector("#sheet-f-might-error").hidden');
+      assert.match(await page.evaluate('document.querySelector("#sheet-f-might-error").textContent'), /cannot be above 40/);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might").getAttribute("aria-invalid")'), "true");
+
+      await type(page, "#sheet-f-might", "18");
+      await page.waitFor('document.querySelector("#sheet-f-might-error").hidden');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might").value'), "18");
+      assertClean(page);
+    }
+  },
+  {
+    name: "pools, rows, uses, conditions and rests work and persist",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+
+      await type(page, 'input[aria-label="Health current"]', "5");
+      await page.click("#sheet-add-abilities");
+      await page.waitFor('document.querySelectorAll("[data-collection=abilities] .sheet-row").length === 1');
+      assert.equal(await page.evaluate('document.activeElement.closest(".sheet-row") !== null'), true);
+
+      await page.evaluate(`(() => {
+        const row = document.querySelector("[data-collection=abilities] .sheet-row");
+        const name = row.querySelector("input[type=text]");
+        name.value = "Blink";
+        name.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      })()`);
+      await page.click('[data-collection=abilities] button[aria-label^="Use one"]');
+      await page.waitFor('document.querySelector("[data-collection=abilities] .uses-count").textContent === "0 of 1 left"');
+
+      await page.click('.cond:not(.is-on)');
+      await page.waitFor('document.querySelectorAll(".cond.is-on").length === 1');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("[data-collection=abilities] .sheet-row")');
+      assert.equal(await page.evaluate('document.querySelector("input[aria-label=\\"Health current\\"]").value'), "5");
+      assert.equal(await page.evaluate('document.querySelectorAll(".cond.is-on").length'), 1);
+      assert.equal(await page.evaluate('document.querySelector("[data-collection=abilities] .uses-count").textContent'), "0 of 1 left");
+
+      await page.click("#sheet-rest-long");
+      await page.waitFor('document.querySelector("input[aria-label=\\"Health current\\"]").value === "14"');
+      await page.waitFor('document.querySelector("[data-collection=abilities] .uses-count").textContent === "1 of 1 left"');
+
+      await page.evaluate('[...document.querySelectorAll(".toast .btn")].at(-1).click(); true');
+      await page.waitFor('document.querySelector("input[aria-label=\\"Health current\\"]").value === "5"');
+      assertClean(page);
+    }
+  },
+  {
+    name: "boxes pools tick, and removing a row can be undone",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-key=energy] .box").length'), 11);
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-key=energy] .box[aria-pressed=true]").length'), 11);
+
+      await page.evaluate('document.querySelectorAll("[data-key=energy] .box")[3].click(); true');
+      await page.waitFor('document.querySelectorAll("[data-key=energy] .box[aria-pressed=true]").length === 4');
+      assert.match(await page.evaluate('document.querySelector("[data-key=energy] .pool-readout").textContent'), /^4 \/ 11/);
+
+      await page.click("#sheet-add-attacks");
+      await page.waitFor('document.querySelectorAll("[data-collection=attacks] .sheet-row").length === 1');
+      await page.click('[data-collection=attacks] .sheet-row button[aria-label^="Remove"]');
+      await page.waitFor('document.querySelectorAll("[data-collection=attacks] .sheet-row").length === 0');
+      await page.evaluate('[...document.querySelectorAll(".toast .btn")].at(-1).click(); true');
+      await page.waitFor('document.querySelectorAll("[data-collection=attacks] .sheet-row").length === 1');
+      assertClean(page);
+    }
+  },
+  {
+    name: "changing system keeps unmatched values aside and Undo restores them",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await installTestSystem(page, context);
+      await startGeneric(page);
+      await type(page, "#sheet-f-might", "16");
+      await saved(page);
+
+      await page.click("#sheet-change");
+      await page.waitFor('document.querySelector("#sheet-picker-confirm")');
+      await page.click("#system-test-d20");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#sheet-f-str")');
+
+      assert.match(await page.evaluate('document.querySelector(".sheet-system").textContent'), /Following Test d20/);
+      assert.match(await page.evaluate('document.querySelector("#sheet-orphans").textContent'), /values\.might/);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might")'), null);
+
+      await page.evaluate('[...document.querySelectorAll(".toast .btn")].at(-1).click(); true');
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might").value'), "16");
+      assertClean(page);
+    }
+  },
+  {
+    name: "a sheet whose system is missing explains it and keeps the values",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await installTestSystem(page, context);
+      await startGeneric(page);
+      await page.click("#sheet-change");
+      await page.click("#system-test-d20");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#sheet-f-str")');
+      await saved(page);
+
+      await page.evaluate(`(async () => {
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        await storage.deleteSystem("test-d20", 1);
+        storage.close();
+        return true;
+      })()`);
+      await page.reload();
+      await page.waitFor('document.querySelector("#sheet-picker")');
+
+      assert.match(await page.evaluate('document.querySelector("#sheet-picker").textContent'), /"test-d20" version 1 is not available/);
+      assert.match(await page.evaluate('document.querySelector("#sheet-picker").textContent'), /Your values are safe/);
+      await page.click("#system-generic");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-orphans").children.length'), 0);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-f-might").value'), "10");
+      assertClean(page);
+    }
+  },
+  {
+    name: "the systems page lists built-ins, which are read-only and can be derived",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+
+      assert.match(await page.evaluate('document.querySelector("#systems-list").textContent'), /Generic[\s\S]*Built in/);
+      assert.equal(await page.evaluate('document.querySelector(".system-item [aria-label^=Delete]")'), null);
+
+      await page.click('.system-item a[aria-label^="View"]');
+      await page.waitFor('document.querySelector("#system-json")');
+      assert.equal(await page.evaluate('document.querySelector("#system-json").readOnly'), true);
+      assert.equal(await page.evaluate('document.querySelector("#system-save").disabled'), true);
+      assert.match(await page.evaluate('document.querySelector("#system-note").textContent'), /built in and read-only/);
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+
+      await page.click("#system-derive");
+      await page.waitFor('document.querySelector("#new-system-dialog").open');
+      assert.equal(await page.evaluate('document.querySelector("#new-system-base").value'), "generic");
+      assertClean(page);
+    }
+  },
+  {
+    name: "a derived system is created, edited with live validation and saved as a new version",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.click("#new-system-btn");
+      await page.waitFor('document.querySelector("#new-system-dialog").open');
+      await type(page, "#new-system-name", "House Rules");
+      assert.equal(await page.evaluate('document.querySelector("#new-system-id").value'), "house-rules");
+      await page.click("#new-system-create");
+      await page.waitFor('location.hash === "#/systems/house-rules"');
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+      assert.match(await page.evaluate('document.querySelector("#system-json").value'), /"id": "house-rules"/);
+      assert.match(await page.evaluate('document.querySelector("#system-note").textContent'), /Saving creates version 2/);
+
+      const edit = (mutation) => page.evaluate(`(() => {
+        const area = document.querySelector("#system-json");
+        const file = JSON.parse(area.value);
+        (${mutation})(file);
+        area.value = JSON.stringify(file, null, 2);
+        area.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      })()`);
+
+      await edit('(file) => file.overlay.push({ op: "add", target: "field", key: "luck", value: { label: "Luck", type: "derived", formula: "@ghost + 1" } })');
+      await page.waitFor('document.querySelector("#system-status")?.textContent.includes("problem")', { timeout: 4000 });
+      assert.match(await page.evaluate('document.querySelector("#system-errors").textContent'), /fields\.luck\.formula[\s\S]*Unknown reference @ghost/);
+      assert.equal(await page.evaluate('document.querySelector("#system-save").disabled'), true);
+
+      await edit('(file) => { file.overlay[0].value.formula = "@might + 1"; }');
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"', { timeout: 4000 });
+      assert.equal(await page.evaluate('document.querySelector("#system-save").disabled'), false);
+      assert.match(await page.evaluate('document.querySelector("#system-summary").textContent'), /13 fields/);
+
+      await page.click("#system-save");
+      await page.waitFor('document.querySelector("#system-note").textContent.includes("Saving creates version 3")');
+      assert.match(await page.evaluate('document.querySelector("#system-title").parentElement.textContent'), /version 2/);
+
+      await go(page, "#/systems", "#systems-title");
+      assert.match(await page.evaluate('document.querySelector("[data-id=house-rules]").textContent'), /Version 2 · 2 versions · derived from generic v1/);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("[data-id=house-rules]")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a sheet can follow a system made in the app",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.click("#new-system-btn");
+      await type(page, "#new-system-name", "Mine");
+      await page.click("#new-system-create");
+      await page.waitFor('location.hash === "#/systems/mine"');
+      await go(page, "#/library", "#library-title");
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#system-mine")');
+      await page.click("#system-mine");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+      assert.match(await page.evaluate('document.querySelector(".sheet-system").textContent'), /Following Mine, version 1/);
+
+      await go(page, "#/systems", "#systems-title");
+      assert.match(await page.evaluate('document.querySelector("[data-id=mine]").textContent'), /1 character using it/);
+      await page.click('[data-id=mine] [aria-label^="Delete"]');
+      await page.waitFor('document.querySelector(".toast-error")');
+      assert.match(await page.evaluate('document.querySelector(".toast-error").textContent'), /1 character follows version 1/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a system file imports, and bad or repeated files are refused with a reason",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+
+      await page.setFileInput("#system-import-input", [context.fixture("systems/d20-core.json")]);
+      await page.waitFor('location.hash === "#/systems/test-d20"');
+      await go(page, "#/systems", "#systems-title");
+      assert.match(await page.evaluate('document.querySelector("[data-id=test-d20]").textContent'), /Test d20/);
+
+      await page.setFileInput("#system-import-input", [context.fixture("systems/d20-core.json")]);
+      await page.waitFor('[...document.querySelectorAll(".toast-error")].some((t) => t.textContent.includes("already exists"))');
+
+      await page.setFileInput("#system-import-input", [context.fixture("not-a-pdf.pdf")]);
+      await page.waitFor('[...document.querySelectorAll(".toast-error")].some((t) => t.textContent.includes("not valid JSON"))');
+
+      await page.setFileInput("#system-import-input", [context.fixture("systems/d20-custom.json")]);
+      await page.waitFor('location.hash === "#/systems/test-d20-custom"');
+
+      await go(page, "#/systems", "#systems-title");
+      await page.click('[data-id=test-d20] [aria-label^="Delete"]');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('[...document.querySelectorAll(".toast-error")].some((t) => t.textContent.includes("derived from this version"))');
+      assertClean(page);
+    }
+  },
+  {
+    name: "an unknown system route returns to the list",
+    async run(page, context) {
+      await boot(page, context);
+      await page.evaluate('location.hash = "#/systems/nothing-here"; true');
+      await page.waitFor('location.hash === "#/systems"');
       assertClean(page);
     }
   },

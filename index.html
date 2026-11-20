@@ -28,6 +28,7 @@
       <a class="menu-item" href="#/library" data-menu-close>Library <kbd>Alt+1</kbd></a>
       <a class="menu-item" href="#/data" data-menu-close>Data <kbd>Alt+2</kbd></a>
       <a class="menu-item" href="#/settings" data-menu-close>Settings <kbd>Alt+3</kbd></a>
+      <a class="menu-item" href="#/systems" data-menu-close>Game systems <kbd>Alt+4</kbd></a>
       <hr class="menu-rule">
       <button class="menu-item" id="menu-palette" type="button" data-menu-close>Command palette <kbd>Ctrl+K</kbd></button>
       <button class="menu-item" id="menu-shortcuts" type="button" data-menu-close>Keyboard shortcuts <kbd>?</kbd></button>
@@ -58,6 +59,8 @@
     <section id="page-character" class="page" aria-labelledby="character-title" hidden></section>
     <section id="page-data" class="page" aria-labelledby="data-title" hidden></section>
     <section id="page-settings" class="page" aria-labelledby="settings-title" hidden></section>
+    <section id="page-systems" class="page" aria-labelledby="systems-title" hidden></section>
+    <section id="page-system" class="page" aria-labelledby="system-title" hidden></section>
   </main>
 
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
@@ -86,6 +89,30 @@
     <form method="dialog" class="dialog-actions">
       <button id="confirm-cancel" class="btn" value="cancel">Cancel</button>
       <button id="confirm-ok" class="btn btn-primary" value="confirm">Confirm</button>
+    </form>
+  </dialog>
+
+  <dialog id="new-system-dialog" class="dialog" aria-labelledby="new-system-title">
+    <form method="dialog" id="new-system-form">
+      <h2 id="new-system-title" class="dialog-title">New game system</h2>
+      <div class="field">
+        <label class="field-label" for="new-system-name">Name</label>
+        <input id="new-system-name" class="input" type="text" maxlength="80" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="field-label" for="new-system-id">Id</label>
+        <input id="new-system-id" class="input" type="text" maxlength="64" autocomplete="off" aria-describedby="new-system-id-hint">
+        <p id="new-system-id-hint" class="field-hint">Lowercase letters, digits, dots, dashes and underscores. It cannot change later.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="new-system-base">Start from</label>
+        <select id="new-system-base" class="input"></select>
+      </div>
+      <p id="new-system-error" class="field-error" hidden></p>
+      <div class="dialog-actions">
+        <button id="new-system-cancel" class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button id="new-system-create" class="btn btn-primary" value="create">Create system</button>
+      </div>
     </form>
   </dialog>
 

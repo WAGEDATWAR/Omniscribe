@@ -21,9 +21,10 @@ P1 passed every gate in CI (run 44652158842, commit aecfbfd): syntax, lint, form
 scenarios, accessibility over 26 states, contrast, deferrals, deferral scan and release check. The
 repository has a Pages site and a branch ruleset (DEF-068).
 
-P2 so far is pure engine code with no UI: `docs/SHEET.md`, the formula language, template validation,
-derivation by base and overlay, evaluation, reconcile and rests, the generic system, and 68 unit tests
-(168 in all). A pair of real flat-PDF character sheets for a derived 3.5e system informed the design
+P2 now has the engine and its pages: `docs/SHEET.md`, the formula language, validation, derivation,
+evaluation, reconcile and rests, the generic system, the character Sheet page, the Game systems page and a
+validated system editor with derive, import and export. 191 unit tests, and the Sheet and systems pages are
+covered by browser scenarios and accessibility states. A pair of real flat-PDF character sheets for a derived 3.5e system informed the design
 (`docs/reference/SHEET-REFERENCE.md`, structure only).
 
 ## Phases
@@ -78,20 +79,29 @@ P2, in order. Nothing past P2.
       derivation, evaluation, reconcile and rests.
 - [x] `H` `P2` The generic system as JSON, plus a d20-style core and a derived fixture that exercise every
       pattern in the reference sheets.
-- [ ] `H` `P2` Character `sheet` record and `template` pin: schema fields, migration 3, store actions
-      (set value, set pool, rows, conditions, rest, change system) with undo; the system registry (built-ins
-      plus the user's, stored in the `templates` store) resolved once per change.
-- [ ] `H` `P2` The Sheet page (link bar, `#/character/<id>/sheet`): typed inputs that explain a refusal,
-      derived values with their markers, pools with number and boxes displays, collection tables with
-      grouping and use counters, conditions, orphans, rest buttons, and errors shown beside the value.
-- [ ] `H` `P2` The Game systems page and editor: create, derive, edit, import and export; validation
-      errors shown by path (DEF-001); the newer-version diff and the move of a character (DEF-003).
-- [ ] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006).
-- [ ] `M` `P2` Browser scenarios and accessibility states for every page and dialog above.
+- [x] `H` `P2` Character `sheet` record and `template` pin: schema, migration 3, store actions with undo,
+      the versioned system registry and its storage.
+- [x] `H` `P2` The Sheet page (`#/character/<id>/sheet`): system picker, typed inputs that explain a refusal,
+      derived values and modifiers, pools as numbers or boxes, row tables with use counters, conditions,
+      orphans, rests, errors beside the value, change system with Undo.
+- [x] `H` `P2` The Game systems page and editor: list, new (from a base or empty), derive, import, export,
+      delete, and a JSON editor with live validation by path that saves new versions.
+- [x] `M` `P2` Browser scenarios and accessibility states for the Sheet page, the systems page, the editor
+      and the new-system dialog.
+- [ ] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006). Structure and
+      formulas only (G-13); do 3.5e first, since derived 3.5e systems are the first real use.
+- [ ] `M` `P2` The newer-version diff: when a base or a system gets a new version, show added, removed and
+      changed fields before a character moves (DEF-003).
+- [ ] `H` `P2` A visual system editor (forms for fields, pools, collections and overlay operations) on top
+      of the JSON editor (DEF-078).
+- [ ] `M` `P2` Review pass over the Sheet page on a phone and with a large 3.5e sheet (200 rows).
 
 ## Recently landed
 
-- **P2 sheet engine (uncommitted).** `docs/SHEET.md` written first. The formula language (typed, total,
+- **P2 pages (uncommitted after ae972e1).** The Sheet page and the Game systems page with editor, import,
+  export, derive and delete, with 12 new browser scenarios and 14 new accessibility states (42 and 40 in
+  all, zero violations). Scenarios found no defects in the pages; one test expectation was wrong.
+- **P2 sheet engine (d62c7b5).** `docs/SHEET.md` written first. The formula language (typed, total,
   no coercion, budgeted, with a fuzz test), template validation with cycle detection and per-path errors,
   derivation by base and overlay across fields, pools, collections, tables, rolls, rests, sections and
   conditions, evaluation in dependency order with errors as values, reconcile (orphans) and rests, the

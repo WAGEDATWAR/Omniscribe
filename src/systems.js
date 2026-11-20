@@ -64,6 +64,21 @@ export function createRegistry({ builtins = [], custom = [] } = {}) {
     lookup,
     add,
     rejected,
+    /** Validates a candidate system without adding it. */
+    check(raw) {
+      const normalized = normalizeSystemFile(raw);
+
+      if (!normalized.ok) {
+        return { ok: false, errors: normalized.errors, warnings: normalized.warnings, template: null };
+      }
+
+      const result = resolveTemplate(normalized.template, lookup);
+      return { ok: result.ok, errors: result.errors, warnings: [...normalized.warnings, ...result.warnings], template: result.template };
+    },
+    latestFile(id) {
+      const versions = [...entries.values()].filter((entry) => entry.file.id === id).map((entry) => entry.file.version);
+      return versions.length ? lookup(id, Math.max(...versions)) : null;
+    },
     has: (id, version) => entries.has(keyOf(id, version)),
     isBuiltin: (id) => [...entries.values()].some((entry) => entry.builtin && entry.file.id === id),
     resolve(ref) {

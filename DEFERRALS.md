@@ -19,7 +19,8 @@ Owners are `P0`-`P7` or `post-v1`.
 
 | # | Item | Notes | Owner | Status |
 |---|---|---|---|---|
-| DEF-001 | An in-app game system editor with create, derive, import and export | S-8 and S-9; pulled into P2 so custom systems exist from the first release | P2 | scheduled |
+| DEF-001 | An in-app game system editor with create, derive, import and export | S-8 and S-9; built as a validated JSON editor with new, derive, import, export and delete; the visual editor is DEF-078 | P2 | done |
+| DEF-078 | A visual system editor | forms for fields, pools, collections, tables and overlay operations, on top of the JSON editor | P2 | scheduled |
 | DEF-006 | Built-in D&D 5e system as a read-only base | structure and formulas only (G-13); lands after the generic system | P2 | scheduled |
 | DEF-007 | Built-in D&D 3.5e system as a read-only base | same rule as DEF-006 | P2 | scheduled |
 | DEF-002 | Item effects that modify sheet values (an equipped item adds to AC) | needs effect records evaluated by the sheet engine, behind the same budget | P4 | scheduled |
