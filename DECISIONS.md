@@ -6,8 +6,8 @@ cheap to reverse.
 **Status legend:** `locked` (not reversed without a new decision) -> `provisional` (cheap to reverse) ->
 `open`.
 
-**Series:** G = governance (product intent), A = architecture, S = sheet, D = dice, P = persistence,
-U = surface.
+**Series:** G = governance (product intent), A = architecture, S = sheet, D = dice, P = persistence, K = campaigns,
+U = surface, C = character pages.
 
 Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe differs, the row says why.
 
@@ -150,6 +150,23 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | C-10 | **Schema migration 5 adds every new list empty,** with a `normalize*` per record that drops a bad record and keeps the rest. | locked |
 | C-11 | **Records are described by data, and every record takes fields of your own.** One descriptor per kind (`src/records/kinds.js`) drives normalization, the store and the generic list page; a record also carries up to 30 user-defined fields (name, type, value) and keeps unknown keys in `extensions`. A new kind or field is a descriptor change. | locked |
 | C-12 | **A system tunes the record pages under its own `extensions.records`** (carry and attunement limits as numbers or formulas over the sheet, and currencies), validated by the records module. No change to the system format, derived systems inherit it, and a system that says nothing still gives a working page. | locked |
+
+## Campaigns (K-series)
+
+| # | Decision | Status |
+|---|---|---|
+| K-1 | **A campaign links to characters and never copies them.** A roster row holds a character id; every figure shown is read from the character's sheet when viewed (G-14). Deleting a character removes its roster rows and initiative entries and the confirmation says so; deleting a campaign leaves the characters. | locked |
+| K-2 | **Campaigns are a second collection in the one store.** State is `{ characters, campaigns }`, one history step snapshots both, and autosave writes each per record. Schema migration 6 adds `campaigns: []`. | locked |
+| K-3 | **Roster, sessions and handouts are record kinds described by data** (C-11): the same normalizer, limits, generic list page and fields of your own. | locked |
+| K-4 | **The party view stores nothing.** Columns are formulas over each character's own sheet (no dice); a missing sheet or an error shows as text, never as 0. A system may suggest columns under `extensions.records.party` (C-12). | locked |
+| K-5 | **Initiative rolls through the one rolling path** with the character's own values: the campaign's expression, else the system's `extensions.records.initiative`, else `1d20`. Order is value descending, ties keep entry order unless edited; the current turn is marked in text and announced. | locked |
+| K-6 | **The fight resumes after a reload:** round, turn and entries are saved with the campaign; ending an encounter is confirmed and undoable. | locked |
+| K-7 | **Handouts are images and PDFs in the blob store,** judged by bytes, shared by reference, counted by integrity, shown in the app's own viewers. | locked |
+| K-8 | **A session recap is plain text copied to the clipboard,** without secrets. Nothing is sent anywhere. | locked |
+| K-9 | **"Secret" means kept out of shared views and exports, not access control.** Secret journal entries, secret session notes and secret rolls are excluded by one function, `isShared(record)`, used by every shared view (DEF-013). There are no accounts. | locked |
+| K-10 | **A character's campaigns are derived,** shown on its Overview from the campaigns; assignment can be made from either side and nothing is stored twice. | locked |
+| K-11 | **Campaigns appear in the Library as tiles** beside characters, with shared search and a status filter; there is no separate hub page. | locked |
+| K-12 | **Automation stays out of P5:** no attack or damage resolution, no ticking conditions, no maps. Conditions on initiative are DEF-088. | locked |
 
 ## Open
 

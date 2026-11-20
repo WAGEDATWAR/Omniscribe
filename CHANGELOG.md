@@ -4,6 +4,12 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added (P5, in progress)
+
+- `docs/CAMPAIGN.md`, written before the code: campaigns that link to characters, the store holding both
+  collections with one history, roster, a party view read from the sheets, sessions, an initiative tracker,
+  handouts and secret rolls. Decisions K-1 to K-12; deferrals DEF-088 and DEF-089.
+
 ## [0.5.0] - P4 characters in depth
 
 ### Added

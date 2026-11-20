@@ -42,7 +42,7 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [x] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
 - [x] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
       (DEF-002, DEF-063, DEF-079)
-- [ ] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
+- [~] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
 - [ ] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
       PDF sheet with the upload override. (DEF-022, DEF-030, DEF-032, DEF-033, DEF-052, DEF-064,
@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P4 is done (0.5.0). P5 (campaigns) is next; its spec comes first.
+P4 is done (0.5.0). P5 has its spec (`docs/CAMPAIGN.md`); the code is next, in the order of its section 12.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -91,6 +91,14 @@ P4 is done (0.5.0). P5 (campaigns) is next; its spec comes first.
       own sheet in place is DEF-087.
 - [x] `M` `P4` Palette entries, Overview summary, browser scenarios and accessibility states for every page.
 - [x] `H` `P4` Phase gate twice, release 0.5.0.
+- [x] `H` `P5` `docs/CAMPAIGN.md`: the campaign record, store and history, pages, roster, party view, sessions,
+      initiative, handouts, secrets, limits and the gate (K-1 to K-12).
+- [ ] `H` `P5` Groundwork: campaigns in the store with one history, migration 6, normalizer, autosave, delete cleanup.
+- [ ] `H` `P5` Campaign record, Library tiles, routes, overview, Roster and the character's Campaigns panel.
+- [ ] `M` `P5` Party view with columns read from sheets.
+- [ ] `M` `P5` Session log and Handouts.
+- [ ] `H` `P5` Initiative tracker (DEF-040).
+- [ ] `M` `P5` Secret rolls (DEF-013), palette entries, scenarios and accessibility states for every page.
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed
