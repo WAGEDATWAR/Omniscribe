@@ -13,6 +13,10 @@ const OWN_PARTS = ["fields", "pools", "collections", "rests", "rolls", "sections
 
 const isObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
+function dropNulls(entry) {
+  return Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== null));
+}
+
 function applyOperation(flat, operation, path, errors) {
   const fail = (message) => errors.push({ path, message });
 
@@ -91,7 +95,7 @@ function applyOperation(flat, operation, path, errors) {
     } else if (!isObject(operation.value)) {
       fail("overriding a table needs an object of entries to merge");
     } else {
-      flat.tables[name] = { ...flat.tables[name], ...operation.value };
+      flat.tables[name] = dropNulls({ ...flat.tables[name], ...operation.value });
     }
 
     return;
@@ -154,7 +158,7 @@ function applyOperation(flat, operation, path, errors) {
     return;
   }
 
-  list[position] = { ...list[position], ...structuredClone(operation.value), [identity]: key };
+  list[position] = dropNulls({ ...list[position], ...structuredClone(operation.value), [identity]: key });
 }
 
 function resolveChain(file, lookup, chain, errors) {

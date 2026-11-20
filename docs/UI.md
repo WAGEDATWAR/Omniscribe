@@ -123,6 +123,10 @@ console error, which the browser scenarios treat as a failure.
 - **Game systems** (`#/systems`, `Alt+4`): every system with its version, what it derives from and how many
   characters use it. Built-ins can be viewed, derived and exported. Your own can also be edited and deleted
   (never while a character follows that version).
-- **System editor** (`#/systems/<id>`): the whole system file as JSON, checked as you type, with problems
-  listed by path, a summary and a test evaluation. Saving never alters a version in use; it adds a new one.
+- **System editor** (`#/systems/<id>`): a Visual view and a JSON view of the same system. Visual has tabs
+  for Details, Fields, Pools, Collections (with their columns), Tables, Conditions, Rests, Rolls and Sections;
+  each tab lists entries beside a form for the one you pick, with add (key checked) and remove (confirmed).
+  Forms commit when a control changes. The JSON view is the whole file. Both are checked as you type, with
+  problems listed by path, a summary and a test evaluation. Saving never alters a version in use; it adds
+  a new one. Built-in systems are read-only.
 - Button names contain their visible text, and every control in a table carries the row name.

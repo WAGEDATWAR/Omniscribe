@@ -96,6 +96,37 @@ const states = [
     await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
   } },
   { name: "game system editor, valid", setup: async (page) => createSystem(page) },
+  { name: "visual editor, fields with a derived field open", setup: async (page) => {
+    await createSystem(page);
+    await page.waitFor('document.querySelector("#visual-panel .entry-btn")');
+    await page.evaluate('[...document.querySelectorAll("#visual-panel .entry-btn")].find((b) => b.textContent.includes("(defense)")).click(); true');
+    await page.waitFor('[...document.querySelectorAll("#visual-panel label")].some((l) => l.textContent === "Formula")');
+  } },
+  { name: "visual editor, collections with columns", setup: async (page) => {
+    await createSystem(page);
+    await page.evaluate('[...document.querySelectorAll(".tab")].find((b) => b.textContent === "Collections").click(); true');
+    await page.waitFor('document.querySelector(".columns-panel")');
+  } },
+  { name: "visual editor, pools", setup: async (page) => {
+    await createSystem(page);
+    await page.evaluate('[...document.querySelectorAll(".tab")].find((b) => b.textContent === "Pools").click(); true');
+    await page.waitFor('document.querySelector("#ve-add-pool")');
+  } },
+  { name: "visual editor, tables", setup: async (page) => {
+    await createSystem(page);
+    await page.evaluate('[...document.querySelectorAll(".tab")].find((b) => b.textContent === "Tables").click(); true');
+    await page.waitFor('document.querySelector("#ve-add-table")');
+  } },
+  { name: "visual editor, rolls and sections", setup: async (page) => {
+    await createSystem(page);
+    await page.evaluate('[...document.querySelectorAll(".tab")].find((b) => b.textContent === "Sections").click(); true');
+    await page.waitFor('document.querySelector("#ve-add-section")');
+  } },
+  { name: "game system editor, JSON view", setup: async (page) => {
+    await createSystem(page);
+    await page.click("#mode-json");
+    await page.waitFor('!document.querySelector("#json-editor").hidden');
+  } },
   { name: "game system editor with errors", setup: async (page) => {
     await createSystem(page);
     await page.evaluate(`(() => {

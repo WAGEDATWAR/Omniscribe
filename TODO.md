@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**P0 and P1 are done and green in CI (0.2.0). P2 is in progress: the sheet engine is built and tested but not committed; the pages are next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0, P1 and P2 are done (0.3.0). P3, the dice table, is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
@@ -36,22 +36,22 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [x] **P1 - Characters and PDFs.** Identity record, portrait, PDF attachments, the vendored PDF viewer,
       tags, status. Gate: a PDF survives a reload and renders; a wrong or oversize file is refused.
       (DEF-075, DEF-076)
-- [~] **P2 - The sheet engine and game systems.** Templates, formulas, value sheet, pools, conditions,
+- [x] **P2 - The sheet engine and game systems.** Templates, formulas, value sheet, pools, conditions,
       rests, the system editor, derived systems, import and export, the generic system, then 5e and 3.5e.
       (DEF-001, DEF-003, DEF-005, DEF-006, DEF-007, DEF-070, DEF-077)
 - [ ] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011)
 - [ ] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
-      (DEF-002, DEF-063)
+      (DEF-002, DEF-063, DEF-079)
 - [ ] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
 - [ ] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
       PDF sheet with the upload override. (DEF-022, DEF-030, DEF-032, DEF-033, DEF-052, DEF-064,
-      DEF-071)
+      DEF-071, DEF-080)
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
       accessibility. (DEF-060, DEF-061, DEF-062, DEF-065, DEF-066, DEF-067)
 - [ ] **v1.**
 - [ ] **P8 - Expansion (post-v1, DEF-014).** Random tables, 3D dice, PDF form mapping, importers,
-      encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051)
+      encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051, DEF-077, DEF-081)
 
 ## Decisions needed
 
@@ -63,7 +63,8 @@ are resolved.
 
 ## Next Up
 
-P2, in order. Nothing past P2.
+P2 is done. P3 is next: write `docs/DICE.md` first, then the grammar, the roller and the dice table.
+The items below are small follow-ups.
 
 - [ ] `L` Commit the P2 engine work (needs your go-ahead).
 - [ ] `L` Watch one transient failure seen once locally: Chrome exiting before DevTools was ready on a
@@ -91,13 +92,17 @@ P2, in order. Nothing past P2.
 - [x] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006).
 - [x] `M` `P2` The newer-version diff (DEF-003).
 - [x] `M` `L` The navigation is a collapsible left sidebar (a drawer on phones) instead of a popup.
-- [ ] `H` `P2` A visual system editor (forms for fields, pools, collections and overlay operations) on top
-      of the JSON editor (DEF-078). The last open P2 item; P2 is done when it lands or is re-owned.
-- [ ] `M` `P2` A review pass over the Sheet page with a 100-row 3.5e sheet on a phone (it passes the
-      accessibility audit; the layout has not been judged by eye on a real phone).
+- [x] `H` `P2` The visual system editor (DEF-078).
+- [ ] `M` Review the Sheet page and the visual editor by eye on a real phone (both pass the accessibility
+      audit; layout has not been judged on a device).
 
 ## Recently landed
 
+- **P2 visual editor (uncommitted after ee59d6d).** Tabbed forms over the resolved system for details,
+  fields, pools, collections and their columns, tables, conditions, rests, rolls and sections, with a
+  Visual and JSON switch. A derived system's form edits are written back as overlay operations by
+  `makeOverlay` (round-tripped by tests); an override can clear a property or table entry with `null`.
+  Also: the translation layer concept is scheduled (S-17; DEF-079 in P4, DEF-080 in P6, DEF-081 later).
 - **P2 built-ins, diff and sidebar (uncommitted after 422cd88).** D&D 3.5e and 5e as built-in systems
   (generated from a script for the long lists, checked against hand-computed numbers including multiclass
   attack lines and expertise), `defaultRows` so a new sheet starts with its skill list, the newer-version

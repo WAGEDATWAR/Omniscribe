@@ -1,6 +1,6 @@
 import { createSheet, evaluateSheet } from "../sheet/evaluate.js";
-import { ID_PATTERN } from "../sheet/template.js";
-import { TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION } from "../sheet/template.js";
+import { makeOverlay } from "../sheet/overlay.js";
+import { ID_PATTERN, KEY_PATTERN, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION } from "../sheet/template.js";
 import { mountSystemEditor } from "../ui/systemEditor.js";
 import { mountSystemsPage } from "../ui/systems.js";
 import { routeHref } from "../views.js";
@@ -35,6 +35,8 @@ export function initSystems(ctx) {
   let idTouched = false;
   let timer = null;
   let editing = { file: null, original: "" };
+  let draft = { flat: null, invalid: false };
+  let mode = "visual";
 
   function usage() {
     const counts = new Map();
@@ -249,12 +251,232 @@ export function initSystems(ctx) {
       summary = `${template.fields.length} fields, ${template.pools.length} pools, ${template.collections.length} collections, ${Object.keys(template.tables).length} tables. A new sheet evaluates with ${computed.errors.length ? `${computed.errors.length} error${computed.errors.length === 1 ? "" : "s"}` : "no errors"}.`;
     }
 
+    if (result.ok && result.template) {
+      draft = { flat: structuredClone(result.template), invalid: false };
+    } else {
+      draft.invalid = true;
+    }
+
+    renderVisual();
     editorView.showReport({ status: result.ok ? "valid" : "invalid", errors: result.errors, warnings: result.warnings, summary });
     editorView.setSaveState({ canSave: result.ok && dirty && !systems.isBuiltin(editing.file.id), dirty, nextVersion: nextVersion() });
     editing.candidate = result.ok ? result.candidate : null;
   }
 
+  const PART_KEYS = ["fields", "pools", "collections", "tables", "conditions", "rests", "rolls", "sections"];
+  const KINDS = { field: "fields", pool: "pools", collection: "collections", roll: "rolls", rest: "rests", section: "sections" };
+  const IDENTITY = { field: "key", pool: "key", collection: "key", roll: "key", rest: "id", section: "id" };
+
+  function renderVisual() {
+    if (!editing.file || !draft.flat) {
+      return;
+    }
+
+    editorView.visual.render({
+      flat: draft.flat,
+      readOnly: systems.isBuiltin(editing.file.id),
+      note: draft.invalid ? "The file has problems, listed below. These forms still show your latest edits." : ""
+    });
+  }
+
+  function fileFromDraft() {
+    let file;
+
+    try {
+      file = JSON.parse(editorView.getText());
+    } catch {
+      file = structuredClone(editing.file);
+    }
+
+    const flat = draft.flat;
+    file.name = flat.name;
+    file.system = flat.system;
+    file.description = flat.description;
+
+    if (file.base) {
+      const baseFlat = systems.resolve(file.base).template;
+      file.overlay = baseFlat ? makeOverlay(baseFlat, flat) : file.overlay;
+    } else {
+      for (const part of PART_KEYS) {
+        file[part] = structuredClone(flat[part]);
+      }
+    }
+
+    return file;
+  }
+
+  function edit(change) {
+    const next = structuredClone(draft.flat);
+    change(next);
+    draft.flat = next;
+    editorView.setText(JSON.stringify(fileFromDraft(), null, 2));
+    validate();
+  }
+
+  const FIELD_PROPS = {
+    number: ["default", "min", "max", "integer"],
+    text: ["default"],
+    longtext: ["default"],
+    flag: ["default"],
+    choice: ["choices", "default"],
+    list: ["default"],
+    derived: ["formula", "format"],
+    uses: ["max", "resetOn"],
+    roll: ["default"]
+  };
+  const COMMON = ["key", "label", "type", "hint", "marker", "subs", "subFormats"];
+
+  function retype(entry, inCollection) {
+    const keep = new Set([...COMMON, ...(FIELD_PROPS[entry.type] ?? [])]);
+
+    for (const prop of Object.keys(entry)) {
+      if (!keep.has(prop)) {
+        delete entry[prop];
+      }
+    }
+
+    if (inCollection) {
+      delete entry.subs;
+      delete entry.subFormats;
+    }
+
+    if (entry.type === "choice" && !entry.choices) {
+      entry.choices = [{ value: "a", label: "A" }];
+    } else if (entry.type === "derived" && !entry.formula) {
+      entry.formula = "0";
+    } else if (entry.type === "uses" && entry.max === undefined) {
+      entry.max = 1;
+    }
+  }
+
+  function setProp(entry, prop, value) {
+    if (value === null) {
+      delete entry[prop];
+    } else {
+      entry[prop] = value;
+    }
+  }
+
+  const visualHandlers = {
+    onCommit(kind, key, prop, value) {
+      edit((flat) => {
+        if (kind === "details") {
+          flat[prop] = value ?? "";
+        } else if (kind === "condition") {
+          flat.conditions = value;
+        } else if (kind === "table") {
+          flat.tables[key] = value;
+        } else if (kind === "item") {
+          const [collectionKey, fieldKey] = key.split(".");
+          const entry = flat.collections.find((item) => item.key === collectionKey)?.fields.find((item) => item.key === fieldKey);
+
+          if (entry) {
+            setProp(entry, prop, value);
+
+            if (prop === "type") {
+              retype(entry, true);
+            }
+          }
+        } else {
+          const entry = flat[KINDS[kind]].find((item) => item[IDENTITY[kind]] === key);
+
+          if (entry) {
+            setProp(entry, prop, value);
+
+            if (kind === "field" && prop === "type") {
+              retype(entry, false);
+            }
+          }
+        }
+      });
+    },
+    onAdd(kind, key, parent) {
+      const flat = draft.flat;
+
+      if (!KEY_PATTERN.test(key)) {
+        return { ok: false, reason: "Use lowercase letters, digits and underscores, starting with a letter (up to 32)." };
+      }
+
+      const taken = kind === "table"
+        ? key in flat.tables
+        : kind === "item"
+          ? flat.collections.find((item) => item.key === parent)?.fields.some((item) => item.key === key)
+          : ["field", "pool", "collection"].includes(kind)
+            ? [...flat.fields, ...flat.pools, ...flat.collections].some((item) => item.key === key)
+            : (flat[KINDS[kind]] ?? []).some((item) => item[IDENTITY[kind]] === key);
+
+      if (taken) {
+        return { ok: false, reason: `"${key}" is already used here.` };
+      }
+
+      edit((next) => {
+        const title = key.replace(/_/g, " ").replace(/^./, (letter) => letter.toUpperCase());
+
+        if (kind === "field") {
+          next.fields.push({ key, label: title, type: "number", default: 0 });
+        } else if (kind === "pool") {
+          next.pools.push({ key, label: title, max: "10", display: "number", temp: false });
+        } else if (kind === "collection") {
+          next.collections.push({ key, label: title, fields: [{ key: "name", label: "Name", type: "text" }] });
+        } else if (kind === "item") {
+          next.collections.find((item) => item.key === parent).fields.push({ key, label: title, type: "text" });
+        } else if (kind === "table") {
+          next.tables[key] = { 0: 0 };
+        } else if (kind === "roll") {
+          next.rolls.push({ key, label: title, expression: "1d20", group: "Rolls" });
+        } else if (kind === "rest") {
+          next.rests.push({ id: key, label: title });
+        } else if (kind === "section") {
+          next.sections.push({ id: key, title, layout: "fields", items: [] });
+        }
+      });
+
+      return { ok: true, key: kind === "item" ? key : key };
+    },
+    async onRemove(kind, key) {
+      const name = kind === "item" ? key.split(".")[1] : key;
+
+      if (!await confirm({ heading: `Remove ${name}?`, body: "It is removed from this system's draft. Characters on a saved version are not affected, and nothing is saved until you press Save.", confirmLabel: "Remove", danger: true })) {
+        return;
+      }
+
+      edit((flat) => {
+        if (kind === "table") {
+          delete flat.tables[key];
+        } else if (kind === "item") {
+          const [collectionKey, fieldKey] = key.split(".");
+          const collection = flat.collections.find((item) => item.key === collectionKey);
+
+          collection.fields = collection.fields.filter((item) => item.key !== fieldKey);
+
+          for (const part of ["groupBy", "sortBy"]) {
+            if (collection[part] === fieldKey) {
+              delete collection[part];
+            }
+          }
+
+          if (collection.columns) {
+            collection.columns = collection.columns.filter((item) => item !== fieldKey);
+          }
+        } else {
+          flat[KINDS[kind]] = flat[KINDS[kind]].filter((item) => item[IDENTITY[kind]] !== key);
+
+          if (["field", "pool", "collection"].includes(kind)) {
+            for (const entry of flat.sections) {
+              entry.items = entry.items.filter((item) => item !== key);
+            }
+          }
+        }
+      });
+    }
+  };
+
   const editorView = mountSystemEditor(document.querySelector("#page-system"), {
+    visual: visualHandlers,
+    onMode(next) {
+      mode = next;
+      editorView.setMode(mode);
+    },
     onInput() {
       clearTimeout(timer);
       timer = setTimeout(validate, 250);
@@ -313,6 +535,7 @@ export function initSystems(ctx) {
     }
 
     editorView.render({ file, readOnly: systems.isBuiltin(file.id), nextVersion: file.version + 1, users: usersOfVersion(file.id, file.version) });
+    editorView.setMode(mode);
 
     if (changed || reset) {
       editorView.setText(editing.original);

@@ -1,4 +1,5 @@
 import { button, h, pageHeader, replace, section } from "./dom.js";
+import { mountVisualEditor } from "./visualEditor.js";
 
 /**
  * The system editor: the whole system file as JSON with live validation, because a file editor can
@@ -19,6 +20,11 @@ export function mountSystemEditor(root, handlers) {
   const report = h("div", { id: "system-report", class: "system-report", role: "region", "aria-label": "Validation", "aria-live": "polite" });
   const head = h("div");
   const note = h("p", { class: "field-hint", id: "system-note" });
+  const visualRoot = h("div", { id: "visual-editor" });
+  const jsonWrap = h("div", { id: "json-editor", hidden: true }, h("label", { class: "field-label", for: "system-json", text: "System file (JSON)" }), text);
+  const visualButton = button({ id: "mode-visual", label: "Visual", onclick: () => handlers.onMode("visual") });
+  const jsonButton = button({ id: "mode-json", label: "JSON", onclick: () => handlers.onMode("json") });
+  const visual = mountVisualEditor(visualRoot, handlers.visual);
   let loaded = null;
 
   replace(
@@ -29,8 +35,9 @@ export function mountSystemEditor(root, handlers) {
       { class: "stack" },
       section(
         { id: "system-file", title: "System file", description: "Edit the JSON and it is checked as you type. Saving never changes a version that characters already use; it adds a new one." },
-        h("label", { class: "field-label", for: "system-json", text: "System file (JSON)" }),
-        text,
+        h("div", { class: "mode-bar", role: "group", "aria-label": "Editor view" }, visualButton, jsonButton),
+        visualRoot,
+        jsonWrap,
         note,
         h("div", { class: "section-actions" }, save, revert)
       ),
@@ -65,6 +72,13 @@ export function mountSystemEditor(root, handlers) {
           ]
         })
       );
+    },
+    visual,
+    setMode(mode) {
+      visualRoot.hidden = mode !== "visual";
+      jsonWrap.hidden = mode !== "json";
+      visualButton.setAttribute("aria-pressed", String(mode === "visual"));
+      jsonButton.setAttribute("aria-pressed", String(mode === "json"));
     },
     reload(file) {
       loaded = null;

@@ -168,7 +168,7 @@ Op := { "op": "add" | "override" | "remove",
 ```
 
 `add` appends (the key must be new). `override` shallow-merges `value` onto the existing entry (arrays and
-`subs` are replaced whole). `remove` deletes it. For `condition` the `value` is the name; for `table`,
+`subs` are replaced whole); a `null` value removes that property, and for a table it removes that entry. `remove` deletes it. For `condition` the `value` is the name; for `table`,
 `override` merges keys into the table; for `meta` an override sets `name`, `system` and `description`.
 The derived file's own `id`, `version`, `name`, `system` and `description` replace the base's first, then the
 operations apply in order, so a `meta` override wins over the file's own description. A derived file carries no
@@ -253,5 +253,40 @@ overlay, evaluation, `reconcileSheet`, `applyRest`, `defaultRows`, the Generic, 
 the version diff (`src/sheet/diff.js`), the character `sheet` record, the Sheet page, and the Game systems page
 with a JSON editor.
 
-**Not built yet:** a visual system editor (DEF-078) and the dice grammar that checks roll expressions (P3).
-Reading a flat PDF into a sheet is DEF-077.
+The visual system editor (`src/ui/visualEditor.js`, `src/sheet/overlay.js`).
+
+**Not built yet:** renames and translation (section 10) and the dice grammar that checks roll expressions
+(P3). Reading a flat PDF into a sheet is DEF-077.
+
+## 10. Translation between systems and versions (planned, early concept)
+
+Moving a character today keeps every stored value whose key still exists and sets the rest aside as orphans
+(S-4). That is safe but blunt: a renamed field strands its value, and a move between two different systems
+strands most of them. The plan is a **translation layer** that moves values accurately and still never
+deletes anything on its own (S-17). It is an early concept and will change.
+
+**Principles**
+
+- **Nothing is applied silently.** A translation produces a *proposal*; the person reviews it in a dialog and
+  confirms. Anything the proposal cannot place stays in `sheet.orphans`, exactly as now.
+- **A proposal is a list of items, each with a choice.** An item is a stored value or row that needs a
+  decision: *Move* it to a target field, *Convert* it (a formula or a lookup supplies the new value), *Keep
+  aside* (the default for anything unmapped), or *Leave behind* (explicitly dropped, and undoable like any
+  step). Nothing is ever *Leave behind* by default.
+- **It is one undoable step**, like a system change today, and the review dialog reuses the diff dialog's shape.
+
+**Two stages, by ease and value**
+
+1. **Renames inside a system's own versions (DEF-079).** A new version may declare
+   `"renames": { "fields": { "old_key": "new_key" }, "pools": {}, "collections": {}, "items": { "collection": { "old": "new" } } }`.
+   Moving a character to that version carries values across the rename instead of orphaning them, and the diff
+   dialog shows renames as renames. This is small, safe and fixes the common case (a version update).
+2. **Translation between different systems (DEF-080).** A system may carry a `translate` block per source
+   system: field-to-field maps, optional conversion formulas (for example turn a 3.5e ability score into
+   another system's), collection-to-collection maps with column maps, and lookup tables. The proposal lists
+   every stored value with its mapped target, flags the ones with no target as *incompatible*, and lets the
+   person move, convert, keep aside or leave behind each one before applying. Conversion formulas use the same
+   formula language and budgets as everywhere else (A-8).
+
+A visual editor for translation maps (DEF-081) comes after the maps themselves work from a file. The
+accuracy bar is that a round trip between two systems, with nothing changed in between, restores every value.

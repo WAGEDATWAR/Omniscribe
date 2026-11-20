@@ -96,6 +96,40 @@ async function startGeneric(page) {
   await page.waitFor('document.querySelector("#sheet-f-might")');
 }
 
+async function openNewSystem(page, name) {
+  await go(page, "#/systems", "#systems-title");
+  await page.click("#new-system-btn");
+  await page.waitFor('document.querySelector("#new-system-dialog").open');
+  await type(page, "#new-system-name", name);
+  await page.click("#new-system-create");
+  await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+}
+
+function tab(page, name) {
+  return page.evaluate(`[...document.querySelectorAll(".tab")].find((button) => button.textContent === ${JSON.stringify(name)}).click(); true`);
+}
+
+async function addEntry(page, inputId, key) {
+  await type(page, `#${inputId}`, key);
+  await page.evaluate(`document.querySelector("#${inputId}").closest(".add-row").querySelector("button").click(); true`);
+}
+
+function selectEntry(page, text) {
+  return page.evaluate(`[...document.querySelectorAll("#visual-panel .entry-btn")].find((button) => button.textContent === ${JSON.stringify(text)}).click(); true`);
+}
+
+async function setControl(page, labelText, value, { last = false } = {}) {
+  await page.waitFor(`[...document.querySelectorAll("#visual-panel label")].some((label) => label.textContent === ${JSON.stringify(labelText)})`);
+  await page.evaluate(`(() => {
+    const labels = [...document.querySelectorAll("#visual-panel label")].filter((label) => label.textContent === ${JSON.stringify(labelText)});
+    const label = ${last ? "labels.at(-1)" : "labels[0]"};
+    const control = document.querySelector("#" + label.htmlFor);
+    control.value = ${JSON.stringify(value)};
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`);
+}
+
 async function installTestSystem(page, context) {
   await page.evaluate(`(async () => {
     const file = await (await fetch("/test/fixtures/systems/d20-core.json")).json();
@@ -1096,6 +1130,155 @@ export const scenarios = [
 
       await page.reload();
       await page.waitFor('document.querySelector("[data-id=house-rules]")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "the visual editor adds, edits and removes parts of a derived system and writes an overlay",
+    timeout: 90000,
+    async run(page, context) {
+      await boot(page, context);
+      await openNewSystem(page, "Visual House");
+
+      const overlay = () => page.evaluate('JSON.parse(document.querySelector("#system-json").value).overlay');
+      const status = () => page.evaluate('document.querySelector("#system-status")?.textContent');
+
+      await tab(page, "Fields");
+      assert.ok(await page.evaluate('[...document.querySelectorAll("#visual-panel .entry-btn")].length > 10'));
+
+      await addEntry(page, "ve-add-field", "luck");
+      await page.waitFor('document.querySelector("#visual-panel .entry-title")?.textContent.includes("(luck)")');
+      await setControl(page, "Label", "Luck score");
+      await setControl(page, "Type", "derived");
+      await page.waitFor('[...document.querySelectorAll("#visual-panel .field-label")].some((l) => l.textContent === "Formula")');
+      await setControl(page, "Formula", "@might + 1");
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+      const added = (await overlay()).find((op) => op.op === "add" && op.key === "luck");
+      assert.equal(added.value.formula, "@might + 1");
+      assert.equal(added.value.label, "Luck score");
+
+      await selectEntry(page, "Defense (defense)");
+      await setControl(page, "Formula", "10 + @agility.mod + 1");
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+      assert.deepEqual((await overlay()).find((op) => op.op === "override" && op.key === "defense").value, { formula: "10 + @agility.mod + 1" });
+
+      await setControl(page, "Formula", "@ghost + 1");
+      await page.waitFor('document.querySelector("#system-status")?.textContent.includes("problem")');
+      assert.match(await page.evaluate('document.querySelector("#visual-note").textContent'), /still show your latest edits/);
+      assert.match(await page.evaluate('document.querySelector("#system-errors").textContent'), /Unknown reference @ghost/);
+      await setControl(page, "Formula", "10 + @agility.mod + 2");
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+
+      await selectEntry(page, "Concept (concept)");
+      await page.click('#visual-panel button[aria-label="Remove field concept"]');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('(JSON.parse(document.querySelector("#system-json").value).overlay).some((op) => op.op === "remove" && op.key === "concept")');
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+
+      await page.click("#system-save");
+      await page.waitFor('document.querySelector("#system-note").textContent.includes("Saving creates version 3")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "the visual editor edits pools, collections, tables, conditions, rolls and rests",
+    timeout: 90000,
+    async run(page, context) {
+      await boot(page, context);
+      await openNewSystem(page, "Parts House");
+      const valid = () => page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+      const overlay = () => page.evaluate('JSON.parse(document.querySelector("#system-json").value).overlay');
+
+      await tab(page, "Pools");
+      await addEntry(page, "ve-add-pool", "mana");
+      await setControl(page, "Maximum (a formula)", "@intellect * 10");
+      await setControl(page, "Shown as", "boxes");
+      await setControl(page, "Points per box", "10");
+      await setControl(page, "What each rest does, one per line as rest = full, none, add: formula or set: formula (short, long)", "long = full\nshort = add: 5");
+      await valid();
+      assert.deepEqual((await overlay()).find((op) => op.key === "mana").value.rests, { long: "full", short: { add: "5" } });
+
+      await tab(page, "Collections");
+      await addEntry(page, "ve-add-collection", "pets");
+      await page.waitFor('document.querySelector("#ve-add-column")');
+      await addEntry(page, "ve-add-column", "bond");
+      await setControl(page, "Type", "number", { last: true });
+      await valid();
+      const collection = (await overlay()).find((op) => op.target === "collection" && op.key === "pets");
+      assert.deepEqual(collection.value.fields.map((field) => field.key), ["name", "bond"]);
+      assert.equal(collection.value.fields[1].type, "number");
+
+      await tab(page, "Tables");
+      await addEntry(page, "ve-add-table", "levels");
+      await setControl(page, "Entries, one per line as key = value", "1 = 10\n2 = 25\nname = text");
+      await valid();
+      assert.deepEqual((await overlay()).find((op) => op.target === "table" && op.key === "levels").value, { 1: 10, 2: 25, name: "text" });
+
+      await tab(page, "Conditions");
+      await setControl(page, "Conditions, one per line", "Blinded\nCursed");
+      await valid();
+      assert.ok((await overlay()).some((op) => op.target === "condition" && op.op === "add" && op.value === "Cursed"));
+      assert.ok((await overlay()).some((op) => op.target === "condition" && op.op === "remove" && op.value === "Poisoned"));
+
+      await tab(page, "Rests");
+      await addEntry(page, "ve-add-rest", "weekly");
+      await tab(page, "Rolls");
+      await addEntry(page, "ve-add-roll", "luck_roll");
+      await setControl(page, "Expression", "1d20 + @might.mod");
+      await valid();
+      assert.ok((await overlay()).some((op) => op.target === "rest" && op.key === "weekly"));
+      assert.equal((await overlay()).find((op) => op.target === "roll" && op.key === "luck_roll").value.expression, "1d20 + @might.mod");
+
+      await tab(page, "Details");
+      await setControl(page, "Description", "A house system.");
+      await valid();
+      assert.equal(await page.evaluate('JSON.parse(document.querySelector("#system-json").value).description'), "A house system.");
+      assertClean(page);
+    }
+  },
+  {
+    name: "the visual editor refuses bad keys, is read-only for built-ins and stays in step with the JSON",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.click('[data-id=generic] a[aria-label^="View"]');
+      await page.waitFor('document.querySelector("#visual-panel input, #visual-panel select")');
+      assert.equal(await page.evaluate('[...document.querySelectorAll("#visual-panel input, #visual-panel select")].every((control) => control.disabled)'), true);
+      assert.equal(await page.evaluate('document.querySelector("#ve-add-field")'), null);
+
+      await go(page, "#/systems", "#systems-title");
+      await page.click("#new-system-btn");
+      await type(page, "#new-system-name", "Sync House");
+      await page.click("#new-system-create");
+      await page.waitFor('location.hash === "#/systems/sync-house"');
+      await tab(page, "Fields");
+
+      await type(page, "#ve-add-field", "Bad Key");
+      await page.evaluate('[...document.querySelectorAll("#visual-panel button")].find((b) => b.textContent.includes("Add field")).click(); true');
+      await page.waitFor('document.querySelector("#visual-panel .field-error:not([hidden])")');
+      assert.match(await page.evaluate('document.querySelector("#visual-panel .field-error:not([hidden])").textContent'), /lowercase letters/);
+
+      await type(page, "#ve-add-field", "might");
+      await page.evaluate('[...document.querySelectorAll("#visual-panel button")].find((b) => b.textContent.includes("Add field")).click(); true');
+      await page.waitFor('[...document.querySelectorAll("#visual-panel .field-error:not([hidden])")].some((e) => e.textContent.includes("already used"))');
+
+      await page.click("#mode-json");
+      await page.waitFor('!document.querySelector("#json-editor").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#visual-editor").hidden'), true);
+      await page.evaluate(`(() => {
+        const area = document.querySelector("#system-json");
+        const file = JSON.parse(area.value);
+        file.overlay.push({ op: "add", target: "field", key: "from_json", value: { label: "From JSON", type: "number" } });
+        area.value = JSON.stringify(file, null, 2);
+        area.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      })()`);
+      await page.waitFor('document.querySelector("#system-status")?.textContent === "Valid"');
+      await page.click("#mode-visual");
+      await page.waitFor('!document.querySelector("#visual-editor").hidden');
+      await page.waitFor('[...document.querySelectorAll("#visual-panel .entry-btn")].some((b) => b.textContent.includes("from_json"))');
       assertClean(page);
     }
   },

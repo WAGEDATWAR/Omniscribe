@@ -1249,6 +1249,77 @@ textarea.input {
   border-radius: var(--radius-md);
 }
 
+.mode-bar,
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tab,
+.entry-btn {
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tab.is-current,
+.entry-btn.is-current,
+.mode-bar .btn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--text);
+}
+
+.visual-split {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.entry-list {
+  display: grid;
+  gap: 4px;
+  max-height: 340px;
+  margin: 0 0 10px;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.entry-btn {
+  width: 100%;
+}
+
+.entry-title {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.entry-form,
+.columns-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.columns-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.add-row {
+  display: grid;
+  gap: 6px;
+}
+
 .system-item {
   display: flex;
   flex-direction: column;
@@ -1289,6 +1360,7 @@ textarea.input {
 /* Responsive */
 
 @media (max-width: 640px) {
+  .visual-split,
   .field-grid,
   .toolbar,
   .doc {

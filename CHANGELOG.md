@@ -4,7 +4,9 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
-### Added (P2, in progress)
+## [0.3.0] - P2 the sheet engine and game systems
+
+### Added
 
 - `docs/SHEET.md`: game systems, derivation, the formula language, evaluation and limits, written before
   the code; `docs/reference/SHEET-REFERENCE.md`: what two real flat-PDF sheets for a derived 3.5e system
@@ -42,6 +44,17 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - The navigation is now a collapsible left sidebar (remembered; a drawer on phones, closing after you
   choose a page) instead of a popup under the brand. The brand links to the Library.
 - 14 more unit tests (205), 3 more browser scenarios (41 in all) and 4 more accessibility states.
+
+- **The visual system editor.** The editor page opens in a Visual view with tabs for Details, Fields, Pools,
+  Collections (with their columns), Tables, Conditions, Rests, Rolls and Sections; add, edit and remove with
+  a confirmation, keys checked, formulas and choices edited as text. For a derived system the forms edit
+  the resolved system and `makeOverlay` writes the difference back as overlay operations, so a derivation
+  stays a derivation; for a standalone system they write the parts directly. The JSON view stays in step
+  both ways, and built-ins are read-only. An override can clear a property or a table entry with `null`.
+- The translation layer concept (S-17) is written up in `docs/SHEET.md` 10 and scheduled by ease and value:
+  renames within a system's versions (DEF-079, P4), translation between systems with a reviewed proposal
+  (DEF-080, P6), and a visual map editor (DEF-081, after v1).
+- 12 more unit tests (217 in all), 3 more browser scenarios (44 in all) and 6 more accessibility states.
 
 ### Fixed
 
