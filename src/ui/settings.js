@@ -51,7 +51,7 @@ export function mountSettingsPage(root, handlers) {
         h("dt", { text: "Version" }),
         h("dd", { id: "about-version", text: version }),
         h("dt", { text: "Stage" }),
-        h("dd", { text: "Foundation (P0). Characters, a library and local storage; sheets, dice and campaigns are planned." }),
+        h("dd", { text: "Characters and PDFs (P1). A library, portraits, PDF sheets and local storage; value sheets, dice and campaigns are planned." }),
         h("dt", { text: "Privacy" }),
         h("dd", { text: "No account and nothing leaves this device." })
       );

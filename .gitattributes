@@ -10,3 +10,4 @@
 *.pdf binary
 *.apk binary
 *.zip binary
+src/vendor/** -text

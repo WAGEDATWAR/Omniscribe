@@ -186,7 +186,7 @@ test("search and sort are session state that never marks anything dirty", () => 
   store.setSearch("elf");
   store.setSort("name");
 
-  assert.deepEqual(store.getUi(), { search: "elf", sort: "name" });
+  assert.deepEqual(store.getUi(), { search: "elf", sort: "name", selectedDocumentId: null });
   assert.deepEqual(events, ["ui", "ui"]);
   assert.equal(store.hasDirty(), false);
 });

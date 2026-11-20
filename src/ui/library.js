@@ -2,13 +2,20 @@ import { SORT_MODES } from "../projects.js";
 import { plural } from "../utils.js";
 import { button, emptyState, h, pageHeader, replace } from "./dom.js";
 
-function tile(item, handlers) {
+function avatar(item, url) {
+  return url
+    ? h("img", { class: "avatar", src: url, alt: "", loading: "lazy", decoding: "async" })
+    : h("span", { class: "avatar avatar-initials", "aria-hidden": "true", text: item.initials });
+}
+
+function tile(item, handlers, urlFor) {
   return h(
     "article",
     { class: "tile", "data-id": item.id },
     h(
       "div",
       { class: "tile-top" },
+      avatar(item, urlFor(item.portraitBlobId)),
       h("h2", { class: "tile-title" }, h("a", { class: "tile-link", href: item.href, text: item.name })),
       h("span", { class: `badge badge-${item.status}`, text: item.statusLabel })
     ),
@@ -90,7 +97,7 @@ export function mountLibrary(root, handlers) {
 
   return {
     toolbar,
-    render({ library, search: query, sort: mode }) {
+    render({ library, search: query, sort: mode, portraitUrl = () => null }) {
       if (document.activeElement !== search) {
         search.value = query;
       }
@@ -103,7 +110,7 @@ export function mountLibrary(root, handlers) {
         ? `${plural(library.items.length, "character")}${library.items.length === library.total ? "" : ` of ${library.total}`}`
         : "";
 
-      replace(grid, library.items.map((item) => tile(item, handlers)));
+      replace(grid, library.items.map((item) => tile(item, handlers, portraitUrl)));
       grid.hidden = !hasItems;
 
       if (library.total === 0) {

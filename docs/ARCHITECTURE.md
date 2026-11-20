@@ -3,7 +3,7 @@
 > **Scope.** This document owns the application shape, data flow, the canonical model, module boundaries
 > and the storage layout. Product intent is `docs/OMNISCRIBE.md`; choices are `DECISIONS.md`.
 
-**Status:** designed; the P0 rows of the module map are built.
+**Status:** designed; the P0 and P1 rows of the module map are built.
 
 ---
 
@@ -55,7 +55,7 @@ index.html
 | `#/systems` | game systems: built-in, custom and derived; create, derive, edit, import, export |
 | `#/systems/<id>` | the system editor |
 | `#/dice` | the dice table: roller, presets, log, character picker |
-| `#/character/<id>` | character overview; sub-pages `/sheet`, `/pdf`, `/inventory`, `/abilities`, `/familiars`, `/relations`, `/journal`, `/rolls` |
+| `#/character/<id>` | character overview; sub-pages `/pdf` (built), then `/sheet`, `/inventory`, `/abilities`, `/familiars`, `/relations`, `/journal`, `/rolls` as their phases land. The pages are a link bar under the header (U-11) |
 | `#/campaign/<id>` | campaign overview; sub-pages `/roster`, `/party`, `/sessions`, `/initiative`, `/handouts` |
 
 Hub pages have no side menu. A character or a campaign shows an editor menu holding only its own pages
@@ -73,7 +73,7 @@ structural, not a framework: one controller module per surface and a size cap (A
 |---|---|---|
 | `schema.js`, `migrations.js`, `sheet/*`, `dice/*`, `inventory.js`, `relations.js`, `campaigns.js`, `search.js`, `integrity.js`, `projects.js`, `views.js` | `utils.js`, each other where noted | DOM, storage, `main.js` |
 | `sheet/*` and `dice/*` | `utils.js` only (they never see a character record) | everything else |
-| `pdf/*` | `src/vendor/*` (lazy), pure `sheet/*` output | storage, the store |
+| `pdf/*` | `src/vendor/*` (lazy), `ui/dom.js`, pure `sheet/*` output | storage, the store |
 | `src/vendor/*` | nothing | being imported by the pure core or by anything but `pdf/*` and the 3D scene |
 | `storage/*` | `schema.js`, `migrations.js` | DOM |
 | `ui/*` | `store.js` reads | own state, `main.js` |
@@ -278,13 +278,16 @@ Records reference blobs by id. A record with a missing blob shows a visible "fil
 | `src/tabGuard.js` | One writer tab over `BroadcastChannel` | P0 |
 | `src/views.js`, `src/projects.js` | Routes; the library item model | P0 |
 | `src/commands.js`, `src/ui/commandPalette.js` | Palette | P0 |
-| `src/files.js` | Pure file checks: magic bytes, size limits | P1 |
+| `src/files.js` | Pure file checks: magic bytes, size limits, name cleaning, portrait scaling maths | P1 built |
+| `src/integrity.js` | Pure blob reachability: referenced ids and orphans (P-17); repair arrives in P6 | P1 built |
+| `src/app/documents.js`, `blobs.js`, `images.js`, `maintenance.js` | The PDF page controller, the object-URL cache, portrait scaling, unused-file collection | P1 built |
+| `src/ui/documents.js` | The PDF sheets page with in-place rows | P1 built |
 | `src/sheet/formula.js` | Tokenizer, parser, evaluator, budget | P2 |
 | `src/sheet/template.js`, `src/sheet/resolve.js`, `src/sheet/evaluate.js` | Template validation, base-and-overlay resolution, sheet evaluation | P2 |
 | `src/templates/*.json` | Built-in systems as data: generic, then 5e and 3.5e | P2 |
 | `src/app/systems.js`, `src/ui/systemEditor.js` | The game system manager and editor | P2 |
-| `src/vendor/<lib>/` | Vendored PDF libraries with `SOURCE.md` (P-14) | P1, P6 |
-| `src/pdf/view.js` | Lazy PDF viewer over the vendored reader | P1 |
+| `src/vendor/pdfjs/` | The vendored PDF reader with `SOURCE.md` (P-14); the writer joins in P6 | P1 built |
+| `src/pdf/view.js` | Lazy PDF viewer over the vendored reader | P1 built |
 | `src/pdf/generate.js` | Generated sheet from a resolved system and a character | P6 |
 | `src/tables/*`, `src/scene3d/*` | Random tables and the 3D dice scene | post-v1 |
 | `src/dice/parse.js`, `src/dice/roll.js`, `src/dice/explain.js` | Grammar, roller with injected RNG, breakdown text | P3 |

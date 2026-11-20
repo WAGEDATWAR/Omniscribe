@@ -4,6 +4,39 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [0.2.0] - P1 characters and PDFs
+
+### Added
+
+- **PDF sheets.** A character keeps up to 20 PDFs (25 MB each): upload by button or drag and drop,
+  rename in place, mark one as the sheet (the override for the generated sheet planned in P6), download,
+  and remove with confirmation and Undo. Files are judged by their bytes, and a refused file is explained
+  in a toast with nothing stored.
+- **An in-app PDF viewer.** PDF.js 6.5.438 is vendored under `src/vendor/pdfjs/` with a `SOURCE.md` of
+  hashes and loaded only when a PDF is opened. Pages draw to canvases as they scroll into view and are
+  released when far away; zoom out, zoom in and fit width; a damaged or password-protected PDF shows a
+  message and still downloads. PDF scripting is not vendored, so no PDF script can run.
+- **Portraits.** Choose an image on the Overview; it is scaled to 512 px, stored as WebP and shown on the
+  tile and the page, with initials when there is none.
+- **A character link bar** (Overview, PDF sheets) with `aria-current`, routes `#/character/<id>/pdf`.
+- **Shared files.** Blobs are immutable and shared by reference: duplicating a character shares its
+  files, and a file nothing points at is collected at start-up after a ten minute grace. The Data page
+  lists unused files and removes them on request.
+- Schema migration 2 adds `documents` and `pdf` to stored characters; a browser scenario seeds version 1
+  data to prove it.
+- `docs/PDF.md`; decisions P-17, P-18 and U-11; deferrals DEF-075 and DEF-076.
+- 25 more unit tests (100 in all), 11 more browser scenarios (27) and 9 more accessibility states (26).
+
+### Fixed
+
+- A confirmation dialog reopened in the same tick as the previous one closing could be resolved early as
+  "cancelled" by the stale close event, so a Delete or Remove silently did nothing. This was the cause of
+  an intermittent browser-scenario failure; a deterministic scenario now covers it.
+- A Windows-style path was not stripped from an uploaded file's name.
+- An oversize message could read "8.0 MB; the limit is 8.0 MB"; it now says the file is larger than the
+  limit.
+- A button's accessible name now contains its visible text ("Use as the sheet: Sheet.pdf").
+
 ## [0.1.0] - P0 foundation
 
 ### Added

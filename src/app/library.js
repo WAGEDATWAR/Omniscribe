@@ -2,7 +2,7 @@ import { buildLibrary } from "../projects.js";
 import { mountLibrary } from "../ui/library.js";
 
 export function initLibrary(ctx) {
-  const { store, router, actions, prefs } = ctx;
+  const { store, router, actions, prefs, blobUrls } = ctx;
   const view = mountLibrary(document.querySelector("#page-library"), {
     onSearch: (query) => store.setSearch(query),
     onSort: (mode) => {
@@ -18,10 +18,19 @@ export function initLibrary(ctx) {
   function render() {
     const ui = store.getUi();
 
+    const library = buildLibrary(store.getState().characters, { query: ui.search, sort: ui.sort });
+
     view.render({
-      library: buildLibrary(store.getState().characters, { query: ui.search, sort: ui.sort }),
+      library,
       search: ui.search,
-      sort: ui.sort
+      sort: ui.sort,
+      portraitUrl: (id) => (id ? blobUrls.peek(id) : null)
+    });
+
+    blobUrls.ensure(library.items.map((item) => item.portraitBlobId).filter(Boolean)).then((loaded) => {
+      if (loaded && router.current().view === "library") {
+        render();
+      }
     });
   }
 

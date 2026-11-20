@@ -89,6 +89,15 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
 
     getBlob: (id) => backend.get("blobs", id),
 
+    async listBlobs() {
+      const blobs = await backend.getAll("blobs");
+      return blobs.map(({ id, type, size, addedAt }) => ({ id, type, size, addedAt }));
+    },
+
+    deleteBlobs(ids) {
+      return enqueue(() => backend.apply([{ store: "blobs", delete: ids }]));
+    },
+
     deleteBlob(id) {
       return enqueue(() => backend.apply([{ store: "blobs", delete: [id] }]));
     },

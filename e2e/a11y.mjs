@@ -17,8 +17,76 @@ async function addSample(page) {
   await page.waitFor('document.querySelectorAll(".tile").length === 1');
 }
 
+const fixture = (name) => resolve(root, "test", "fixtures", name);
+
+async function openPdfPage(page) {
+  await addSample(page);
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
+  await page.click('.subnav-link[data-page="pdf"]');
+  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")');
+}
+
+async function uploadSample(page) {
+  await page.setFileInput("#pdf-input", [fixture("sample.pdf")]);
+  await page.waitFor('document.querySelectorAll(".doc").length === 1');
+  await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+}
+
 /* Every new dialog or page joins this list in the same change (U-3). */
 const states = [
+  { name: "character pdf sheets, empty", setup: async (page) => openPdfPage(page) },
+  { name: "character pdf sheets with a rendered document", setup: async (page) => {
+    await openPdfPage(page);
+    await uploadSample(page);
+  } },
+  { name: "character pdf sheets, the sheet marked", setup: async (page) => {
+    await openPdfPage(page);
+    await uploadSample(page);
+    await page.click('.doc button[aria-label^="Use"]');
+    await page.waitFor('document.querySelector(".doc-meta").textContent.includes("This is the sheet")');
+  } },
+  { name: "character pdf sheets, damaged file", setup: async (page) => {
+    await openPdfPage(page);
+    await page.setFileInput("#pdf-input", [fixture("damaged.pdf")]);
+    await page.waitFor('document.querySelector(".pdf-status") && !document.querySelector(".pdf-status").hidden && document.querySelector(".pdf-status").textContent.length > 0', { timeout: 20000 });
+  } },
+  { name: "character page with a portrait", setup: async (page) => {
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#portrait-input")');
+    await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+    await page.waitFor('document.querySelector("#portrait-img")?.complete && document.querySelector("#portrait-img").naturalWidth > 0');
+  } },
+  { name: "library with a portrait tile", setup: async (page) => {
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#portrait-input")');
+    await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+    await page.waitFor('document.querySelector("#portrait-img")?.complete');
+    await openPage(page, "#/library", "#library-title");
+    await page.waitFor('document.querySelector(".tile img.avatar")');
+  } },
+  { name: "data page with unused files", setup: async (page) => {
+    await openPdfPage(page);
+    await uploadSample(page);
+    await page.click('.doc button[aria-label^="Remove"]');
+    await page.waitFor('document.querySelector("#confirm-dialog").open');
+    await page.click("#confirm-ok");
+    await page.waitFor('document.querySelectorAll(".doc").length === 0');
+    await openPage(page, "#/data", "#data-title");
+    await page.waitFor('document.querySelector("#cleanup-btn")');
+  } },
+  { name: "mobile pdf sheets", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openPdfPage(page);
+    await uploadSample(page);
+  } },
+  { name: "light pdf sheets", setup: async (page) => {
+    await page.evaluate('document.documentElement.dataset.theme = "light"; true');
+    await openPdfPage(page);
+    await uploadSample(page);
+  } },
   { name: "empty library", setup: async () => {} },
   { name: "library with a character", setup: async (page) => addSample(page) },
   { name: "library with no search match", setup: async (page) => {

@@ -1,13 +1,42 @@
+import { HEAD_BYTES, checkImage } from "../files.js";
 import { routeHref } from "../views.js";
 import { mountCharacterPage } from "../ui/character.js";
+import { scalePortrait } from "./images.js";
 
 export function initCharacter(ctx) {
-  const { store, router, actions, bus, toast } = ctx;
+  const { store, storage, router, actions, bus, toast, blobUrls } = ctx;
   let focusNameFor = null;
 
   function currentId() {
     const route = router.current();
     return route.view === "character" ? route.id : null;
+  }
+
+  async function setPortraitFrom(file) {
+    const id = currentId();
+    const head = new Uint8Array(await file.slice(0, HEAD_BYTES).arrayBuffer());
+    const verdict = checkImage({ size: file.size, head });
+
+    if (!verdict.ok) {
+      toast(verdict.reason, { tone: "error" });
+      return;
+    }
+
+    try {
+      const image = await scalePortrait(file);
+      const meta = await storage.putBlob({ type: image.type, data: image });
+
+      if (!store.getCharacter(id)) {
+        await storage.deleteBlobs([meta.id]);
+        return;
+      }
+
+      await blobUrls.ensure([meta.id]);
+      store.setPortrait(id, meta.id);
+      toast("Portrait updated.");
+    } catch {
+      toast("That image could not be read.", { tone: "error" });
+    }
   }
 
   const view = mountCharacterPage(document.querySelector("#page-character"), {
@@ -24,6 +53,16 @@ export function initCharacter(ctx) {
 
       if (id && await actions.remove(id)) {
         router.navigate(routeHref("library"));
+      }
+    },
+    onPortraitFile: setPortraitFrom,
+    onPortraitRemove() {
+      const id = currentId();
+      const previous = store.getCharacter(id)?.portraitBlobId;
+
+      if (previous) {
+        store.setPortrait(id, null);
+        toast("Portrait removed.", { action: { label: "Undo", run: () => store.setPortrait(id, previous) } });
       }
     }
   });
@@ -43,7 +82,20 @@ export function initCharacter(ctx) {
       return;
     }
 
-    const switched = view.render(character, { force });
+    const blobId = character.portraitBlobId;
+    const switched = view.render(character, {
+      force,
+      sub: router.current().sub,
+      portraitUrl: blobId ? blobUrls.peek(blobId) : null
+    });
+
+    if (blobId && blobUrls.peek(blobId) === null) {
+      blobUrls.ensure([blobId]).then((loaded) => {
+        if (loaded) {
+          show();
+        }
+      });
+    }
 
     if (switched && focusNameFor === id) {
       focusNameFor = null;

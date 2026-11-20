@@ -1,6 +1,6 @@
 import { createHistory } from "./history.js";
 import { LIMITS } from "./limits.js";
-import { createCharacter, normalizeCharacter, sameCharacter } from "./schema.js";
+import { createCharacter, createDocument, normalizeCharacter, sameCharacter } from "./schema.js";
 
 const IMMUTABLE_FIELDS = ["id", "createdAt"];
 
@@ -11,7 +11,7 @@ const IMMUTABLE_FIELDS = ["id", "createdAt"];
  */
 export function createStore({ characters = [], now = Date.now, history = createHistory(), sort = "recent" } = {}) {
   let state = { characters };
-  let ui = { search: "", sort };
+  let ui = { search: "", sort, selectedDocumentId: null };
   const listeners = new Set();
   const dirty = new Set();
   const removed = new Set();
@@ -60,6 +60,29 @@ export function createStore({ characters = [], now = Date.now, history = createH
     return state.characters.find((character) => character.id === id) ?? null;
   }
 
+  function update(id, patch, { key = null } = {}) {
+    const current = find(id);
+
+    if (!current) {
+      return null;
+    }
+
+    const merged = { ...current, ...patch };
+
+    for (const field of IMMUTABLE_FIELDS) {
+      merged[field] = current[field];
+    }
+
+    const next = normalizeCharacter({ ...merged, updatedAt: now() }, { now: now() });
+
+    if (sameCharacter(current, next)) {
+      return current;
+    }
+
+    commit(state.characters.map((character) => (character.id === id ? next : character)), { key });
+    return next;
+  }
+
   return {
     getState: () => state,
     getUi: () => ui,
@@ -77,28 +100,7 @@ export function createStore({ characters = [], now = Date.now, history = createH
       commit([...state.characters, character]);
       return character;
     },
-    updateCharacter(id, patch, { key = null } = {}) {
-      const current = find(id);
-
-      if (!current) {
-        return null;
-      }
-
-      const merged = { ...current, ...patch };
-
-      for (const field of IMMUTABLE_FIELDS) {
-        merged[field] = current[field];
-      }
-
-      const next = normalizeCharacter({ ...merged, updatedAt: now() }, { now: now() });
-
-      if (sameCharacter(current, next)) {
-        return current;
-      }
-
-      commit(state.characters.map((character) => (character.id === id ? next : character)), { key });
-      return next;
-    },
+    updateCharacter: update,
     duplicateCharacter(id) {
       const source = find(id);
 
@@ -106,8 +108,20 @@ export function createStore({ characters = [], now = Date.now, history = createH
         return null;
       }
 
+      const idMap = new Map();
+      const documents = source.documents.map((document) => {
+        const copied = createDocument(document, { now: now() });
+        idMap.set(document.id, copied.id);
+        return { ...copied, addedAt: document.addedAt };
+      });
+
       const copy = createCharacter(
-        { ...structuredClone(source), name: `${source.name || "Unnamed character"} (copy)` },
+        {
+          ...structuredClone(source),
+          name: `${source.name || "Unnamed character"} (copy)`,
+          documents,
+          pdf: { uploadedId: idMap.get(source.pdf.uploadedId) ?? null }
+        },
         { now: now() }
       );
 
@@ -123,6 +137,66 @@ export function createStore({ characters = [], now = Date.now, history = createH
 
       commit(state.characters.filter((character) => character.id !== id));
       return current;
+    },
+    addDocument(characterId, { blobId, name, size }) {
+      const current = find(characterId);
+
+      if (!current || current.documents.length >= LIMITS.documents) {
+        return null;
+      }
+
+      const document = createDocument({ blobId, name, size }, { now: now() });
+      update(characterId, { documents: [...current.documents, document] });
+      return document;
+    },
+    renameDocument(characterId, documentId, name) {
+      const current = find(characterId);
+
+      if (!current?.documents.some((document) => document.id === documentId)) {
+        return null;
+      }
+
+      return update(
+        characterId,
+        { documents: current.documents.map((document) => (document.id === documentId ? { ...document, name } : document)) },
+        { key: `${characterId}:doc:${documentId}` }
+      );
+    },
+    removeDocument(characterId, documentId) {
+      const current = find(characterId);
+      const index = current?.documents.findIndex((document) => document.id === documentId) ?? -1;
+
+      if (index < 0) {
+        return null;
+      }
+
+      const removedDocument = current.documents[index];
+      const wasSheet = current.pdf.uploadedId === documentId;
+
+      update(characterId, { documents: current.documents.filter((document) => document.id !== documentId) });
+      return { document: removedDocument, index, wasSheet };
+    },
+    restoreDocument(characterId, { document, index, wasSheet }) {
+      const current = find(characterId);
+
+      if (!current || current.documents.some((item) => item.id === document.id) || current.documents.length >= LIMITS.documents) {
+        return null;
+      }
+
+      const documents = [...current.documents];
+      documents.splice(Math.min(index, documents.length), 0, document);
+
+      return update(characterId, { documents, ...(wasSheet ? { pdf: { uploadedId: document.id } } : {}) });
+    },
+    setSheetDocument(characterId, documentId) {
+      return update(characterId, { pdf: { uploadedId: documentId } });
+    },
+    setPortrait(characterId, blobId) {
+      return update(characterId, { portraitBlobId: blobId });
+    },
+    selectDocument(documentId) {
+      ui = { ...ui, selectedDocumentId: documentId };
+      emit("ui");
     },
     restoreCharacter(character) {
       if (!character || find(character.id) || state.characters.length >= LIMITS.characters) {

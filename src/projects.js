@@ -1,4 +1,4 @@
-import { STATUS_LABELS, displayName } from "./schema.js";
+import { STATUS_LABELS, displayName, initials } from "./schema.js";
 import { routeHref } from "./views.js";
 
 export const SORT_MODES = Object.freeze([
@@ -22,6 +22,9 @@ export function toLibraryItem(character) {
     id: character.id,
     name: displayName(character),
     subtitle,
+    initials: initials(character),
+    portraitBlobId: character.portraitBlobId,
+    sheetCount: character.documents.length,
     status: character.status,
     statusLabel: STATUS_LABELS[character.status],
     tags: character.tags,

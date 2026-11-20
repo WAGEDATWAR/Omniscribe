@@ -57,6 +57,29 @@ function hide(page) {
   })()`);
 }
 
+async function sampleToPdfPage(page) {
+  await page.click("#sample-btn");
+  await page.waitFor('document.querySelectorAll(".tile").length === 1');
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
+  await page.click('.subnav-link[data-page="pdf"]');
+  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")');
+}
+
+function samplePixels(page) {
+  return page.evaluate(`(() => {
+    const canvas = document.querySelector(".pdf-page canvas");
+    const context = canvas.getContext("2d");
+    const at = (x, y) => context.getImageData(Math.floor(canvas.width * x), Math.floor(canvas.height * y), 1, 1).data;
+    const dark = at(0.5, 0.75);
+    const light = at(0.04, 0.04);
+    return {
+      dark: dark[0] < 40 && dark[1] < 40 && dark[2] < 40 && dark[3] === 255,
+      light: light[0] > 235 && light[1] > 235 && light[2] > 235
+    };
+  })()`);
+}
+
 function assertClean(page) {
   assert.deepEqual(page.errors, [], `uncaught errors: ${page.errors.join("; ")}`);
   assert.deepEqual(page.consoleErrors, [], `console errors: ${page.consoleErrors.join("; ")}`);
@@ -176,6 +199,29 @@ export const scenarios = [
       await page.evaluate('[...document.querySelectorAll(".toast .btn")].at(-1).click(); true');
       await page.waitFor('document.querySelectorAll(".tile").length === 2');
       await saved(page);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a confirmation reopened in the same tick is not resolved by the previous close",
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+
+      await page.evaluate(`(() => {
+        const remove = () => document.querySelector('.tile [aria-label^="Delete"]').click();
+        remove();
+        document.querySelector("#confirm-cancel").click();
+        remove();
+        return true;
+      })()`);
+
+      await sleep(150);
+      assert.equal(await page.evaluate('document.querySelector("#confirm-dialog").open'), true);
+
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelectorAll(".tile").length === 0');
       assertClean(page);
     }
   },
@@ -421,6 +467,267 @@ export const scenarios = [
       await page.reload();
       await page.waitFor('document.querySelector("#character-notes")?.value');
       assert.equal(await page.evaluate('document.querySelector("#character-notes").value'), "mine should win");
+      assertClean(page);
+    }
+  },
+  {
+    name: "a PDF uploads, renders real pixels and survives a reload",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      assert.match(await page.evaluate('document.querySelector("#pdf-empty").textContent'), /No PDF sheets yet/);
+
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.waitFor('document.querySelectorAll(".pdf-page").length === 2', { timeout: 20000 });
+      await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+
+      assert.equal(await page.evaluate('document.querySelector(".pdf-count").textContent'), "2 pages");
+      assert.deepEqual(await samplePixels(page), { dark: true, light: true });
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+      assert.match(await route(page), /\/pdf$/);
+      assert.deepEqual(await samplePixels(page), { dark: true, light: true });
+      assertClean(page);
+    }
+  },
+  {
+    name: "a file that is not a PDF is refused with a reason and nothing is stored",
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+
+      await page.setFileInput("#pdf-input", [context.fixture("not-a-pdf.pdf")]);
+      await page.waitFor('document.querySelector(".toast-error")');
+
+      assert.match(await page.evaluate('document.querySelector(".toast-error").textContent'), /not-a-pdf\.pdf: This does not look like a PDF/);
+      assert.equal(await page.evaluate('document.querySelectorAll(".doc").length'), 0);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a damaged PDF is listed and explained without breaking the page",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+
+      await page.setFileInput("#pdf-input", [context.fixture("damaged.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.waitFor('document.querySelector(".pdf-status") && !document.querySelector(".pdf-status").hidden && /damaged|could not be displayed/.test(document.querySelector(".pdf-status").textContent)', { timeout: 20000 });
+
+      assert.equal(await page.evaluate('document.querySelectorAll(".pdf-page").length'), 0);
+      assert.equal(await page.evaluate('document.querySelector(".doc button[aria-label^=Download]").disabled'), false);
+    }
+  },
+  {
+    name: "a PDF can be renamed and marked as the sheet, and both persist",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+
+      await type(page, ".doc-name", "Mira level 3");
+      await page.click('.doc button[aria-label^="Use"]');
+      await page.waitFor('document.querySelector(".doc-meta").textContent.includes("This is the sheet")');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+
+      assert.equal(await page.evaluate('document.querySelector(".doc-name").value'), "Mira level 3");
+      assert.match(await page.evaluate('document.querySelector(".doc-meta").textContent'), /This is the sheet/);
+      assert.match(await page.evaluate('document.querySelector(".doc button[aria-label^=Stop]").textContent'), /Stop using as the sheet/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "removing a PDF is guarded and undoable",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+
+      await page.click('.doc button[aria-label^="Remove"]');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-cancel");
+      await page.waitFor('!document.querySelector("#confirm-dialog").open');
+      assert.equal(await page.evaluate('document.querySelectorAll(".doc").length'), 1);
+
+      await page.click('.doc button[aria-label^="Remove"]');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelectorAll(".doc").length === 0');
+      await page.waitFor('document.querySelector("#pdf-empty").textContent.includes("No PDF sheets yet")');
+
+      await page.evaluate('[...document.querySelectorAll(".toast .btn")].at(-1).click(); true');
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+      assertClean(page);
+    }
+  },
+  {
+    name: "a portrait is scaled to 512 px, stored, shown on the tile and removable",
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector("#portrait-input")');
+
+      await page.setFileInput("#portrait-input", [context.fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#portrait-img")?.complete && document.querySelector("#portrait-img").naturalWidth > 0');
+
+      assert.equal(await page.evaluate('document.querySelector("#portrait-img").naturalWidth'), 512);
+      assert.equal(await page.evaluate('document.querySelector("#portrait-img").naturalHeight'), 341);
+      assert.equal(await page.evaluate('document.querySelector("#portrait-remove").hidden'), false);
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelector(".tile img.avatar")');
+
+      await page.reload();
+      await page.waitFor('document.querySelector(".tile img.avatar")');
+
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector("#portrait-remove")');
+      await page.click("#portrait-remove");
+      await page.waitFor('!document.querySelector("#portrait-img")');
+      assert.equal(await page.evaluate('document.querySelector("#portrait-frame").textContent'), "MV");
+      assertClean(page);
+    }
+  },
+  {
+    name: "a file that is not an image is refused as a portrait",
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector("#portrait-input")');
+
+      await page.setFileInput("#portrait-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelector(".toast-error")');
+
+      assert.match(await page.evaluate('document.querySelector(".toast-error").textContent'), /not a PNG, JPEG, WebP or GIF/);
+      assert.equal(await page.evaluate('document.querySelector("#portrait-img")'), null);
+      assertClean(page);
+    }
+  },
+  {
+    name: "duplicating shares the files, and unused files are listed and cleaned up on request",
+    timeout: 90000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.click('.tile [aria-label^="Duplicate"]');
+      await page.waitFor('document.querySelectorAll(".tile").length === 2');
+      await saved(page);
+
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#storage-files")');
+      assert.match(await page.evaluate('document.querySelector("#storage-files").textContent'), /^1 file,/);
+      assert.equal(await page.evaluate('document.querySelector("#storage-unused").textContent'), "None");
+
+      const removeFirstPdf = async (which) => {
+        await go(page, "#/library", "#library-title");
+        await page.evaluate(`[...document.querySelectorAll(".tile-link")].find((link) => link.textContent.includes("(copy)") === ${which}).click(); true`);
+        await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
+        await page.click('.subnav-link[data-page="pdf"]');
+        await page.waitFor('document.querySelectorAll(".doc").length === 1');
+        await page.click('.doc button[aria-label^="Remove"]');
+        await page.waitFor('document.querySelector("#confirm-dialog").open');
+        await page.click("#confirm-ok");
+        await page.waitFor('document.querySelectorAll(".doc").length === 0');
+        await saved(page);
+      };
+
+      await removeFirstPdf(true);
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#storage-unused")');
+      assert.equal(await page.evaluate('document.querySelector("#storage-unused").textContent'), "None");
+
+      await removeFirstPdf(false);
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#cleanup-btn")');
+      assert.match(await page.evaluate('document.querySelector("#storage-unused").textContent'), /^1 file,/);
+
+      await page.click("#cleanup-btn");
+      await page.waitFor('document.querySelector("#storage-unused").textContent === "None"');
+      assert.match(await page.evaluate('document.querySelector("#storage-files").textContent'), /^0 files/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "data saved before documents existed is migrated and still opens",
+    async run(page, context) {
+      await boot(page, context);
+
+      await page.evaluate(`(async () => {
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        await storage.backend.apply([
+          { store: "characters", put: [["char_legacy", { id: "char_legacy", name: "Legacy Hero", createdAt: 1, updatedAt: 1 }]] },
+          { store: "meta", put: [["schemaVersion", 1]] }
+        ]);
+        storage.close();
+        return true;
+      })()`);
+
+      await page.reload();
+      await page.waitFor('document.querySelector(".tile-title")?.textContent.includes("Legacy Hero")');
+      await saved(page);
+
+      const stored = await page.evaluate(`(async () => {
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        const value = await storage.meta("schemaVersion");
+        const record = (await storage.load()).characters[0];
+        storage.close();
+        return { value, documents: record.documents, pdf: record.pdf };
+      })()`);
+
+      assert.equal(stored.value, 2);
+      assert.deepEqual(stored.documents, []);
+      assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
+
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
+      await page.click('.subnav-link[data-page="pdf"]');
+      await page.waitFor('document.querySelector("#pdf-empty").textContent.includes("No PDF sheets yet")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "the character link bar switches pages and marks the current one",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Navigator");
+
+      assert.equal(await page.evaluate('document.querySelector(".subnav-link[aria-current=page]").textContent'), "Overview");
+
+      await page.click('.subnav-link[data-page="pdf"]');
+      await page.waitFor('!document.querySelector("#character-pdf").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#character-overview").hidden'), true);
+      assert.equal(await page.evaluate('document.querySelector(".subnav-link[aria-current=page]").textContent'), "PDF sheets");
+      assert.match(await route(page), /\/pdf$/);
+
+      await page.click('.subnav-link[data-page="overview"]');
+      await page.waitFor('!document.querySelector("#character-overview").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#character-name").value'), "Navigator");
       assertClean(page);
     }
   }

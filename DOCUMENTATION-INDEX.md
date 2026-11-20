@@ -40,7 +40,7 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/TABLES.md` | Random tables: loot and encounters as data on the dice engine (DEF-014) | planned (P8) |
 | `docs/DISTRIBUTION.md` | Pages, the Windows build, the APK, the release workflow | planned (P7) |
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record | planned (P3) |
-| `docs/PDF.md` | PDF attachments, the vendored libraries, the viewer, the generated sheet and the upload override | planned (P1) |
+| `docs/PDF.md` | PDF attachments, portraits, the vendored reader, the viewer, the upload override; the generated sheet arrives in P6 | built |
 | `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | planned (P4) |
 | `docs/CAMPAIGNS.md` | Campaigns, roster, party view, sessions, initiative, handouts | planned (P5) |
 | `docs/PERSISTENCE.md` | Storage backends, autosave, the tab guard, migration; backups and revisions arrive in P6 | built |

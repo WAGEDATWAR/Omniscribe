@@ -43,7 +43,9 @@ Owners are `P0`-`P7` or `post-v1`.
 |---|---|---|---|---|
 | DEF-020 | Read and write an uploaded PDF's form fields and map them to sheet values | the libraries are approved (P-14); this is the mapping surface | post-v1 | scheduled |
 | DEF-021 | A PDF fallback where inline viewing is unsupported | the in-app viewer (U-8) renders on every shell, so no fallback is needed | P7 | dropped |
-| DEF-022 | Image handouts and portraits cropping | portraits are stored as given in P1 | P6 | scheduled |
+| DEF-022 | Image handouts and portrait cropping | portraits are scaled to 512 px and kept whole in P1 | P6 | scheduled |
+| DEF-075 | Text selection and search inside the PDF viewer | needs PDF.js's text layer; the viewer draws canvases only | P7 | scheduled |
+| DEF-076 | CJK character maps for PDFs with non-embedded Asian fonts | about 1.5 MB of `cmaps/` to vendor; excluded in P1 | P7 | scheduled |
 
 ## P. Persistence
 
@@ -82,7 +84,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-065 | PWA shell: service worker, manifest, icons | network-first with a hashed cache, as Loreweaver | P7 | scheduled |
 | DEF-066 | Windows build published with each tag | Electron wrapper in `desktop/` (P-15) | P7 | scheduled |
 | DEF-067 | Release workflow: Pages deploy, Windows build and APK attached to a GitHub release | G-18; Loreweaver's deploy workflow is the starting point | P7 | scheduled |
-| DEF-068 | GitHub repository, remote and branch protection | O-7 | P0 | scheduled |
+| DEF-068 | GitHub repository, remote and branch protection | O-7; repository, Pages from `main` and a ruleset blocking deletion and force pushes are in place | P0 | done |
 
 ## R. Robustness
 

@@ -1,8 +1,18 @@
+function addDocuments(project) {
+  const characters = (project.characters ?? []).map((character) => (
+    character && typeof character === "object"
+      ? { documents: [], pdf: { preference: "generated", uploadedId: null }, ...character }
+      : character
+  ));
+
+  return { ...project, characters };
+}
+
 /**
  * Append-only project migrations (P-2). `MIGRATIONS[k]` upgrades schema version `k + 1` to `k + 2`.
  * A released migration is never edited; a new one is appended and the version follows from the length.
  */
-export const MIGRATIONS = Object.freeze([]);
+export const MIGRATIONS = Object.freeze([addDocuments]);
 
 export const SCHEMA_VERSION = 1 + MIGRATIONS.length;
 

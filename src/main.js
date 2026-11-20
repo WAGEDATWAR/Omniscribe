@@ -1,7 +1,10 @@
 import { createActions } from "./app/actions.js";
 import { createBus } from "./app/bus.js";
+import { createBlobUrls } from "./app/blobs.js";
 import { initCharacter } from "./app/character.js";
 import { initData } from "./app/data.js";
+import { initDocuments } from "./app/documents.js";
+import { collectUnusedFiles } from "./app/maintenance.js";
 import { initLibrary } from "./app/library.js";
 import { initPalette } from "./app/palette.js";
 import { createRouter } from "./app/router.js";
@@ -83,6 +86,7 @@ async function boot() {
   const ctx = {
     store,
     storage,
+    blobUrls: createBlobUrls(storage),
     autosave,
     guard,
     router,
@@ -118,6 +122,7 @@ async function boot() {
   initShell(ctx);
   initLibrary(ctx);
   initCharacter(ctx);
+  initDocuments(ctx);
   initData(ctx);
   initSettings(ctx);
   initShortcuts(ctx);
@@ -127,6 +132,10 @@ async function boot() {
 
   if (loaded.migrated) {
     store.markAllDirty();
+  }
+
+  if (!storage.degraded) {
+    collectUnusedFiles({ storage, characters: loaded.characters }).catch(() => {});
   }
 
   guard.announce();

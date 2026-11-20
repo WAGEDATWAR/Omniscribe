@@ -25,7 +25,7 @@ later phase adds records, not stores. Only `meta`, `characters` and `blobs` are 
 `get`, `getAll`, `keys`, `apply`, `clear`. `apply` takes `[{ store, put: [[key, value]], delete: [key] }]` and
 commits every operation in **one transaction**, so a save is atomic across stores. `src/storage.js`
 builds the application API on a backend: `load`, `save`, `putBlob`, `getBlob`, `deleteBlob`,
-`blobUsage`, `meta`, `clear`.
+`listBlobs` (metadata only), `deleteBlobs`, `blobUsage`, `meta`, `clear`.
 
 - **Serialized writes.** Every write runs through one promise queue, so two saves never interleave and the
   last one wins (P-1).
@@ -60,6 +60,19 @@ data older than the current version is migrated in memory and every record is ma
 written back. Data from a **newer** version is refused: the app shows a message and changes nothing.
 A released migration is never edited.
 
+### Migration 2 (P1)
+
+Version 2 adds `documents` and `pdf` to every character. Version 1 data loads, is migrated in memory,
+and is written back; a browser scenario seeds a version 1 database and checks exactly that.
+
+## 5.1 Files and reachability (P-17)
+
+A blob is immutable and a character only points at it (`documents[].blobId`, `portraitBlobId`). Several
+characters can point at one blob, so duplicating a character copies records and not files. A blob that
+no character points at is an **orphan**. `src/integrity.js` finds orphans purely. At start-up the app
+deletes orphans older than ten minutes; the Data page lists unused files and removes them at once. The
+grace period protects an upload that another tab has not saved yet, and Undo within a session.
+
 ## 6. Protection (P-12, P-16)
 
 At boot the app asks the browser for persistent storage and the Data page shows the result and a button
@@ -69,7 +82,8 @@ has its own storage and a backup file is the only bridge.
 ## 7. Limits
 
 `src/limits.js` is the one place for limits (DEF-072 for the import side): 5,000 characters, field
-length caps, 100 undo steps, 25 MB per PDF and 8 MB per portrait (declared now, enforced from P1).
+length caps, 100 undo steps, 20 documents per character, 25 MB per PDF and 8 MB per portrait (enforced
+since P1).
 
 ## 8. Not yet built
 

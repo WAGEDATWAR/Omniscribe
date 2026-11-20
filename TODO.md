@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**P0 is built and gated; it awaits its first commit and CI run.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0 is done. P1 is built and gated locally (0.2.0); the work is uncommitted.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
@@ -11,23 +11,26 @@ revision.
 
 ## Where we are
 
-Omniscribe runs: a library of characters, a character page that autosaves, undo and redo, a command
-palette, light and dark themes, a Data page, per-record IndexedDB storage with a blob store, and a tab
-guard. The tooling and process come from Loreweaver, with the improvements its review found built in
-from the start (tab guard, persistent storage, per-record saves, a split `main.js`, a size cap).
+Omniscribe runs: a library of characters with portraits, a character page that autosaves with a link bar
+(Overview, PDF sheets), PDF upload and an in-app viewer, undo and redo, a command palette, light and dark
+themes, a Data page that lists and cleans unused files, per-record IndexedDB storage with a shared blob
+store, and a tab guard. The tooling and process come from Loreweaver, with the improvements its review
+found built in from the start.
 
-Gates run green locally: syntax, lint, format, 75 unit tests, 16 browser scenarios, accessibility over
-17 states (zero violations), contrast, deferrals, deferral scan and release check. P0 is not called done
-until the work is committed and the same gates pass in CI on GitHub (DEF-068).
+Gates run green locally for P1: syntax, lint, format, 100 unit tests, 27 browser scenarios,
+accessibility over 26 states (zero violations), contrast, deferrals, deferral scan and release check.
+P0 passed the same gates in CI (run 44647504403, commit e14c5d6), and the repository has a Pages site and
+a branch ruleset (DEF-068).
 
 ## Phases
 
 Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression blocks the next phase.
 
-- [~] **P0 - Foundation.** Tooling, shell, schema, store, persistence with blobs, tab guard, library,
+- [x] **P0 - Foundation.** Tooling, shell, schema, store, persistence with blobs, tab guard, library,
       character stub, palette, git and the GitHub repository. (DEF-068, DEF-072)
-- [ ] **P1 - Characters and PDFs.** Identity record, portrait, PDF attachments, the vendored PDF viewer,
-      tags, status.
+- [x] **P1 - Characters and PDFs.** Identity record, portrait, PDF attachments, the vendored PDF viewer,
+      tags, status. Gate: a PDF survives a reload and renders; a wrong or oversize file is refused.
+      (DEF-075, DEF-076)
 - [ ] **P2 - The sheet engine and game systems.** Templates, formulas, value sheet, pools, conditions,
       rests, the system editor, derived systems, import and export, the generic system, then 5e and 3.5e.
       (DEF-001, DEF-003, DEF-005, DEF-006, DEF-007, DEF-070)
@@ -55,28 +58,38 @@ are resolved.
 
 ## Next Up
 
-Finish P0, then P1. Nothing past P1.
+P2, in order. Nothing past P2. Spec first: write `docs/SHEET.md` before any code.
 
-- [ ] `L` `P0` Commit the work, push, and confirm every gate is green in CI (needs your go-ahead to commit).
-- [ ] `L` `P0` Branch protection and Pages settings on the GitHub repository (DEF-068).
-- [ ] `L` `P0` Watch two transient failures seen once each locally: Chrome exiting before DevTools was
-      ready on a first launch, and one browser scenario failing in a full gate pass (the name was not
-      captured). Neither reproduced in 10 further runs, four of them under CPU load. If either recurs,
+- [ ] `L` Commit and push P1 (needs your go-ahead).
+- [ ] `L` Watch one transient failure seen once locally: Chrome exiting before DevTools was ready on a
+      first launch. The other transient (a scenario that cancelled and reopened a confirmation) was a real
+      app bug, fixed in 0.2.0 and now covered by a deterministic scenario. If the launch failure recurs,
       the runner prints the scenario name and saves a screenshot to `test-results/e2e/`.
-- [ ] `H` `P1` Write `docs/PDF.md` first: libraries and versions, limits, the viewer, the active-content
-      risk and the upload override (G-19, P-14).
-- [ ] `H` `P1` Vendor the PDF reader under `src/vendor/` with `SOURCE.md`; lazy-load it on PDF pages.
-- [ ] `M` `P1` `src/files.js`: magic-byte and size checks (P-13), refused with a reason.
-- [ ] `H` `P1` Character `documents`: upload, list, rename, remove, set as the override; blobs through
-      `storage.putBlob`.
-- [ ] `M` `P1` Portrait upload, shown on tiles and the character page.
-- [ ] `M` `P1` Decide how Duplicate treats blobs (copy, or share with a reference count); today a copy
-      would share `portraitBlobId`.
-- [ ] `M` `P1` PDF viewer page, with e2e for upload, reload, view and refusal, and a11y states.
+- [ ] `L` Bump `actions/checkout` and `actions/setup-node` in CI (GitHub is retiring Node 20 for actions).
+- [ ] `H` `P2` `docs/SHEET.md`: the template format, the formula language and its grammar, evaluation and
+      cycles, pools, conditions, rests, orphans, derivation by base and overlay (S-1 to S-10, A-8).
+- [ ] `VH` `P2` `src/sheet/formula.js`: tokenizer, parser, evaluator, step and length budget, cycle
+      report; fixtures and a hostile-input property test (DEF-070).
+- [ ] `H` `P2` `src/sheet/template.js` and `resolve.js`: validation, base and overlay, missing-base and
+      cycle reports; `evaluate.js` over a template and values.
+- [ ] `H` `P2` The generic system as JSON, with a fixture that evaluates it.
+- [ ] `H` `P2` The Sheet page: typed inputs, derived values, pools, conditions, orphans, rests (DEF-005).
+- [ ] `H` `P2` The Game systems page and editor: create, derive, edit, import and export (DEF-001,
+      DEF-003); a template migration diff for characters.
+- [ ] `H` `P2` Built-in D&D 5e and 3.5e systems as read-only bases (DEF-006, DEF-007).
+- [ ] `M` `P2` Tests, browser scenarios and a11y states for every page and dialog above.
 
 ## Recently landed
 
-- **P0 foundation (0.1.0, uncommitted).** Tooling adapted from Loreweaver (with `eval`, file-size and
+- **P1 characters and PDFs (0.2.0, uncommitted).** `docs/PDF.md` written first; PDF.js 6.5.438 vendored
+  with hashes and loaded lazily; byte-level file checks; documents on a character (upload, rename, mark
+  as the sheet, download, remove with Undo); a viewer that renders pages to canvases as they scroll
+  into view; portraits scaled to 512 px; shared immutable blobs with reachability collection and a Data
+  page cleanup; the link bar; schema migration 2. Tests caught a lost backslash in file-name cleaning
+  and a confusing size message; the browser scenarios caught PDF.js 6 moving `destroy()` to the loading
+  task; the accessibility audit caught a label that did not contain its visible text.
+
+- **P0 foundation (0.1.0, e14c5d6).** Tooling adapted from Loreweaver (with `eval`, file-size and
   vendor checks added), the shell and page anatomy, routes, the pure schema, migrations, history and
   store, per-record storage with a blob store and an in-memory twin, autosave, the tab guard with a
   stale-tab dialog, the Library, the character page, the command palette, Data and Settings pages,

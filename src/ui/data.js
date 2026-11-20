@@ -39,15 +39,25 @@ export function mountDataPage(root, handlers) {
             row("Characters", plural(info.characters, "character"), "storage-characters"),
             row("Files", `${plural(info.blobs.count, "file")}, ${formatBytes(info.blobs.bytes)}`, "storage-files"),
             row(
+              "Unused files",
+              info.unused.count ? `${plural(info.unused.count, "file")}, ${formatBytes(info.unused.bytes)}` : "None",
+              "storage-unused"
+            ),
+            row(
               "Space used",
               info.usage.usage === null ? "Unknown" : `${formatBytes(info.usage.usage)} of ${formatBytes(info.usage.quota)}`,
               "storage-usage"
             ),
             row("Data version", String(info.schemaVersion), "storage-schema")
           ),
-          info.persistence.supported && !info.persistence.persisted
-            ? button({ id: "persist-btn", label: "Request protection", onclick: handlers.onPersist })
-            : null
+          h(
+            "div",
+            { class: "section-actions" },
+            info.persistence.supported && !info.persistence.persisted
+              ? button({ id: "persist-btn", label: "Request protection", onclick: handlers.onPersist })
+              : null,
+            info.unused.count ? button({ id: "cleanup-btn", label: "Remove unused files", onclick: handlers.onCleanup }) : null
+          )
         ),
         section(
           { id: "data-devices", title: "Devices and backups" },

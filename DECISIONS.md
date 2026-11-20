@@ -98,9 +98,11 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | P-11 | **One writer tab.** A cross-tab guard pauses saving in an outdated tab and asks the user; it never overwrites silently. Built in P0, not retrofitted. | locked |
 | P-12 | **Request persistent storage at boot** and surface the result in the storage panel. Built in P0. | locked |
 | P-13 | **File limits:** 25 MB per PDF, 8 MB per portrait, and a visible total in the storage panel. A file is checked by magic bytes, not by extension. | provisional |
-| P-14 | **The PDF libraries are vendored**, lazy-loaded only on PDF surfaces: a viewer and reader (PDF.js style) from P1, and a writer (pdf-lib style) from P6. Each lives in `src/vendor/<name>/` with `SOURCE.md` (version, URL, licence, hash) and is never imported by the pure core. The exact libraries and versions are chosen and recorded in `docs/PDF.md` when P1 starts. | locked |
+| P-14 | **The PDF libraries are vendored**, lazy-loaded only on PDF surfaces: a viewer and reader (PDF.js style) from P1, and a writer (pdf-lib style) from P6. Each lives in `src/vendor/<name>/` with `SOURCE.md` (version, URL, licence, hash) and is never imported by the pure core. The reader is `pdfjs-dist` 6.5.438 (`docs/PDF.md`); the writer is chosen when P6 starts. | locked |
 | P-15 | **Release wrappers are dev dependencies:** Capacitor for Android as Loreweaver does, and Electron for Windows. They package the same `www/` bundle and add no app code beyond a minimal Electron main file in `desktop/`. | locked |
 | P-16 | **Each shell has its own storage origin** (browser, installed app, Windows build, Android). A backup file is the only bridge between them, and the Data page says so. | locked |
+| P-17 | **Blobs are immutable and shared by reference; unused ones are collected by reachability.** Duplicating a character copies its document records, not its files. A blob nothing points at and older than ten minutes is deleted at start-up, and the Data page can remove unused files at once. | locked |
+| P-18 | **`'wasm-unsafe-eval'` is allowed in `script-src`** so PDF.js can compile its WebAssembly decoders. It permits WebAssembly only; `eval` and `Function` stay forbidden (A-8). | locked |
 
 ## Surface (U-series)
 
@@ -115,6 +117,7 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | U-7 | **Icon-only buttons carry `aria-label` and `title`**, and `prefers-reduced-motion` disables animation. | locked |
 | U-8 | **PDFs render in the app's own viewer** (P-14), page by page to a canvas, so they look the same on every shell including Android and no PDF script runs. Open and download stay available. | locked |
 | U-9 | **Table-speed rule:** rolling, adjusting HP and toggling a condition take at most two actions from a character's sheet. | locked |
+| U-11 | **A character's pages are a link bar under its header** (Overview, PDF sheets, and later Sheet, Inventory and the rest). It scrolls sideways on a phone and the current page is marked with `aria-current`. This replaces the side editor menu planned in U-4 for characters. | locked |
 | U-10 | **A UI evaluation and redesign precedes v1** (DEF-060). It may change layout and style but not the model, the engines or the pure core. | provisional |
 
 ## Open

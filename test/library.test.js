@@ -11,22 +11,30 @@ const mira = createCharacter({ name: "Mira Vale", player: "Sam", systemId: "Gene
 const bram = createCharacter({ name: "Bram", status: "dead", summary: "x".repeat(300) }, { now: 200 });
 
 test("parseRoute reads hub and character routes and falls back to the library", () => {
-  assert.deepEqual(parseRoute("#/library"), { view: "library", id: null });
-  assert.deepEqual(parseRoute("#/data"), { view: "data", id: null });
-  assert.deepEqual(parseRoute("#/settings?x=1"), { view: "settings", id: null });
-  assert.deepEqual(parseRoute("#/character/char_ab12"), { view: "character", id: "char_ab12" });
-  assert.deepEqual(parseRoute("#/character/bad id"), { view: DEFAULT_VIEW, id: null });
-  assert.deepEqual(parseRoute("#/character/char_a/extra"), { view: DEFAULT_VIEW, id: null });
-  assert.deepEqual(parseRoute("#/nowhere"), { view: DEFAULT_VIEW, id: null });
-  assert.deepEqual(parseRoute(""), { view: DEFAULT_VIEW, id: null });
-  assert.deepEqual(parseRoute(undefined), { view: DEFAULT_VIEW, id: null });
+  const library = { view: DEFAULT_VIEW, id: null, sub: null };
+
+  assert.deepEqual(parseRoute("#/library"), library);
+  assert.deepEqual(parseRoute("#/data"), { view: "data", id: null, sub: null });
+  assert.deepEqual(parseRoute("#/settings?x=1"), { view: "settings", id: null, sub: null });
+  assert.deepEqual(parseRoute("#/character/char_ab12"), { view: "character", id: "char_ab12", sub: "overview" });
+  assert.deepEqual(parseRoute("#/character/char_ab12/pdf"), { view: "character", id: "char_ab12", sub: "pdf" });
+  assert.deepEqual(parseRoute("#/character/char_ab12/overview"), { view: "character", id: "char_ab12", sub: "overview" });
+  assert.deepEqual(parseRoute("#/character/bad id"), library);
+  assert.deepEqual(parseRoute("#/character/char_a/extra"), library);
+  assert.deepEqual(parseRoute("#/character/char_a/pdf/more"), library);
+  assert.deepEqual(parseRoute("#/nowhere"), library);
+  assert.deepEqual(parseRoute(""), library);
+  assert.deepEqual(parseRoute(undefined), library);
 });
 
 test("routeHref and parseRoute round trip", () => {
   assert.equal(routeHref("character", "char_a"), "#/character/char_a");
+  assert.equal(routeHref("character", "char_a", "pdf"), "#/character/char_a/pdf");
+  assert.equal(routeHref("character", "char_a", "bogus"), "#/character/char_a");
   assert.equal(routeHref("data"), "#/data");
   assert.equal(routeHref("character"), "#/library");
-  assert.deepEqual(parseRoute(routeHref("character", "char_a")), { view: "character", id: "char_a" });
+  assert.deepEqual(parseRoute(routeHref("character", "char_a")), { view: "character", id: "char_a", sub: "overview" });
+  assert.deepEqual(parseRoute(routeHref("character", "char_a", "pdf")), { view: "character", id: "char_a", sub: "pdf" });
 });
 
 test("view helpers", () => {

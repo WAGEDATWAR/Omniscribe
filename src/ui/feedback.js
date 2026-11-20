@@ -44,6 +44,10 @@ export function createConfirm({ dialog, title, message, ok, cancel }) {
 
     return new Promise((resolve) => {
       function finish() {
+        if (dialog.open) {
+          return;
+        }
+
         dialog.removeEventListener("close", finish);
         resolve(dialog.returnValue === "confirm");
       }

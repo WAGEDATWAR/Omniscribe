@@ -1,6 +1,9 @@
+import { findOrphanBlobs } from "../integrity.js";
 import { SCHEMA_VERSION } from "../migrations.js";
 import { checkPersistence, estimateUsage, requestPersistence } from "../storage.js";
 import { mountDataPage } from "../ui/data.js";
+import { formatBytes, plural } from "../utils.js";
+import { collectUnusedFiles } from "./maintenance.js";
 
 export function initData(ctx) {
   const { store, storage, router, toast } = ctx;
@@ -17,15 +20,30 @@ export function initData(ctx) {
       );
 
       refresh();
+    },
+    async onCleanup() {
+      try {
+        const { characters } = await storage.load();
+        const removed = await collectUnusedFiles({ storage, characters, graceMs: 0 });
+        const bytes = removed.reduce((total, blob) => total + (blob.size ?? 0), 0);
+
+        toast(removed.length ? `Removed ${plural(removed.length, "unused file")} (${formatBytes(bytes)}).` : "There were no unused files.");
+      } catch {
+        toast("Could not remove unused files.", { tone: "error" });
+      }
+
+      refresh();
     }
   });
 
   async function refresh() {
-    const [persistence, usage, blobs] = await Promise.all([
+    const [persistence, usage, blobs, stored] = await Promise.all([
       checkPersistence(),
       estimateUsage(),
-      storage.blobUsage()
+      storage.blobUsage(),
+      storage.listBlobs()
     ]);
+    const unused = findOrphanBlobs(store.getState().characters, stored, { graceMs: 0 });
 
     if (router.current().view !== "data") {
       return;
@@ -37,6 +55,7 @@ export function initData(ctx) {
       persistence,
       usage,
       blobs,
+      unused: { count: unused.length, bytes: unused.reduce((total, blob) => total + (blob.size ?? 0), 0) },
       characters: store.getState().characters.length,
       schemaVersion: SCHEMA_VERSION
     });
