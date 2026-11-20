@@ -1,6 +1,9 @@
 import { createHistory } from "./history.js";
 import { LIMITS } from "./limits.js";
-import { createCharacter, createDocument, normalizeCharacter, sameCharacter } from "./schema.js";
+import { withoutContainer } from "./inventory.js";
+import { kindOf } from "./records/kinds.js";
+import { createRecord, listOf, listPatch } from "./records/normalize.js";
+import { RECORD_HOOKS, createCharacter, createDocument, normalizeCharacter, sameCharacter } from "./schema.js";
 import { applyRest as applySheetRest, createSheet, reconcileSheet } from "./sheet/evaluate.js";
 import { TEMPLATE_LIMITS } from "./sheet/template.js";
 
@@ -283,6 +286,85 @@ export function createStore({ characters = [], now = Date.now, history = createH
     },
     applyRest(characterId, restId, template) {
       return updateSheet(characterId, (sheet) => applySheetRest(template, sheet, restId));
+    },
+    addRecord(characterId, kindId, fields = {}) {
+      const current = find(characterId);
+      const kind = kindOf(kindId);
+
+      if (!current || !kind || listOf(current, kindId).length >= kind.limit) {
+        return null;
+      }
+
+      const record = createRecord(kindId, fields, { now: now(), hooks: RECORD_HOOKS });
+      update(characterId, listPatch(current, kindId, [...listOf(current, kindId), record]));
+      return record;
+    },
+    updateRecord(characterId, kindId, recordId, patch, { key = null } = {}) {
+      const current = find(characterId);
+      const list = current ? listOf(current, kindId) : [];
+
+      if (!list.some((record) => record.id === recordId)) {
+        return null;
+      }
+
+      update(characterId, listPatch(current, kindId, list.map((record) => (record.id === recordId ? { ...record, ...patch } : record))), {
+        key: key ? `${characterId}:${kindId}:${recordId}:${key}` : null
+      });
+
+      return listOf(find(characterId), kindId).find((record) => record.id === recordId) ?? null;
+    },
+    removeRecord(characterId, kindId, recordId) {
+      const current = find(characterId);
+      const before = current ? listOf(current, kindId) : [];
+      const index = before.findIndex((record) => record.id === recordId);
+
+      if (index < 0) {
+        return null;
+      }
+
+      const record = before[index];
+      let after = before.filter((entry) => entry.id !== recordId);
+      let moved = 0;
+
+      if (kindId === "inventory") {
+        ({ items: after, moved } = withoutContainer(before, recordId));
+      }
+
+      update(characterId, listPatch(current, kindId, after));
+      return { record, index, before, moved };
+    },
+    restoreList(characterId, kindId, list) {
+      const current = find(characterId);
+      return current ? update(characterId, listPatch(current, kindId, list)) : null;
+    },
+    moveRecord(characterId, kindId, recordId, delta) {
+      const current = find(characterId);
+      const list = current ? [...listOf(current, kindId)] : [];
+      const from = list.findIndex((record) => record.id === recordId);
+      const to = from + delta;
+
+      if (from < 0 || to < 0 || to >= list.length) {
+        return null;
+      }
+
+      [list[from], list[to]] = [list[to], list[from]];
+      return update(characterId, listPatch(current, kindId, list));
+    },
+    setWallet(characterId, currency, amount, { key = null } = {}) {
+      const current = find(characterId);
+      return current
+        ? update(characterId, { inventory: { ...current.inventory, wallets: { ...current.inventory.wallets, [currency]: amount } } }, { key: key ? `${characterId}:wallet:${currency}` : null })
+        : null;
+    },
+    removeWallet(characterId, currency) {
+      const current = find(characterId);
+
+      if (!current || !(currency in current.inventory.wallets)) {
+        return null;
+      }
+
+      const { [currency]: _gone, ...rest } = current.inventory.wallets;
+      return update(characterId, { inventory: { ...current.inventory, wallets: rest } });
     },
     restoreCharacter(character) {
       if (!character || find(character.id) || state.characters.length >= LIMITS.characters) {

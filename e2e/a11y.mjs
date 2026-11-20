@@ -41,6 +41,25 @@ async function openSheetPicker(page) {
   await page.waitFor('document.querySelector("#sheet-picker")');
 }
 
+async function openRecordsPage(page, sub) {
+  await addSample(page);
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=' + sub + ']")');
+  await page.click('.subnav-link[data-page="' + sub + '"]');
+  await page.waitFor('!document.querySelector("#character-' + sub + '").hidden && document.querySelector("#rec-' + sub + '-form")');
+}
+
+async function fillRecord(page, kind, fields) {
+  await page.evaluate(`(() => {
+    for (const [key, value] of Object.entries(${JSON.stringify(fields)})) {
+      const element = document.querySelector("#rec-${kind}-" + key);
+      if (element.type === "checkbox") { element.checked = value; } else { element.value = value; }
+    }
+    return true;
+  })()`);
+  await page.click('#rec-' + kind + '-save');
+}
+
 async function startSheet(page) {
   await openSheetPicker(page);
   await page.click("#system-generic");
@@ -195,6 +214,48 @@ const states = [
     await page.evaluate('document.querySelector("#preset-expression").value = "d20 +"; document.querySelector("#preset-label").value = "Bad"; true');
     await page.click("#preset-save");
     await page.waitFor('!document.querySelector("#preset-error").hidden');
+  } },
+  { name: "inventory page, empty", setup: async (page) => openRecordsPage(page, "inventory") },
+  { name: "inventory page with a container, items, a wallet and an error", setup: async (page) => {
+    await openRecordsPage(page, "inventory");
+    await fillRecord(page, "inventory", { name: "Bag", weight: "2", isContainer: true });
+    await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
+    await fillRecord(page, "inventory", { name: "Rope", weight: "10", quantity: "99999999" });
+    await page.waitFor('!document.querySelector("#rec-inventory-error").hidden');
+  } },
+  { name: "abilities page with a roll result and a custom field", setup: async (page) => {
+    await openRecordsPage(page, "abilities");
+    await page.click("#rec-abilities-add-custom");
+    await fillRecord(page, "abilities", { name: "Fire bolt", expression: "2d6", "uses-max": "3" });
+    await page.waitFor('document.querySelectorAll("#rec-abilities-list [data-record]").length === 1');
+    await page.evaluate('document.querySelector("button[aria-label=\\"Roll Fire bolt\\"]").click(); true');
+    await page.waitFor('document.querySelector("#abilities-result .roll-result")');
+  } },
+  { name: "journal page with entries", setup: async (page) => {
+    await openRecordsPage(page, "journal");
+    await fillRecord(page, "journal", { title: "First night", text: "We met in a tavern." });
+    await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 1');
+  } },
+  { name: "relations page with a relation", setup: async (page) => {
+    await openRecordsPage(page, "relations");
+    await fillRecord(page, "relations", { targetName: "Old Marn", kind: "Mentor", attitude: "4" });
+    await page.waitFor('document.querySelectorAll("#rec-relations-list [data-record]").length === 1');
+  } },
+  { name: "progression page with entries", setup: async (page) => {
+    await openRecordsPage(page, "progression");
+    await fillRecord(page, "progression", { label: "Goblin cave", kind: "xp", delta: "300" });
+    await page.waitFor('document.querySelectorAll("#rec-progression-list [data-record]").length === 1');
+  } },
+  { name: "familiars page with a familiar", setup: async (page) => {
+    await openRecordsPage(page, "familiars");
+    await fillRecord(page, "familiars", { name: "Pip", kind: "Familiar" });
+    await page.waitFor('document.querySelectorAll("#rec-familiars-list [data-record]").length === 1');
+  } },
+  { name: "mobile inventory page", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openRecordsPage(page, "inventory");
+    await fillRecord(page, "inventory", { name: "Bag", weight: "2", isContainer: true });
+    await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
   } },
   { name: "sheet with rows, a condition and a ticked pool", setup: async (page) => {
     await startSheet(page);

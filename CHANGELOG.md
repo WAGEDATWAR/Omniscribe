@@ -9,6 +9,16 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - `docs/CHARACTER.md`, written before the code: inventory with containers, carry weight and wallets,
   abilities, journal, relations with a derived reciprocal view, a progression log and familiars with their
   own sheets, the build order and the gate. Decisions C-1 to C-10; deferrals DEF-084 to DEF-086.
+- **Six character pages** at `#/character/<id>/<page>`: Inventory (containers that cannot loop, carried weight with
+  container multipliers, a wallet with typed changes that never go below zero, equip and quantity steppers),
+  Abilities (use counters, restore all, a Roll button through the one rolling path), Journal (newest first, kind
+  filter, goals you can tick), Relations (attitude with its word, links to characters, a derived "Others who know
+  this character" view), Progression (experience total and last level) and Familiars (present toggle, make a
+  character). Schema migration 5 adds the lists. Add, edit, reorder and delete with Undo; limits stated per page.
+- **Extensible by design (C-11).** One descriptor per kind drives normalization, the store and a generic list page,
+  and every record takes up to 30 fields of your own (text, number or yes/no) that are saved, duplicated and
+  shown with it. Unknown keys are kept in `extensions`, so newer data survives older code.
+- 12 more unit tests, 5 more browser scenarios (54 in all) and 8 more accessibility states.
 
 ## [0.4.0] - P3 the dice table
 

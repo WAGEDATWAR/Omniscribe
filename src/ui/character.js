@@ -1,6 +1,7 @@
 import { CHARACTER_PAGES, routeHref } from "../views.js";
 import { CHARACTER_STATUSES, STATUS_LABELS, displayName, initials } from "../schema.js";
 import { LIMITS } from "../limits.js";
+import { KIND_IDS } from "../records/kinds.js";
 import { button, field, h, pageHeader, replace, section } from "./dom.js";
 import { createTagInput } from "./tagInput.js";
 
@@ -135,7 +136,9 @@ export function mountCharacterPage(root, handlers) {
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
   const rollsRoot = h("div", { id: "character-rolls", hidden: true });
 
-  replace(root, header, nav, overview, sheetRoot, rollsRoot, pdfRoot);
+  const listRoots = new Map(KIND_IDS.map((id) => [id, h("div", { id: `character-${id}`, hidden: true })]));
+
+  replace(root, header, nav, overview, sheetRoot, rollsRoot, ...listRoots.values(), pdfRoot);
 
   let shownId = null;
 
@@ -219,6 +222,10 @@ export function mountCharacterPage(root, handlers) {
       sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";
       rollsRoot.hidden = sub !== "rolls";
+
+      for (const [id, element] of listRoots) {
+        element.hidden = sub !== id;
+      }
 
       setValue(name, character.name, force);
       setValue(player, character.player, force);

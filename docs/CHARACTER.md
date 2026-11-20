@@ -4,7 +4,7 @@
 > them. The sheet, the formula language and systems are `docs/SHEET.md`; rolls are `docs/DICE.md`; storage is
 > `docs/PERSISTENCE.md`. Choices are `DECISIONS.md` G-14, S-11, A-1 and C-1 to C-10.
 
-**Status:** designed (P4). Nothing below is built yet; `TODO.md` says which parts exist.
+**Status:** in build (P4). The six pages, their lists and the shared editor exist; `TODO.md` says what is still open (system limits and currencies, rest-driven uses, apply-to-sheet, a familiar's own sheet, palette and Overview).
 
 ---
 
@@ -22,6 +22,14 @@ import the DOM or storage (A-1). The store is the only writer (A-2); controllers
 (`src/app/<page>.js`, one per page, A-9).
 
 ## 2. The shared shape
+
+**One descriptor per kind (C-11).** `src/records/kinds.js` describes every kind as data: its id prefix, limit,
+and fields with a type (text, long, int, num, bool, tags, choice, date, id, uses, sheet), bounds and defaults.
+`src/records/normalize.js`, the store and the generic page (`src/ui/records.js`) all read it, so a new kind of
+record, or a new field, is a descriptor entry plus an optional hook for what data cannot say
+(`src/app/recordKinds.js`). On top of that, **every record carries `custom`: up to 30 user-defined fields**
+(`{ label, type: text | number | checkbox, value }`) so a player is never blocked by a missing field, and keeps
+any key it does not know under `extensions.unknown`.
 
 All five list pages use one record shape discipline:
 

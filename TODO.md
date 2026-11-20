@@ -79,16 +79,18 @@ P3 is done (0.4.0). P4 has its spec (`docs/CHARACTER.md`); the code is next, in 
 - [x] `M` `P3` Browser scenarios and accessibility states for every page and dialog above.
 - [x] `H` `P4` `docs/CHARACTER.md`: the six record shapes, limits, containers, carry, reciprocal relations,
       progression and familiars, the build order and the gate (C-1 to C-10).
-- [ ] `H` `P4` Schema migration 5 and `normalize*` for every list; store methods with undo; the shared list
-      editor UI; duplicate and delete cover every list.
-- [ ] `H` `P4` Inventory: `src/inventory.js` (weight, containers, cycles), page, wallets, carry limit from the
-      system (`limits.carry`, `currencies`).
-- [ ] `M` `P4` Abilities: page, use counters following rests, roll button through `rolling.js`.
-- [ ] `M` `P4` Journal: page with kinds, goals, filter and search.
-- [ ] `M` `P4` Relations: `src/relations.js`, page, reciprocal view.
-- [ ] `M` `P4` Progression: log page and "apply to the sheet".
-- [ ] `M` `P4` Familiars: page reusing the Sheet builder, promote to a character.
-- [ ] `M` `P4` Palette entries, Overview summary, browser scenarios and accessibility states for every page.
+- [x] `H` `P4` Schema migration 5 and `normalize*` for every list; store methods with undo; the shared list
+      editor UI (descriptor-driven, with fields of your own on every record); duplicate and delete cover every list.
+- [~] `H` `P4` Inventory: `src/inventory.js`, page, wallets, containers, weight: done. Open: the carry limit,
+      attunement cap and currencies from the system (`limits.carry`, `limits.attunement`, `currencies`).
+- [~] `M` `P4` Abilities: page, use counters, restore all, roll button: done. Open: uses following the system's rests.
+- [x] `M` `P4` Journal: page with kinds, goals, filter and search.
+- [x] `M` `P4` Relations: `src/relations.js`, page, reciprocal view.
+- [~] `M` `P4` Progression: log, xp total and last level: done. Open: "apply to the sheet".
+- [~] `M` `P4` Familiars: record, present toggle, make a character: done. Open: a sheet on the familiar (reuse the
+      Sheet builder) and promotion as one undo step.
+- [~] `M` `P4` Browser scenarios and accessibility states for every page: done. Open: palette entries and the
+      Overview summary.
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed

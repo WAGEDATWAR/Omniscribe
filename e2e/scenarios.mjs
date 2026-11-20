@@ -160,6 +160,36 @@ async function withSecondTab(page, context, work) {
   }
 }
 
+async function pick(page, selector, value) {
+  await page.evaluate(`(() => {
+    const element = document.querySelector(${q(selector)});
+    element.value = ${JSON.stringify(value)};
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`);
+}
+
+async function openRecords(page, sub) {
+  await page.click(`.subnav-link[data-page="${sub}"]`);
+  await page.waitFor(`!document.querySelector("#character-${sub}").hidden && document.querySelector("#rec-${sub}-form")`);
+}
+
+async function addRecord(page, kind, fields) {
+  for (const [key, value] of Object.entries(fields)) {
+    const selector = `#rec-${kind}-${key}`;
+
+    if (typeof value === "boolean") {
+      await page.evaluate(`document.querySelector(${q(selector)}).checked = ${value}; true`);
+    } else if (await page.evaluate(`document.querySelector(${q(selector)}).tagName === "SELECT"`)) {
+      await pick(page, selector, value);
+    } else {
+      await type(page, selector, value);
+    }
+  }
+
+  await page.click(`#rec-${kind}-save`);
+}
+
 export const scenarios = [
   {
     name: "boots to an empty library without errors",
@@ -808,7 +838,7 @@ export const scenarios = [
         return { value, documents: record.documents, pdf: record.pdf };
       })()`);
 
-      assert.equal(stored.value, 4);
+      assert.equal(stored.value, 5);
       assert.deepEqual(stored.documents, []);
       assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
 
@@ -1522,6 +1552,157 @@ export const scenarios = [
       await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 1');
       await page.evaluate('document.querySelector(".toast button").click(); true');
       await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 2');
+      assertClean(page);
+    }
+  }
+  ,
+  {
+    name: "inventory holds containers and weight, refuses a loop, keeps a wallet and survives a reload",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Packrat");
+      await openRecords(page, "inventory");
+
+      await addRecord(page, "inventory", { name: "Bag", weight: "2", isContainer: true, weightMultiplier: "0.5" });
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
+      await addRecord(page, "inventory", { name: "Rope", weight: "10" });
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 2');
+      await page.evaluate('document.querySelector("button[aria-label=\\"Edit Rope\\"]").click(); true');
+      await pick(page, "#rec-inventory-container", await page.evaluate('[...document.querySelector("#rec-inventory-container").options].find((o) => o.text === "Bag").value'));
+      await page.click("#rec-inventory-save");
+      await page.waitFor('document.querySelector("#inventory-stats").textContent.includes("Carried weight7")');
+
+      await page.evaluate('document.querySelector("button[aria-label=\\"Edit Bag\\"]").click(); true');
+      assert.equal(await page.evaluate('[...document.querySelector("#rec-inventory-container").options].some((o) => o.text === "Rope")'), false);
+
+      await page.evaluate('document.querySelector("#rec-inventory-cancel").click(); true');
+      await type(page, "#wallet-delta-gp", "+25");
+      await page.click('[data-currency="gp"] button');
+      await page.waitFor('document.querySelector("#wallet-amount-gp").textContent === "25"');
+      await type(page, "#wallet-delta-gp", "-99");
+      await page.click('[data-currency="gp"] button');
+      await page.waitFor('!document.querySelector("#wallet-error-gp").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#wallet-amount-gp").textContent'), "25");
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 2');
+      assert.equal(await page.evaluate('document.querySelector("#wallet-amount-gp").textContent'), "25");
+
+      await page.evaluate('document.querySelector("button[aria-label=\\"Delete Bag\\"]").click(); true');
+      await page.waitFor('document.querySelector(".toast").textContent.includes("moved out")');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 2');
+      assertClean(page);
+    }
+  },
+  {
+    name: "abilities count uses, roll their expression and take fields of your own",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Caster");
+      await openRecords(page, "abilities");
+
+      await addRecord(page, "abilities", { name: "Bad roll", expression: "d20 +" });
+      await page.waitFor('!document.querySelector("#rec-abilities-error").hidden');
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-abilities-list [data-record]").length'), 0);
+
+      await type(page, "#rec-abilities-expression", "2d6 + 1");
+      await type(page, "#rec-abilities-name", "Fire bolt");
+      await type(page, "#rec-abilities-uses-max", "2");
+      await page.click("#rec-abilities-add-custom");
+      await page.evaluate('(() => { const row = document.querySelector(".custom-row"); const inputs = row.querySelectorAll("input"); inputs[0].value = "School"; inputs[1].value = "Evocation"; return true; })()');
+      await page.click("#rec-abilities-save");
+      await page.waitFor('document.querySelectorAll("#rec-abilities-list [data-record]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#rec-abilities-list").textContent'), /School: Evocation/);
+
+      await page.evaluate('document.querySelector("button[aria-label=\\"Use Fire bolt\\"]").click(); true');
+      await page.waitFor('document.querySelector("#rec-abilities-list").textContent.includes("1 of 2 uses left")');
+      await page.evaluate('document.querySelector("button[aria-label=\\"Roll Fire bolt\\"]").click(); true');
+      await page.waitFor('document.querySelector("#abilities-result .roll-result")');
+      await page.click("#abilities-restore");
+      await page.waitFor('document.querySelector("#rec-abilities-list").textContent.includes("2 of 2 uses left")');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#rec-abilities-list") && document.querySelector("#rec-abilities-list").textContent.includes("School: Evocation")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "the journal sorts newest first, filters by kind and checks off goals",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Scribe");
+      await openRecords(page, "journal");
+
+      await addRecord(page, "journal", { title: "First night", date: "2026-01-02", text: "Line one\nLine two" });
+      await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 1');
+      await addRecord(page, "journal", { title: "Find the key", date: "2026-03-04", kind: "goal" });
+      await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 2');
+      assert.equal(await page.evaluate('document.querySelector("#rec-journal-list .record-title").textContent'), "Find the key");
+
+      await pick(page, "#rec-journal-filter-kind", "note");
+      await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 1');
+      await pick(page, "#rec-journal-filter-kind", "");
+      await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 2');
+
+      await page.evaluate('document.querySelector("button[aria-label=\\"Done: Find the key\\"]").click(); true');
+      await page.waitFor('document.querySelector("#rec-journal-list").textContent.includes("done")');
+      assert.match(await page.evaluate('getComputedStyle(document.querySelector(".record-text")).whiteSpace'), /pre-wrap/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "relations link characters and show the reverse view without storing it twice",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await go(page, "#/library", "#library-title");
+      await newCharacter(page, "Birch");
+      await openRecords(page, "relations");
+
+      await type(page, "#rec-relations-kind", "Ally");
+      await pick(page, "#rec-relations-targetType", "character");
+      await type(page, "#rec-relations-attitude", "3");
+      await pick(page, "#rec-relations-character", await page.evaluate('[...document.querySelector("#rec-relations-character").options].find((o) => o.text === "Alder").value'));
+      await type(page, "#rec-relations-targetName", "Alder");
+      await page.click("#rec-relations-save");
+      await page.waitFor('document.querySelectorAll("#rec-relations-list [data-record]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#rec-relations-list").textContent'), /Loyal \(\+3\)/);
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelectorAll(".tile").length === 2');
+      await page.evaluate('[...document.querySelectorAll(".tile")].find((t) => t.textContent.includes("Alder")).querySelector(".tile-link").click(); true');
+      await page.waitFor('location.hash.startsWith("#/character/")');
+      await openRecords(page, "relations");
+      await page.waitFor('document.querySelector("#relations-reciprocal").textContent.includes("Birch")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "progression totals experience and a familiar becomes a character",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Veteran");
+      await openRecords(page, "progression");
+      await addRecord(page, "progression", { label: "Goblin cave", kind: "xp", delta: "300" });
+      await page.waitFor('document.querySelectorAll("#rec-progression-list [data-record]").length === 1');
+      await addRecord(page, "progression", { label: "Reached level 2", kind: "level", delta: "2" });
+      await page.waitFor('document.querySelector("#progression-stats").textContent.includes("300")');
+      assert.match(await page.evaluate('document.querySelector("#progression-stats").textContent'), /Last level2/);
+
+      await addRecord(page, "progression", { label: "Bad", delta: "99999999999" });
+      await page.waitFor('!document.querySelector("#rec-progression-error").hidden');
+
+      await openRecords(page, "familiars");
+      await addRecord(page, "familiars", { name: "Pip", kind: "Familiar" });
+      await page.waitFor('document.querySelectorAll("#rec-familiars-list [data-record]").length === 1');
+      await page.evaluate('document.querySelector("button[aria-label=\\"Make a character: Pip\\"]").click(); true');
+      await page.waitFor('document.querySelector(".toast").textContent.includes("Pip is now a character")');
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelectorAll(".tile").length === 2');
       assertClean(page);
     }
   }

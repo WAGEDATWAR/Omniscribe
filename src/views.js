@@ -1,4 +1,5 @@
 import { ID_PATTERN as SYSTEM_ID_PATTERN } from "./sheet/template.js";
+import { KINDS } from "./records/kinds.js";
 import { isValidId } from "./utils.js";
 
 /**
@@ -19,7 +20,13 @@ export const DEFAULT_VIEW = "library";
 export const CHARACTER_PAGES = Object.freeze([
   { id: "overview", label: "Overview" },
   { id: "sheet", label: "Sheet" },
+  { id: "inventory", label: KINDS.inventory.label },
+  { id: "abilities", label: KINDS.abilities.label },
   { id: "rolls", label: "Rolls" },
+  { id: "journal", label: KINDS.journal.label },
+  { id: "relations", label: KINDS.relations.label },
+  { id: "progression", label: KINDS.progression.label },
+  { id: "familiars", label: KINDS.familiars.label },
   { id: "pdf", label: "PDF sheets" }
 ]);
 

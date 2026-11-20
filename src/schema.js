@@ -1,6 +1,7 @@
 import { normalizePresets } from "./dice/presets.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION } from "./migrations.js";
+import { normalizeInventory, normalizeList } from "./records/normalize.js";
 import { ID_PATTERN } from "./sheet/template.js";
 import { cleanText, createId, finiteNumber, isPlainObject, isValidId, normalizeTags } from "./utils.js";
 
@@ -27,6 +28,12 @@ const CHARACTER_FIELDS = new Set([
   "pdf",
   "sheet",
   "rollPresets",
+  "inventory",
+  "abilities",
+  "journal",
+  "relations",
+  "progression",
+  "familiars",
   "extensions",
   "createdAt",
   "updatedAt"
@@ -120,6 +127,8 @@ export function normalizeSheet(raw) {
   };
 }
 
+export const RECORD_HOOKS = Object.freeze({ sheet: normalizeSheet });
+
 export function createCharacter(fields = {}, { now = Date.now(), bytes } = {}) {
   return normalizeCharacter(
     { name: "New character", ...fields, id: createId("char", bytes), createdAt: now, updatedAt: now },
@@ -162,6 +171,12 @@ export function normalizeCharacter(raw, { now = Date.now() } = {}) {
     pdf: normalizePdfChoice(raw.pdf, documents),
     sheet: normalizeSheet(raw.sheet),
     rollPresets: normalizePresets(raw.rollPresets),
+    inventory: normalizeInventory(raw.inventory, RECORD_HOOKS),
+    abilities: normalizeList("abilities", raw.abilities, RECORD_HOOKS),
+    journal: normalizeList("journal", raw.journal, RECORD_HOOKS),
+    relations: normalizeList("relations", raw.relations, RECORD_HOOKS),
+    progression: normalizeList("progression", raw.progression, RECORD_HOOKS),
+    familiars: normalizeList("familiars", raw.familiars, RECORD_HOOKS),
     extensions,
     createdAt,
     updatedAt: finiteNumber(raw.updatedAt, createdAt)

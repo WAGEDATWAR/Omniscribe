@@ -28,7 +28,16 @@ function addRollPresets(project) {
   return { ...project, characters };
 }
 
-export const MIGRATIONS = Object.freeze([addDocuments, addSheet, addRollPresets]);
+function addRecordLists(project) {
+  const lists = { inventory: { items: [], wallets: {} }, abilities: [], journal: [], relations: [], progression: [], familiars: [] };
+  const characters = (project.characters ?? []).map((character) => (
+    character && typeof character === "object" ? { ...structuredClone(lists), ...character } : character
+  ));
+
+  return { ...project, characters };
+}
+
+export const MIGRATIONS = Object.freeze([addDocuments, addSheet, addRollPresets, addRecordLists]);
 
 export const SCHEMA_VERSION = 1 + MIGRATIONS.length;
 

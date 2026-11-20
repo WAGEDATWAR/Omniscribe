@@ -7,6 +7,12 @@ export function referencedBlobIds(characters) {
       ids.add(character.portraitBlobId);
     }
 
+    for (const familiar of character.familiars ?? []) {
+      if (familiar.portraitBlobId) {
+        ids.add(familiar.portraitBlobId);
+      }
+    }
+
     for (const document of character.documents ?? []) {
       ids.add(document.blobId);
     }
