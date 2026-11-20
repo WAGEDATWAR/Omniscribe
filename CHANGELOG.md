@@ -4,6 +4,12 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added (P4, in progress)
+
+- `docs/CHARACTER.md`, written before the code: inventory with containers, carry weight and wallets,
+  abilities, journal, relations with a derived reciprocal view, a progression log and familiars with their
+  own sheets, the build order and the gate. Decisions C-1 to C-10; deferrals DEF-084 to DEF-086.
+
 ## [0.4.0] - P3 the dice table
 
 ### Fixed

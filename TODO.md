@@ -39,8 +39,8 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [x] **P2 - The sheet engine and game systems.** Templates, formulas, value sheet, pools, conditions,
       rests, the system editor, derived systems, import and export, the generic system, then 5e and 3.5e.
       (DEF-001, DEF-003, DEF-005, DEF-006, DEF-007, DEF-070, DEF-077)
-- [~] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
-- [ ] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
+- [x] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
+- [~] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
       (DEF-002, DEF-063, DEF-079)
 - [ ] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P3 is built and waits on its gate and a look on a real phone. Spec first: `docs/DICE.md` is written; the code follows it.
+P3 is done (0.4.0). P4 has its spec (`docs/CHARACTER.md`); the code is next, in the order of its section 9.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -77,6 +77,18 @@ P3 is built and waits on its gate and a look on a real phone. Spec first: `docs/
 - [x] `M` `P3` A character's Rolls page and roll buttons on the Sheet page (system presets, row rolls).
 - [x] `M` `P3` Pools (DEF-010) and macros (DEF-011) in the grammar, the presets and the page.
 - [x] `M` `P3` Browser scenarios and accessibility states for every page and dialog above.
+- [x] `H` `P4` `docs/CHARACTER.md`: the six record shapes, limits, containers, carry, reciprocal relations,
+      progression and familiars, the build order and the gate (C-1 to C-10).
+- [ ] `H` `P4` Schema migration 5 and `normalize*` for every list; store methods with undo; the shared list
+      editor UI; duplicate and delete cover every list.
+- [ ] `H` `P4` Inventory: `src/inventory.js` (weight, containers, cycles), page, wallets, carry limit from the
+      system (`limits.carry`, `currencies`).
+- [ ] `M` `P4` Abilities: page, use counters following rests, roll button through `rolling.js`.
+- [ ] `M` `P4` Journal: page with kinds, goals, filter and search.
+- [ ] `M` `P4` Relations: `src/relations.js`, page, reciprocal view.
+- [ ] `M` `P4` Progression: log page and "apply to the sheet".
+- [ ] `M` `P4` Familiars: page reusing the Sheet builder, promote to a character.
+- [ ] `M` `P4` Palette entries, Overview summary, browser scenarios and accessibility states for every page.
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed

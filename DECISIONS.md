@@ -134,6 +134,21 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | U-11 | **A character's pages are a link bar under its header** (Overview, PDF sheets, and later Sheet, Inventory and the rest). It scrolls sideways on a phone and the current page is marked with `aria-current`. This replaces the side editor menu planned in U-4 for characters. | locked |
 | U-10 | **A UI evaluation and redesign precedes v1** (DEF-060). It may change layout and style but not the model, the engines or the pure core. | provisional |
 
+## Character pages (C-series)
+
+| # | Decision | Status |
+|---|---|---|
+| C-1 | **Everything a player writes about a character is a list on that character.** Inventory, abilities, journal, relations, progression and familiars are records inside the aggregate (G-14), saved, duplicated, deleted and undone with it. | locked |
+| C-2 | **No page needs a game system.** A system may enrich a page (a carry limit, currencies, rest ids, a companion template) through optional validated keys, but an empty system still gives a working page. | locked |
+| C-3 | **Containers hold items by id and may not form a cycle;** deleting a container moves its contents out and says so. Carried weight counts nested contents, scaled by an optional container multiplier. | locked |
+| C-4 | **A limit is a warning, never a block,** for carry weight and attunement; a record count limit is a plain-message refusal. | locked |
+| C-5 | **Abilities are free-form records, not the template's collections** (S-11). They may carry a use counter that follows the system's rests and an optional dice expression that rolls through the one rolling path. | locked |
+| C-6 | **Journal text is plain text** rendered with `textContent`; goals have a done flag; secret entries are marked and are hidden from party views in P5. | locked |
+| C-7 | **A character relation is stored once.** The reciprocal view is derived by `relations.js` from the other characters; a deleted target leaves the cached name, never a dropped relation. | locked |
+| C-8 | **Progression is a log, not a calculator.** Applying an entry to the sheet is an explicit, undoable button, and only when the sheet has the matching field. | locked |
+| C-9 | **A familiar's sheet is the character sheet shape,** evaluated by the same engine against any system, so a companion needs no new engine. Promotion creates a linked character and keeps the familiar. | locked |
+| C-10 | **Schema migration 5 adds every new list empty,** with a `normalize*` per record that drops a bad record and keeps the rest. | locked |
+
 ## Open
 
 | # | Question | Needed by |

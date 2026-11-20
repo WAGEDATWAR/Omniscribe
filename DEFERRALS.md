@@ -100,3 +100,6 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-070 | Formula and dice step budgets under adversarial input | A-8 and D-3; the formula half is done (budgets, fuzz test); the dice half lands with P3 | P2 | doing |
 | DEF-071 | Zip reader caps inflated size and entry count | avoids a zip bomb on import | P6 | scheduled |
 | DEF-072 | Import limits centralised in one `limits.js` | Loreweaver scattered them | P0 | scheduled |
+| DEF-084 | Shared item and ability libraries with give-to actions | across characters; the charter backlog | post-v1 | scheduled |
+| DEF-085 | Journal attachments and images | text only in P4 | post-v1 | scheduled |
+| DEF-086 | Roll presets on inventory items | abilities carry rolls in P4 | post-v1 | scheduled |

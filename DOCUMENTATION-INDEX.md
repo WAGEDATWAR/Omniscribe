@@ -27,7 +27,7 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/OMNISCRIBE.md` | **The charter.** Pillars, constraints, non-goals, feature catalogue, phases | active |
 | `TODO.md` | Live phase status and what is next | active |
 | `PLAN.md` | Workflow, gates, phase gates, the deferral rule | active |
-| `DECISIONS.md` | Locked choices, by series (G, A, S, D, P, U) and open questions | active |
+| `DECISIONS.md` | Locked choices, by series (G, A, S, D, P, U, C) and open questions | active |
 | `CHANGELOG.md` | What each revision changed | active |
 | `DEFERRALS.md` | The deferral ledger; every "later" has a row | active |
 
@@ -42,7 +42,7 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/DISTRIBUTION.md` | Pages, the Windows build, the APK, the release workflow | planned (P7) |
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record, presets, the log, the dice table | designed (P3) |
 | `docs/PDF.md` | PDF attachments, portraits, the vendored reader, the viewer, the upload override; the generated sheet arrives in P6 | built |
-| `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | planned (P4) |
+| `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | designed (P4) |
 | `docs/CAMPAIGNS.md` | Campaigns, roster, party view, sessions, initiative, handouts | planned (P5) |
 | `docs/PERSISTENCE.md` | Storage backends, autosave, the tab guard, migration; backups and revisions arrive in P6 | built |
 | `docs/UI.md` | Layout, tokens, page anatomy, interaction, accessibility, responsive | built |
@@ -83,6 +83,7 @@ A decision beats a design. If they disagree, the design has a bug, not the decis
 
 **Touching a sheet or a formula:** `docs/SHEET.md`, then `DECISIONS.md` S and A-8.
 **Touching dice:** `docs/DICE.md`, then `DECISIONS.md` D.
+**Touching character pages:** `docs/CHARACTER.md`, then `DECISIONS.md` C and G-14.
 **Touching files:** `docs/PDF.md`, then `DECISIONS.md` P-13 and U-8.
 **Touching storage:** `docs/PERSISTENCE.md`, then `DECISIONS.md` P.
 **Touching the surface:** `docs/UI.md`, then `DECISIONS.md` U.
