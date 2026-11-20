@@ -838,7 +838,7 @@ export const scenarios = [
         return { value, documents: record.documents, pdf: record.pdf };
       })()`);
 
-      assert.equal(stored.value, 5);
+      assert.equal(stored.value, 6);
       assert.deepEqual(stored.documents, []);
       assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
 
@@ -1729,6 +1729,295 @@ export const scenarios = [
 
       await page.click('.subnav-link[data-page="overview"]');
       await page.waitFor('document.querySelector("#character-glance").textContent.includes("Items0")');
+      assertClean(page);
+    }
+  }
+  ,
+  {
+    name: "on a phone the sheet and the character pages fit the screen without sideways scrolling",
+    async run(page, context) {
+      await boot(page, context);
+      await page.setViewport(390, 844);
+      await newCharacter(page, "Narrow");
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#sheet-picker")');
+      await page.click("#system-dnd35");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector(".sheet-system")');
+
+      const fits = 'document.documentElement.scrollWidth <= document.documentElement.clientWidth';
+      assert.equal(await page.evaluate(fits), true, "the sheet page is wider than the screen");
+
+      for (const sub of ["inventory", "abilities", "rolls", "journal", "relations", "progression", "familiars", "pdf", "overview"]) {
+        await page.click(`.subnav-link[data-page="${sub}"]`);
+        await page.waitFor(`!document.querySelector("#character-${sub}, #page-character")?.hidden`);
+        assert.equal(await page.evaluate(fits), true, `the ${sub} page is wider than the screen`);
+      }
+
+      await page.setViewport(1440, 900);
+      assertClean(page);
+    }
+  }
+  ,
+  {
+    name: "a campaign is created from the library, edited, persisted and deleted with an undo",
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await page.waitFor('document.querySelector("#campaign-name")');
+      await type(page, "#campaign-name", "Curse of the Moor");
+      await pick(page, "#campaign-status", "active");
+      await type(page, "#campaign-description", "A gloomy tale.");
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelectorAll("#library-campaign-grid .campaign-tile").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#library-campaign-grid").textContent'), /Curse of the Moor/);
+      assert.equal(await tileCount(page), 0);
+
+      await page.reload();
+      await page.waitFor('document.querySelectorAll("#library-campaign-grid .campaign-tile").length === 1');
+      await page.evaluate('document.querySelector(".campaign-link").click(); true');
+      await page.waitFor('document.querySelector("#campaign-name") && document.querySelector("#campaign-name").value === "Curse of the Moor"');
+
+      await page.click("#campaign-delete");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('location.hash === "#/library"');
+      await page.waitFor('document.querySelectorAll(".campaign-tile").length === 0');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll(".campaign-tile").length === 1');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a roster links characters, a character's campaigns are derived, and deleting a character cleans the roster",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Saga");
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('!document.querySelector("#campaign-roster").hidden && document.querySelector("#rec-roster-form")');
+
+      await page.click("#rec-roster-save");
+      await page.waitFor('!document.querySelector("#rec-roster-error").hidden');
+      await pick(page, "#rec-roster-character", await page.evaluate('[...document.querySelector("#rec-roster-character").options].find((o) => o.text === "Alder").value'));
+      await type(page, "#rec-roster-role", "Rogue");
+      await page.click("#rec-roster-save");
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#rec-roster-list").textContent'), /Alder/);
+      assert.equal(await page.evaluate('[...document.querySelector("#rec-roster-character").options].some((o) => o.text === "Alder")'), false);
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector("#character-campaign-list")');
+      await page.waitFor('document.querySelector("#character-campaign-list").textContent.includes("Saga")');
+      assert.match(await page.evaluate('document.querySelector("#character-campaign-list").textContent'), /Rogue/);
+
+      await page.click("#character-delete");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      assert.match(await page.evaluate('document.querySelector("#confirm-message").textContent'), /1 campaign/);
+      await page.click("#confirm-ok");
+      await page.waitFor('location.hash === "#/library"');
+      await page.evaluate('document.querySelector(".campaign-link").click(); true');
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 0');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+      assertClean(page);
+    }
+  },
+  {
+    name: "the party view reads values from each sheet, sorts and says when there is no sheet",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Sheeted");
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#sheet-picker")');
+      await page.click("#system-generic");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+      await go(page, "#/library", "#library-title");
+      await newCharacter(page, "Plain");
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Party");
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelector("#rec-roster-form")');
+
+      for (const who of ["Sheeted", "Plain"]) {
+        await pick(page, "#rec-roster-character", await page.evaluate(`[...document.querySelector("#rec-roster-character").options].find((o) => o.text === ${JSON.stringify(who)}).value`));
+        await page.click("#rec-roster-save");
+        await page.waitFor(`document.querySelector("#rec-roster-list").textContent.includes(${JSON.stringify(who)})`);
+      }
+
+      await page.click('.subnav-link[data-page="party"]');
+      await page.waitFor('!document.querySelector("#campaign-party").hidden && document.querySelector("#party-suggest")');
+      await page.click("#party-suggest");
+      await page.waitFor('document.querySelector("#party-table table")');
+      assert.match(await page.evaluate('document.querySelector("#party-table").textContent'), /Health/);
+      assert.match(await page.evaluate('document.querySelector("#party-table").textContent'), /No sheet/);
+
+      await type(page, "#rec-partyColumns-label", "Level");
+      await type(page, "#rec-partyColumns-ref", "@level");
+      await page.click("#rec-partyColumns-save");
+      await page.waitFor('document.querySelector("#party-table").textContent.includes("Level")');
+      assert.match(await page.evaluate('document.querySelector("#party-table tbody tr").textContent'), /Sheeted/);
+
+      await type(page, "#rec-partyColumns-label", "Bad");
+      await type(page, "#rec-partyColumns-ref", "((");
+      await page.click("#rec-partyColumns-save");
+      await page.waitFor('!document.querySelector("#rec-partyColumns-error").hidden');
+      assertClean(page);
+    }
+  },
+  {
+    name: "sessions record attendees and keep secret notes out of the recap, and handouts store images",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Saga");
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelector("#rec-roster-form")');
+      await pick(page, "#rec-roster-character", await page.evaluate('[...document.querySelector("#rec-roster-character").options].find((o) => o.text === "Alder").value'));
+      await page.click("#rec-roster-save");
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+
+      await page.click('.subnav-link[data-page="sessions"]');
+      await page.waitFor('document.querySelector("#rec-sessions-form")');
+      await type(page, "#rec-sessions-title", "The tavern");
+      await type(page, "#rec-sessions-date", "2026-02-03");
+      await type(page, "#rec-sessions-notes", "They met.");
+      await type(page, "#rec-sessions-secretNotes", "The butler did it.");
+      await page.evaluate('document.querySelector("#rec-sessions-attendees").options[0].selected = true; true');
+      await page.click("#rec-sessions-save");
+      await page.waitFor('document.querySelectorAll("#rec-sessions-list [data-record]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#rec-sessions-list").textContent'), /Alder/);
+
+      await page.click('.subnav-link[data-page="handouts"]');
+      await page.waitFor('document.querySelector("#handout-input")');
+      await page.setFileInput("#handout-input", [context.fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#rec-handouts-list .handout-image")');
+      await saved(page);
+      await page.reload();
+      await page.waitFor('document.querySelector("#rec-handouts-list .handout-image")');
+
+      await page.setFileInput("#handout-input", [context.fixture("not-a-pdf.pdf")]);
+      await page.waitFor('document.querySelector(".toast-error")');
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-handouts-list [data-record]").length'), 1);
+      assertClean(page);
+    }
+  },
+  {
+    name: "the initiative tracker rolls the roster, orders, steps turns and rounds, and ends with an undo",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Fight");
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelector("#rec-roster-form")');
+      await pick(page, "#rec-roster-character", await page.evaluate('[...document.querySelector("#rec-roster-character").options].find((o) => o.text === "Alder").value'));
+      await page.click("#rec-roster-save");
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+
+      await page.click('.subnav-link[data-page="initiative"]');
+      await page.waitFor('!document.querySelector("#campaign-initiative").hidden && document.querySelector("#initiative-roster")');
+      await page.click("#initiative-roster");
+      await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 1');
+
+      await type(page, "#initiative-name", "Goblin");
+      await type(page, "#initiative-value", "99");
+      await page.click("#initiative-add");
+      await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 2');
+      assert.equal(await page.evaluate('document.querySelector("#initiative-list [data-entry] .record-title").textContent'), "Goblin");
+      assert.match(await page.evaluate('document.querySelector("#initiative-status").textContent'), /Round 1 · Current turn: Goblin/);
+
+      await type(page, "#initiative-name", "Bad");
+      await type(page, "#initiative-value", "lots");
+      await page.click("#initiative-add");
+      await page.waitFor('!document.querySelector("#initiative-error").hidden');
+
+      await page.click("#initiative-next");
+      await page.waitFor('document.querySelector("#initiative-status").textContent.includes("Current turn: Alder")');
+      await page.click("#initiative-next");
+      await page.waitFor('document.querySelector("#initiative-status").textContent.includes("Round 2 · Current turn: Goblin")');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#initiative-status") && document.querySelector("#initiative-status").textContent.includes("Round 2")');
+
+      await page.click("#initiative-end");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 0');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 2');
+      assertClean(page);
+    }
+  }
+  ,
+  {
+    name: "a secret roll is marked in the log and left out of the campaign's recent rolls",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Fight");
+      const overview = await route(page);
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelector("#rec-roster-form")');
+      await pick(page, "#rec-roster-character", await page.evaluate('[...document.querySelector("#rec-roster-character").options].find((o) => o.text === "Alder").value'));
+      await page.click("#rec-roster-save");
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+      await page.click('.subnav-link[data-page="initiative"]');
+      await page.waitFor('document.querySelector("#initiative-roster")');
+      await page.click("#initiative-roster");
+      await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 1');
+
+      await go(page, "#/dice", "#dice-title");
+      await type(page, "#dice-expression", "1d20");
+      await page.evaluate('document.querySelector("#dice-secret").checked = true; true');
+      await page.click("#dice-roll");
+      await page.waitFor('document.querySelector("#dice-log").textContent.includes("Secret")');
+
+      await page.evaluate(`location.hash = ${JSON.stringify(overview)}; true`);
+      await page.waitFor('document.querySelector("#campaign-rolls-list")');
+      await page.waitFor('document.querySelector("#campaign-rolls-list").textContent.includes("Initiative: Alder")');
+      assert.equal(await page.evaluate('document.querySelectorAll("#campaign-rolls-list .roll-entry").length'), 1);
+      assertClean(page);
+    }
+  },
+  {
+    name: "on a phone the campaign pages fit the screen",
+    async run(page, context) {
+      await boot(page, context);
+      await page.setViewport(390, 844);
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+
+      const fits = "document.documentElement.scrollWidth <= document.documentElement.clientWidth";
+
+      for (const sub of ["overview", "roster", "party", "sessions", "initiative", "handouts"]) {
+        await page.click(`.subnav-link[data-page="${sub}"]`);
+        await page.waitFor(sub === "overview" ? '!document.querySelector("#campaign-overview").hidden' : `!document.querySelector("#campaign-${sub}").hidden`);
+        assert.equal(await page.evaluate(fits), true, `the ${sub} page is wider than the screen`);
+      }
+
+      await page.setViewport(1440, 900);
       assertClean(page);
     }
   }

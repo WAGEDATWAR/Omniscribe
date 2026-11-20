@@ -4,7 +4,7 @@
 > records are `docs/CHARACTER.md`; rolls are `docs/DICE.md`; storage and the one-writer store are
 > `docs/PERSISTENCE.md` and `docs/ARCHITECTURE.md`. Choices are `DECISIONS.md` G-14 and K-1 to K-12.
 
-**Status:** designed (P5). Nothing below is built yet; `TODO.md` says which parts exist.
+**Status:** built (P5), gate pending. Deviations from the first design: a PDF handout opens in a browser tab and downloads, and the in-app viewer is DEF-090; "Roll as" on the party opens the dice page already scoped to that character; the campaign's recent rolls sit on its Overview.
 
 ---
 
@@ -157,7 +157,7 @@ Entry { id (init_), characterId | null, name, value, tiebreak, hp?, note, done }
   campaign. They go to the blob store and are shared by reference like portraits and sheets (P-17); a
   duplicated campaign shares the files; unused files are collected as today. `integrity.js` counts handout
   blobs as referenced.
-- Images are shown scaled in the page with alt text from the name; a PDF opens in the in-app viewer (`docs/PDF.md`).
+- Images are shown scaled in the page with alt text from the name; a PDF opens in a browser tab (the in-app viewer is DEF-090).
   Rename, notes, download, remove with confirmation and Undo.
 - A file that is not an image or PDF is refused with a reason and nothing is stored.
 

@@ -93,12 +93,14 @@ P4 is done (0.5.0). P5 has its spec (`docs/CAMPAIGN.md`); the code is next, in t
 - [x] `H` `P4` Phase gate twice, release 0.5.0.
 - [x] `H` `P5` `docs/CAMPAIGN.md`: the campaign record, store and history, pages, roster, party view, sessions,
       initiative, handouts, secrets, limits and the gate (K-1 to K-12).
-- [ ] `H` `P5` Groundwork: campaigns in the store with one history, migration 6, normalizer, autosave, delete cleanup.
-- [ ] `H` `P5` Campaign record, Library tiles, routes, overview, Roster and the character's Campaigns panel.
-- [ ] `M` `P5` Party view with columns read from sheets.
-- [ ] `M` `P5` Session log and Handouts.
-- [ ] `H` `P5` Initiative tracker (DEF-040).
-- [ ] `M` `P5` Secret rolls (DEF-013), palette entries, scenarios and accessibility states for every page.
+- [x] `H` `P5` Groundwork: campaigns in the store with one history, migration 6, normalizer, autosave, delete cleanup.
+- [x] `H` `P5` Campaign record, Library tiles, routes, overview, Roster and the character's Campaigns panel.
+- [x] `M` `P5` Party view with columns read from sheets.
+- [x] `M` `P5` Session log and Handouts.
+- [x] `H` `P5` Initiative tracker (DEF-040).
+- [x] `M` `P5` Secret rolls (DEF-013), palette entries, scenarios and accessibility states for every page.
+- [x] `H` `P5` Phase gate twice, release 0.6.0.
+- [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed

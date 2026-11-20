@@ -4,11 +4,31 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
-### Added (P5, in progress)
+## [0.6.0] - 2026-11-20
+
+### Fixed
+
+- On a phone the Sheet page (and any page built from a stack of panels) was wider than the screen. A wide table or
+  toolbar made the grid track grow past the viewport; the stack now holds its column to the screen. A scenario
+  measures the page width on a phone for the sheet, the character pages and the campaign pages.
+
+### Added
 
 - `docs/CAMPAIGN.md`, written before the code: campaigns that link to characters, the store holding both
   collections with one history, roster, a party view read from the sheets, sessions, an initiative tracker,
-  handouts and secret rolls. Decisions K-1 to K-12; deferrals DEF-088 and DEF-089.
+  handouts and secret rolls. Decisions K-1 to K-12; deferrals DEF-088 to DEF-090.
+- **Campaigns** (`#/campaign/<id>`): tiles in the Library beside characters; an overview with fields of your own; a
+  roster that links characters (a character can be in many; its Overview lists them and can add it); a **party
+  view** whose columns are sheet formulas read from each character's own sheet, with a system's suggested columns,
+  sorting and honest "No sheet" cells; a **session log** with attendees, secret notes and a recap copy that leaves
+  secrets out; **handouts** (images and PDFs, judged by their bytes, shared by reference); and an **initiative
+  tracker** that rolls the roster through the dice path (the campaign's expression, the system's, else 1d20),
+  orders by value and tiebreak, steps turns and rounds with the current turn in text, resumes after a reload and
+  ends with an undo. Campaigns are a second collection in the one store with one history, so deleting a character
+  that sat on rosters is one undo step. Schema migration 6; the built-in systems suggest party columns and an
+  initiative roll under `extensions.records`.
+- **Secret rolls** (DEF-013): a Secret option on the dice page; marked in the log and left out of a campaign's
+  recent rolls and recaps.
 
 ## [0.5.0] - P4 characters in depth
 

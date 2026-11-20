@@ -351,7 +351,7 @@ export function rollExpression(source, { scope = {}, item = null, rng = cryptoRn
       inputs,
       flags: state.flags,
       groupId: options.groupId ?? null,
-      secret: false
+      secret: options.secret === true
     }
   };
 }

@@ -87,5 +87,24 @@
     { "id": "abilities", "title": "Abilities", "layout": "table", "items": ["abilities"] },
     { "id": "attacks", "title": "Attacks", "layout": "table", "items": ["attacks"] },
     { "id": "background", "title": "Background", "layout": "text", "items": ["background"] }
-  ]
+  ],
+  "extensions": {
+    "records": {
+      "party": [
+        {
+          "label": "Health",
+          "ref": "@health.current"
+        },
+        {
+          "label": "Energy",
+          "ref": "@energy.current"
+        },
+        {
+          "label": "Defense",
+          "ref": "@defense"
+        }
+      ],
+      "initiative": "1d20 + @agility"
+    }
+  }
 }

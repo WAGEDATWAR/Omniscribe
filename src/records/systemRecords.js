@@ -36,7 +36,15 @@ export function systemRecords(template) {
     }
   }
 
-  return { carry: limitSource(limits.carry), attunement: limitSource(limits.attunement), currencies };
+  const party = [];
+
+  for (const entry of Array.isArray(source.party) ? source.party : []) {
+    if (isPlainObject(entry) && typeof entry.label === "string" && entry.label.trim() && typeof entry.ref === "string" && entry.ref.length <= 200 && parseFormula(entry.ref).ok && party.length < 12) {
+      party.push({ label: entry.label.trim().slice(0, 60), ref: entry.ref.trim() });
+    }
+  }
+
+  return { carry: limitSource(limits.carry), attunement: limitSource(limits.attunement), currencies, party, initiative: typeof source.initiative === "string" && source.initiative.length <= 100 && parseFormula(source.initiative, { dice: true }).ok ? source.initiative.trim() : null };
 }
 
 /** A limit's number for a sheet, or null when there is no limit or the formula does not give a number. */

@@ -161,7 +161,7 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | K-4 | **The party view stores nothing.** Columns are formulas over each character's own sheet (no dice); a missing sheet or an error shows as text, never as 0. A system may suggest columns under `extensions.records.party` (C-12). | locked |
 | K-5 | **Initiative rolls through the one rolling path** with the character's own values: the campaign's expression, else the system's `extensions.records.initiative`, else `1d20`. Order is value descending, ties keep entry order unless edited; the current turn is marked in text and announced. | locked |
 | K-6 | **The fight resumes after a reload:** round, turn and entries are saved with the campaign; ending an encounter is confirmed and undoable. | locked |
-| K-7 | **Handouts are images and PDFs in the blob store,** judged by bytes, shared by reference, counted by integrity, shown in the app's own viewers. | locked |
+| K-7 | **Handouts are images and PDFs in the blob store,** judged by bytes, shared by reference, counted by integrity, images are shown in the app; a PDF opens in a browser tab until the in-app viewer takes it (DEF-090). | locked |
 | K-8 | **A session recap is plain text copied to the clipboard,** without secrets. Nothing is sent anywhere. | locked |
 | K-9 | **"Secret" means kept out of shared views and exports, not access control.** Secret journal entries, secret session notes and secret rolls are excluded by one function, `isShared(record)`, used by every shared view (DEF-013). There are no accounts. | locked |
 | K-10 | **A character's campaigns are derived,** shown on its Overview from the campaigns; assignment can be made from either side and nothing is stored twice. | locked |

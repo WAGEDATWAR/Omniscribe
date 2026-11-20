@@ -11,7 +11,7 @@ export function initSync(ctx) {
 
   async function reloadFromStorage() {
     const loaded = await storage.load();
-    store.replaceAll(loaded.characters);
+    store.replaceAll(loaded.characters, loaded.campaigns);
     ctx.bus.emit("data:reloaded");
   }
 

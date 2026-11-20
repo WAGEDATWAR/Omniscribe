@@ -99,3 +99,26 @@ export function fitWithin(width, height, max = LIMITS.portraitPixels) {
   const scale = max / longest;
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
+
+/** An image or a PDF for a campaign handout, judged by its bytes. Returns `{ ok, kind }` or `{ ok: false, reason }`. */
+export function checkHandout({ size, head }, { count = 0 } = {}) {
+  if (count >= LIMITS.handouts) {
+    return { ok: false, reason: `This campaign already has ${LIMITS.handouts} handouts. Remove one first.` };
+  }
+
+  if (!size) {
+    return { ok: false, reason: "This file is empty." };
+  }
+
+  if (size > LIMITS.pdfBytes) {
+    return { ok: false, reason: `This file is larger than the ${formatBytes(LIMITS.pdfBytes)} limit.` };
+  }
+
+  const kind = detectKind(head);
+
+  if (kind !== "pdf" && !isImageKind(kind)) {
+    return { ok: false, reason: "Handouts are images (PNG, JPEG, WebP, GIF) or PDFs." };
+  }
+
+  return { ok: true, kind };
+}

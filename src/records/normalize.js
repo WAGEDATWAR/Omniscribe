@@ -1,6 +1,6 @@
 import { repairContainers } from "../inventory.js";
 import { cleanText, createId, finiteNumber, isPlainObject, isValidId, normalizeTags } from "../utils.js";
-import { KINDS, RECORD_LIMITS, kindOf } from "./kinds.js";
+import { RECORD_LIMITS, kindOf } from "./kinds.js";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const CUSTOM_TYPES = ["text", "number", "checkbox"];
@@ -69,6 +69,8 @@ export function normalizeValue(spec, raw, hooks = {}) {
       return isCalendarDay(raw) ? raw : "";
     case "id":
       return isValidId(raw) ? raw : null;
+    case "ids":
+      return [...new Set((Array.isArray(raw) ? raw : []).filter(isValidId))].slice(0, 100);
     case "uses":
       return normalizeUses(raw);
     case "sheet":
@@ -90,6 +92,7 @@ export function defaultValue(spec, now = Date.now()) {
     case "bool":
       return false;
     case "tags":
+    case "ids":
       return [];
     case "choice":
       return spec.def;
@@ -215,7 +218,7 @@ export function listPatch(character, kindId, list) {
 
 /** A new record with every field at its default, overlaid with `fields`. Not yet normalized or stored. */
 export function createRecord(kindId, fields = {}, { now = Date.now(), bytes, hooks = {} } = {}) {
-  const kind = KINDS[kindId];
+  const kind = kindOf(kindId);
   const base = { id: createId(kind.prefix, bytes) };
 
   for (const spec of kind.fields) {

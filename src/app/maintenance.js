@@ -5,8 +5,8 @@ import { findOrphanBlobs } from "../integrity.js";
  * Deletes blobs that no character points at (P-17). `graceMs` protects an upload another tab has not
  * saved yet; an explicit cleanup passes 0. Returns what was removed.
  */
-export async function collectUnusedFiles({ storage, characters, graceMs = LIMITS.orphanGraceMs, now = Date.now() }) {
-  const orphans = findOrphanBlobs(characters, await storage.listBlobs(), { now, graceMs });
+export async function collectUnusedFiles({ storage, characters, campaigns = [], graceMs = LIMITS.orphanGraceMs, now = Date.now() }) {
+  const orphans = findOrphanBlobs(characters, await storage.listBlobs(), { now, graceMs, campaigns });
 
   if (orphans.length) {
     await storage.deleteBlobs(orphans.map((blob) => blob.id));

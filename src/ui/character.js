@@ -134,6 +134,15 @@ export function mountCharacterPage(root, handlers) {
   );
   const glance = h("div", { class: "stat-row", id: "character-glance" });
   overview.append(section({ id: "character-glance-section", title: "At a glance", description: "What this character has recorded on the other pages." }, glance));
+  const campaignList = h("div", { class: "stack", id: "character-campaign-list" });
+  const campaignPick = h("select", { id: "character-campaign-pick", class: "input", "aria-label": "Campaign to join" });
+  const campaignAdd = button({ id: "character-campaign-add", label: "Add to campaign", variant: "btn-small", onclick: () => campaignPick.value && handlers.onJoinCampaign(campaignPick.value) });
+  const campaignPanel = section(
+    { id: "character-campaigns", title: "Campaigns", description: "The campaigns this character plays in. Shown here from the campaigns; nothing is stored on the character." },
+    campaignList,
+    h("div", { class: "toolbar" }, campaignPick, campaignAdd)
+  );
+  overview.append(campaignPanel);
   const sheetRoot = h("div", { id: "character-sheet", hidden: true });
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
   const rollsRoot = h("div", { id: "character-rolls", hidden: true });
@@ -183,6 +192,18 @@ export function mountCharacterPage(root, handlers) {
     );
   }
 
+  function drawCampaigns(joined, available) {
+    replace(
+      campaignList,
+      joined.length
+        ? joined.map(({ campaign, row }) => h("p", { class: "record-summary" }, h("a", { href: routeHref("campaign", campaign.id), text: campaign.name.trim() || "Unnamed campaign" }), h("span", { text: ` · ${[row.role, row.status].filter(Boolean).join(" · ") || "member"}` })))
+        : h("p", { class: "muted", text: "Not in any campaign yet." })
+    );
+    campaignPick.replaceChildren(...available.map((campaign) => h("option", { value: campaign.id, text: campaign.name.trim() || "Unnamed campaign" })));
+    campaignPick.hidden = !available.length;
+    campaignAdd.hidden = !available.length;
+  }
+
   let portraitKey = null;
 
   function drawPortrait(character, url) {
@@ -206,7 +227,7 @@ export function mountCharacterPage(root, handlers) {
   return {
     sheetRoot,
     pdfRoot,
-    render(character, { force: forced = false, sub = "overview", portraitUrl = null } = {}) {
+    render(character, { force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] } } = {}) {
       const force = forced || character.id !== shownId;
       shownId = character.id;
 
@@ -238,6 +259,7 @@ export function mountCharacterPage(root, handlers) {
 
       drawNav(character.id, sub);
       drawGlance(character);
+      drawCampaigns(campaigns.joined, campaigns.available);
       overview.hidden = sub !== "overview";
       sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";

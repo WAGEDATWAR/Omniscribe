@@ -1,4 +1,5 @@
 import { normalizePresets } from "./dice/presets.js";
+import { normalizeCampaigns } from "./campaigns.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION } from "./migrations.js";
 import { normalizeInventory, normalizeList } from "./records/normalize.js";
@@ -203,7 +204,7 @@ export function normalizeProject(raw, { now = Date.now() } = {}) {
     }
   }
 
-  return { version: SCHEMA_VERSION, characters };
+  return { version: SCHEMA_VERSION, characters, campaigns: normalizeCampaigns(raw?.campaigns, { now }) };
 }
 
 export function initials(character) {

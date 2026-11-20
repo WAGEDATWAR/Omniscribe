@@ -1,5 +1,6 @@
+import { campaignName } from "../campaigns.js";
 import { displayName } from "../schema.js";
-import { CHARACTER_PAGES, VIEWS, routeHref } from "../views.js";
+import { CAMPAIGN_PAGES, CHARACTER_PAGES, VIEWS, routeHref } from "../views.js";
 import { createPalette } from "../ui/commandPalette.js";
 import { applyTheme } from "./theme.js";
 
@@ -15,6 +16,7 @@ export function initPalette(ctx) {
       run: () => router.navigate(routeHref(view.id))
     }));
 
+    commands.push({ id: "new-campaign", title: "New campaign", keywords: "create add game", run: () => actions.newCampaign() });
     commands.push({ id: "new-character", title: "New character", keywords: "create add", run: () => actions.newCharacter() });
 
     if (store.canUndo()) {
@@ -48,6 +50,16 @@ export function initPalette(ctx) {
       for (const page of CHARACTER_PAGES) {
         commands.push({ id: `page-${page.id}`, title: `Open this character's ${page.label}`, keywords: "page tab", run: () => router.navigate(routeHref("character", route.id, page.id)) });
       }
+    }
+
+    if (route.view === "campaign" && store.getCampaign(route.id)) {
+      for (const page of CAMPAIGN_PAGES) {
+        commands.push({ id: `campaign-page-${page.id}`, title: `Open this campaign's ${page.label}`, keywords: "page tab", run: () => router.navigate(routeHref("campaign", route.id, page.id)) });
+      }
+    }
+
+    for (const campaign of store.getState().campaigns) {
+      commands.push({ id: `open-${campaign.id}`, title: `Open campaign: ${campaignName(campaign)}`, keywords: `${campaign.system} ${campaign.tags.join(" ")}`, run: () => router.navigate(routeHref("campaign", campaign.id)) });
     }
 
     for (const character of store.getState().characters) {

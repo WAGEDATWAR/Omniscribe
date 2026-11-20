@@ -37,7 +37,11 @@ function addRecordLists(project) {
   return { ...project, characters };
 }
 
-export const MIGRATIONS = Object.freeze([addDocuments, addSheet, addRollPresets, addRecordLists]);
+function addCampaigns(project) {
+  return { ...project, campaigns: Array.isArray(project.campaigns) ? project.campaigns : [] };
+}
+
+export const MIGRATIONS = Object.freeze([addDocuments, addSheet, addRollPresets, addRecordLists, addCampaigns]);
 
 export const SCHEMA_VERSION = 1 + MIGRATIONS.length;
 

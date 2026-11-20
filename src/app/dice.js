@@ -5,14 +5,14 @@ import { mountDicePage } from "../ui/dice.js";
 
 /** The dice table: the roller, saved rolls for the chosen character, and the roll log. */
 export function initDice(ctx) {
-  const { store, router, toast, confirm } = ctx;
+  const { store, router, toast, confirm, bus } = ctx;
   const { rolling } = ctx;
   let characterId = null;
 
   const view = mountDicePage(document.querySelector("#page-dice"), {
     onCheck: (text) => checkExpression(text),
-    async onRoll({ expression, adv, dis }) {
-      const result = await rolling.roll(expression, { characterId, options: { adv, dis } });
+    async onRoll({ expression, adv, dis, secret }) {
+      const result = await rolling.roll(expression, { characterId, options: { adv, dis, secret } });
 
       if (result.ok) {
         view.renderResults([result]);
@@ -135,6 +135,10 @@ export function initDice(ctx) {
     if (router.current().view === "dice") {
       renderLog();
     }
+  });
+
+  bus.on("dice:as", (id) => {
+    characterId = store.getCharacter(id) ? id : null;
   });
 
   router.onRoute((route) => {

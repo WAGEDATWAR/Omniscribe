@@ -1237,5 +1237,32 @@
         "background"
       ]
     }
-  ]
+  ],
+  "extensions": {
+    "records": {
+      "party": [
+        {
+          "label": "HP",
+          "ref": "@hp.current"
+        },
+        {
+          "label": "AC",
+          "ref": "@ac"
+        },
+        {
+          "label": "Fort",
+          "ref": "@fort"
+        },
+        {
+          "label": "Ref",
+          "ref": "@ref"
+        },
+        {
+          "label": "Will",
+          "ref": "@will"
+        }
+      ],
+      "initiative": "1d20 + @initiative"
+    }
+  }
 }

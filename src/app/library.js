@@ -1,4 +1,4 @@
-import { buildLibrary } from "../projects.js";
+import { buildCampaigns, buildLibrary } from "../projects.js";
 import { mountLibrary } from "../ui/library.js";
 
 export function initLibrary(ctx) {
@@ -10,6 +10,9 @@ export function initLibrary(ctx) {
       prefs.update({ sort: mode });
     },
     onNew: () => actions.newCharacter(),
+    onNewCampaign: () => actions.newCampaign(),
+    onDuplicateCampaign: (id) => actions.duplicateCampaign(id),
+    onDeleteCampaign: (id) => actions.removeCampaign(id),
     onSample: () => actions.addSample(),
     onDuplicate: (id) => actions.duplicate(id),
     onDelete: (id) => actions.remove(id)
@@ -22,6 +25,7 @@ export function initLibrary(ctx) {
 
     view.render({
       library,
+      campaigns: buildCampaigns(store.getState().campaigns, { query: ui.search, sort: ui.sort }),
       search: ui.search,
       sort: ui.sort,
       portraitUrl: (id) => (id ? blobUrls.peek(id) : null)

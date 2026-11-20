@@ -1,34 +1,30 @@
+import { campaignListOf } from "../campaigns.js";
 import { checkExpression } from "../dice/presets.js";
 import { canContain } from "../inventory.js";
-import { KINDS, KIND_IDS } from "../records/kinds.js";
+import { KIND_IDS, kindOf } from "../records/kinds.js";
 import { listOf } from "../records/normalize.js";
 import { mountRecordPage } from "../ui/records.js";
+import { createCampaignKindUi } from "./campaignKinds.js";
 import { createKindUi } from "./recordKinds.js";
 
 /**
- * One controller for every record page (C-11): it mounts a page per kind from its descriptor, validates what the
- * descriptor cannot, and writes only through the store. Adding a kind is a descriptor, a root and a hook entry.
+ * One controller for every record page (C-11, K-3): it mounts a page per kind from its descriptor, validates what
+ * the descriptor cannot, and writes only through the store. An adapter says whose records they are (a character's
+ * or a campaign's) and which store methods write them, so adding a kind is a descriptor, a root and a hook entry.
  */
-export function initRecords(ctx) {
-  const { store, router, toast } = ctx;
-
-  function currentId() {
-    const route = router.current();
-    return route.view === "character" ? route.id : null;
-  }
-
-  const kindUi = createKindUi({ ...ctx, currentId });
+function mountKinds(ctx, adapter, kindIds, kindUi) {
+  const { toast } = ctx;
   const views = new Map();
 
   function check(kindId, fields, editingId, records) {
-    const kind = KINDS[kindId];
+    const kind = kindOf(kindId);
 
     if (kind.fields.find((spec) => spec.required) && !String(fields[kind.title] ?? "").trim()) {
       return { ok: false, reason: `Give the ${kind.noun} a ${kind.fields.find((spec) => spec.key === kind.title).label.toLowerCase()}` };
     }
 
     if (!editingId && records.length >= kind.limit) {
-      return { ok: false, reason: `A character can keep ${kind.limit} ${kind.nouns}` };
+      return { ok: false, reason: `A ${adapter.noun} can keep ${kind.limit} ${kind.nouns}` };
     }
 
     if (kindId === "inventory" && fields.containerId) {
@@ -47,7 +43,7 @@ export function initRecords(ctx) {
       }
     }
 
-    return { ok: true };
+    return adapter.check?.(kindId, fields, editingId, records) ?? { ok: true };
   }
 
   function prepare(kindId, fields) {
@@ -55,7 +51,7 @@ export function initRecords(ctx) {
 
     if (kindId === "relations") {
       if (next.targetType === "character" && next.targetId) {
-        const target = store.getCharacter(next.targetId);
+        const target = ctx.store.getCharacter(next.targetId);
         next.targetName = next.targetName.trim() || target?.name || "Unnamed character";
       } else {
         next.targetId = null;
@@ -66,12 +62,12 @@ export function initRecords(ctx) {
       next.weightMultiplier = 1;
     }
 
-    return next;
+    return adapter.prepare?.(kindId, next) ?? next;
   }
 
-  for (const kindId of KIND_IDS) {
-    const kind = KINDS[kindId];
-    const root = document.querySelector(`#character-${kindId}`);
+  for (const kindId of kindIds) {
+    const kind = kindOf(kindId);
+    const root = document.querySelector(`#${adapter.rootPrefix}-${kindId}`);
 
     if (!root) {
       continue;
@@ -79,14 +75,14 @@ export function initRecords(ctx) {
 
     const handlers = {
       onSave(fields, editingId) {
-        const id = currentId();
-        const character = store.getCharacter(id);
+        const id = adapter.currentId();
+        const owner = adapter.get(id);
 
-        if (!character) {
-          return { ok: false, reason: "That character is no longer here" };
+        if (!owner) {
+          return { ok: false, reason: `That ${adapter.noun} is no longer here` };
         }
 
-        const records = listOf(character, kindId);
+        const records = adapter.list(owner, kindId);
         const verdict = check(kindId, fields, editingId, records);
 
         if (!verdict.ok) {
@@ -96,31 +92,32 @@ export function initRecords(ctx) {
         const prepared = prepare(kindId, fields);
 
         if (editingId) {
-          store.updateRecord(id, kindId, editingId, prepared);
+          adapter.update(id, kindId, editingId, prepared);
         } else {
-          store.addRecord(id, kindId, prepared);
+          adapter.add(id, kindId, prepared);
         }
 
         toast(`Saved ${String(prepared[kind.title] ?? "").trim() || kind.noun}.`);
         return { ok: true };
       },
       onUpdate(recordId, patch, key) {
-        store.updateRecord(currentId(), kindId, recordId, patch, { key });
+        adapter.update(adapter.currentId(), kindId, recordId, patch, { key });
       },
       onDelete(recordId) {
-        const id = currentId();
-        const removed = store.removeRecord(id, kindId, recordId);
+        const id = adapter.currentId();
+        const removed = adapter.remove(id, kindId, recordId);
 
         if (!removed) {
           return;
         }
 
-        const name = String(removed.record[kind.title] ?? "").trim() || `that ${kind.noun}`;
+        const name = (kindUi[kindId]?.title ? kindUi[kindId].title(removed.record, adapter.get(id)) : String(removed.record[kind.title] ?? "").trim()) || `that ${kind.noun}`;
         const moved = removed.moved ? ` Its ${removed.moved === 1 ? "contents were" : `${removed.moved} contents were`} moved out.` : "";
-        toast(`Deleted ${name}.${moved}`, { action: { label: "Undo", run: () => store.restoreList(id, kindId, removed.before) } });
+        toast(`Deleted ${name}.${moved}`, { action: { label: "Undo", run: () => adapter.restore(id, kindId, removed.before) } });
+        kindUi[kindId]?.afterRemove?.(removed.record);
       },
       onMove(recordId, delta) {
-        store.moveRecord(currentId(), kindId, recordId, delta);
+        adapter.move(adapter.currentId(), kindId, recordId, delta);
       },
       onRefresh: () => render(kindId)
     };
@@ -129,22 +126,77 @@ export function initRecords(ctx) {
   }
 
   function render(kindId) {
-    const route = router.current();
-    const character = route.view === "character" ? store.getCharacter(route.id) : null;
+    const route = ctx.router.current();
+    const owner = route.view === adapter.view ? adapter.get(route.id) : null;
 
-    if (character && route.sub === kindId) {
-      views.get(kindId)?.render(character, listOf(character, kindId));
+    if (owner && route.sub === (adapter.subs?.[kindId] ?? kindId)) {
+      views.get(kindId)?.render(owner, adapter.list(owner, kindId));
     }
   }
 
   function renderCurrent() {
-    const sub = router.current().sub;
+    const sub = ctx.router.current().sub;
 
-    if (views.has(sub)) {
-      render(sub);
+    for (const kindId of views.keys()) {
+      if ((adapter.subs?.[kindId] ?? kindId) === sub) {
+        render(kindId);
+      }
     }
   }
 
-  router.onRoute(() => renderCurrent());
-  store.subscribe(() => renderCurrent());
+  ctx.router.onRoute(() => renderCurrent());
+  ctx.bus.on("records:refresh", () => renderCurrent());
+  ctx.store.subscribe(() => renderCurrent());
+  return views;
+}
+
+export function initRecords(ctx) {
+  const { store, router } = ctx;
+  const characterId = () => {
+    const route = router.current();
+    return route.view === "character" ? route.id : null;
+  };
+  const campaignId = () => {
+    const route = router.current();
+    return route.view === "campaign" ? route.id : null;
+  };
+
+  mountKinds(
+    ctx,
+    {
+      view: "character",
+      noun: "character",
+      rootPrefix: "character",
+      currentId: characterId,
+      get: store.getCharacter,
+      list: listOf,
+      add: store.addRecord,
+      update: store.updateRecord,
+      remove: store.removeRecord,
+      restore: store.restoreList,
+      move: store.moveRecord
+    },
+    KIND_IDS,
+    createKindUi({ ...ctx, currentId: characterId })
+  );
+
+  const campaignAdapter = {
+    view: "campaign",
+    noun: "campaign",
+    rootPrefix: "campaign",
+    subs: { partyColumns: "party" },
+    currentId: campaignId,
+    get: store.getCampaign,
+    list: campaignListOf,
+    add: store.addCampaignRecord,
+    update: store.updateCampaignRecord,
+    remove: store.removeCampaignRecord,
+    restore: store.restoreCampaignList,
+    move: store.moveCampaignRecord
+  };
+
+  const campaignUi = createCampaignKindUi({ ...ctx, currentId: campaignId, adapter: campaignAdapter });
+  campaignAdapter.check = campaignUi.check;
+  campaignAdapter.prepare = campaignUi.prepare;
+  mountKinds(ctx, campaignAdapter, ["roster", "sessions", "handouts", "partyColumns"], campaignUi.kinds);
 }

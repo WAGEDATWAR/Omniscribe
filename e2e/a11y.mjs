@@ -60,6 +60,26 @@ async function fillRecord(page, kind, fields) {
   await page.click('#rec-' + kind + '-save');
 }
 
+async function openCampaignPage(page, sub, { withMember = false } = {}) {
+  await addSample(page);
+  await page.click("#new-campaign-btn");
+  await page.waitFor('location.hash.startsWith("#/campaign/")');
+  await page.evaluate('(() => { const input = document.querySelector("#campaign-name"); input.value = "Saga"; input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()');
+
+  if (withMember) {
+    await page.click('.subnav-link[data-page="roster"]');
+    await page.waitFor('document.querySelector("#rec-roster-form")');
+    await page.evaluate('(() => { const select = document.querySelector("#rec-roster-character"); select.value = select.options[1].value; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()');
+    await page.click("#rec-roster-save");
+    await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+  }
+
+  if (sub !== "overview") {
+    await page.click('.subnav-link[data-page="' + sub + '"]');
+    await page.waitFor('!document.querySelector("#campaign-' + sub + '").hidden');
+  }
+}
+
 async function startSheet(page) {
   await openSheetPicker(page);
   await page.click("#system-generic");
@@ -256,6 +276,51 @@ const states = [
     await openRecordsPage(page, "inventory");
     await fillRecord(page, "inventory", { name: "Bag", weight: "2", isContainer: true });
     await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
+  } },
+  { name: "library with a campaign", setup: async (page) => {
+    await addSample(page);
+    await page.click("#new-campaign-btn");
+    await page.waitFor('location.hash.startsWith("#/campaign/")');
+    await page.evaluate('location.hash = "#/library"; true');
+    await page.waitFor('document.querySelectorAll("#library-campaign-grid .campaign-tile").length === 1');
+  } },
+  { name: "campaign overview", setup: async (page) => openCampaignPage(page, "overview") },
+  { name: "campaign roster with a member", setup: async (page) => openCampaignPage(page, "roster", { withMember: true }) },
+  { name: "campaign party view with a column", setup: async (page) => {
+    await openCampaignPage(page, "party", { withMember: true });
+    await page.evaluate('(() => { document.querySelector("#rec-partyColumns-label").value = "Level"; document.querySelector("#rec-partyColumns-ref").value = "@level"; return true; })()');
+    await page.click("#rec-partyColumns-save");
+    await page.waitFor('document.querySelector("#party-table table")');
+  } },
+  { name: "campaign sessions with an entry", setup: async (page) => {
+    await openCampaignPage(page, "sessions", { withMember: true });
+    await page.evaluate('(() => { document.querySelector("#rec-sessions-title").value = "The tavern"; document.querySelector("#rec-sessions-notes").value = "They met."; document.querySelector("#rec-sessions-attendees").options[0].selected = true; return true; })()');
+    await page.click("#rec-sessions-save");
+    await page.waitFor('document.querySelectorAll("#rec-sessions-list [data-record]").length === 1');
+  } },
+  { name: "campaign handouts with an image", setup: async (page) => {
+    await openCampaignPage(page, "handouts");
+    await page.setFileInput("#handout-input", [fixture("portrait.png")]);
+    await page.waitFor('document.querySelector("#rec-handouts-list .handout-image")');
+  } },
+  { name: "campaign initiative with combatants", setup: async (page) => {
+    await openCampaignPage(page, "initiative", { withMember: true });
+    await page.click("#initiative-roster");
+    await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 1');
+    await page.evaluate('(() => { document.querySelector("#initiative-name").value = "Goblin"; document.querySelector("#initiative-value").value = "14"; return true; })()');
+    await page.click("#initiative-add");
+    await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 2');
+    await page.click("#initiative-next");
+  } },
+  { name: "mobile campaign initiative", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openCampaignPage(page, "initiative", { withMember: true });
+    await page.click("#initiative-roster");
+    await page.waitFor('document.querySelectorAll("#initiative-list [data-entry]").length === 1');
+  } },
+  { name: "mobile campaign party view", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openCampaignPage(page, "party", { withMember: true });
   } },
   { name: "sheet with rows, a condition and a ticked pool", setup: async (page) => {
     await startSheet(page);

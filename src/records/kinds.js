@@ -3,7 +3,7 @@
  * generic page all read these descriptors, so a new kind of record, or a new field on an existing one, is a
  * descriptor change and not a new code path.
  *
- * Field types: text, long, int, num, bool, tags, choice, date, id, uses, sheet.
+ * Field types: text, long, int, num, bool, tags, choice, date, id, ids, uses, sheet.
  * `nullable` fields keep `null` for "none"; `suggest` is a list of ideas shown while typing, never a limit.
  */
 export const RECORD_LIMITS = Object.freeze({
@@ -142,8 +142,104 @@ export const KINDS = Object.freeze({
   }
 });
 
+
+/** Records that live on a campaign (K-3). They use the same descriptors, normalizer and list page as a character's. */
+export const CAMPAIGN_KINDS = Object.freeze({
+  roster: {
+    id: "roster",
+    prefix: "rost",
+    label: "Roster",
+    noun: "member",
+    nouns: "members",
+    limit: 100,
+    title: "role",
+    summary: ["role", "status"],
+    empty: "Add the characters who play in this campaign, with a role and a status for each.",
+    fields: [
+      { key: "characterId", type: "id", nullable: true, label: "Character", hidden: true },
+      { key: "role", type: "text", max: 60, label: "Role", suggest: ["Player character", "Companion", "Guest", "Retainer"] },
+      { key: "status", type: "text", max: 60, label: "Status", suggest: ["Active", "Away", "Retired", "Dead"] },
+      { key: "joinedAt", type: "date", label: "Joined", today: true },
+      { key: "notes", type: "long", max: 5000, label: "Notes" }
+    ]
+  },
+  sessions: {
+    id: "sessions",
+    prefix: "sess",
+    label: "Sessions",
+    noun: "session",
+    nouns: "sessions",
+    limit: 1000,
+    title: "title",
+    summary: ["date"],
+    empty: "Log each session: its date, who came and what happened. Notes are plain text.",
+    fields: [
+      { key: "title", type: "text", max: 200, label: "Title", required: true },
+      { key: "date", type: "date", label: "Date", today: true },
+      { key: "attendeeIds", type: "ids", label: "Attendees", hidden: true },
+      { key: "notes", type: "long", max: 20000, label: "Notes" },
+      { key: "secretNotes", type: "long", max: 20000, label: "Secret notes", hint: "Kept out of recaps and shared views." }
+    ]
+  },
+  handouts: {
+    id: "handouts",
+    prefix: "hand",
+    label: "Handouts",
+    noun: "handout",
+    nouns: "handouts",
+    limit: 100,
+    title: "name",
+    summary: ["kind"],
+    empty: "Attach images and PDFs the table should see: maps, letters, portraits.",
+    fields: [
+      { key: "name", type: "text", max: 200, label: "Name", required: true },
+      { key: "blobId", type: "id", nullable: true, label: "File", hidden: true },
+      { key: "size", type: "num", min: 0, max: 1e10, def: 0, label: "Size", hidden: true },
+      { key: "kind", type: "choice", values: ["image", "pdf"], def: "image", label: "Kind", hidden: true },
+      { key: "notes", type: "long", max: 5000, label: "Notes" }
+    ]
+  },
+  partyColumns: {
+    id: "partyColumns",
+    prefix: "col",
+    label: "Party columns",
+    noun: "column",
+    nouns: "columns",
+    limit: 12,
+    title: "label",
+    summary: ["ref"],
+    empty: "Choose which sheet values the party view shows, such as @hp.current.",
+    fields: [
+      { key: "label", type: "text", max: 60, label: "Label", required: true },
+      { key: "ref", type: "text", max: 200, label: "Value", mono: true, hint: "A sheet formula, such as @hp.current or @ac." }
+    ]
+  },
+  initiative: {
+    id: "initiative",
+    prefix: "init",
+    label: "Initiative",
+    noun: "combatant",
+    nouns: "combatants",
+    limit: 100,
+    title: "name",
+    summary: ["value"],
+    empty: "Add the roster or any combatant to start tracking turns.",
+    fields: [
+      { key: "name", type: "text", max: 200, label: "Name", required: true },
+      { key: "characterId", type: "id", nullable: true, label: "Character", hidden: true },
+      { key: "value", type: "num", min: -1e6, max: 1e6, def: 0, label: "Initiative" },
+      { key: "tiebreak", type: "int", min: -1000, max: 1000, def: 0, label: "Tiebreak" },
+      { key: "hp", type: "text", max: 20, label: "Hit points" },
+      { key: "note", type: "text", max: 300, label: "Note" },
+      { key: "done", type: "bool", def: false, label: "Turn taken", hidden: true }
+    ]
+  }
+});
+
+const ALL_KINDS = Object.freeze({ ...KINDS, ...CAMPAIGN_KINDS });
+
 export const KIND_IDS = Object.freeze(Object.keys(KINDS));
 
 export function kindOf(id) {
-  return Object.prototype.hasOwnProperty.call(KINDS, id) ? KINDS[id] : null;
+  return Object.prototype.hasOwnProperty.call(ALL_KINDS, id) ? ALL_KINDS[id] : null;
 }

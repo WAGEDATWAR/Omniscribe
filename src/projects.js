@@ -1,3 +1,4 @@
+import { CAMPAIGN_STATUS_LABELS, campaignName } from "./campaigns.js";
 import { STATUS_LABELS, displayName, initials } from "./schema.js";
 import { routeHref } from "./views.js";
 
@@ -64,5 +65,30 @@ export function sortItems(items, mode = "recent") {
 
 export function buildLibrary(characters, { query = "", sort = "recent" } = {}) {
   const all = characters.map(toLibraryItem);
+  return { total: all.length, items: sortItems(filterItems(all, { query }), sort) };
+}
+
+export function toCampaignItem(campaign) {
+  const system = campaign.system.trim();
+  const description = campaign.description.trim();
+
+  return {
+    kind: "campaign",
+    id: campaign.id,
+    name: campaignName(campaign),
+    subtitle: [system, `${campaign.roster.length} ${campaign.roster.length === 1 ? "character" : "characters"}`].filter(Boolean).join(" · "),
+    status: campaign.status,
+    statusLabel: CAMPAIGN_STATUS_LABELS[campaign.status],
+    tags: campaign.tags,
+    excerpt: description.length > EXCERPT_LENGTH ? `${description.slice(0, EXCERPT_LENGTH - 1)}…` : description,
+    createdAt: campaign.createdAt,
+    updatedAt: campaign.updatedAt,
+    href: routeHref("campaign", campaign.id),
+    haystack: [campaign.name, campaign.system, campaign.description, ...campaign.tags].join("\n").toLowerCase()
+  };
+}
+
+export function buildCampaigns(campaigns, { query = "", sort = "recent" } = {}) {
+  const all = campaigns.map(toCampaignItem);
   return { total: all.length, items: sortItems(filterItems(all, { query }), sort) };
 }

@@ -1,6 +1,7 @@
 import { createActions } from "./app/actions.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
+import { initCampaign } from "./app/campaign.js";
 import { initCharacter } from "./app/character.js";
 import { createRolling } from "./app/rolling.js";
 import { initData } from "./app/data.js";
@@ -9,6 +10,8 @@ import { initDocuments } from "./app/documents.js";
 import { collectUnusedFiles } from "./app/maintenance.js";
 import { initLibrary } from "./app/library.js";
 import { initPalette } from "./app/palette.js";
+import { initInitiative } from "./app/initiative.js";
+import { initParty } from "./app/party.js";
 import { initRecords } from "./app/records.js";
 import { initRolls } from "./app/rolls.js";
 import { initSheet } from "./app/sheet.js";
@@ -93,7 +96,7 @@ async function boot() {
     ok: query("#confirm-ok"),
     cancel: query("#confirm-cancel")
   });
-  const store = createStore({ characters: loaded.characters, sort: current.sort });
+  const store = createStore({ characters: loaded.characters, campaigns: loaded.campaigns, sort: current.sort });
   let sync = null;
 
   const guard = createTabGuard({
@@ -153,8 +156,11 @@ async function boot() {
   initShell(ctx);
   initLibrary(ctx);
   initCharacter(ctx);
+  initCampaign(ctx);
   initSheet(ctx);
   initRolls(ctx);
+  initParty(ctx);
+  initInitiative(ctx);
   initRecords(ctx);
   initSystems(ctx);
   initDice(ctx);
@@ -171,7 +177,7 @@ async function boot() {
   }
 
   if (!storage.degraded) {
-    collectUnusedFiles({ storage, characters: loaded.characters }).catch(() => {});
+    collectUnusedFiles({ storage, characters: loaded.characters, campaigns: loaded.campaigns }).catch(() => {});
   }
 
   guard.announce();

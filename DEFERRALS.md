@@ -106,3 +106,4 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-087 | An editor for a familiar's own sheet on its page | a familiar keeps a sheet when promoted; editing one in place needs the Sheet builder to take a target other than the character | P6 | scheduled |
 | DEF-088 | Conditions and effects on initiative entries | P5 tracks order, turns and notes only (K-12) | post-v1 | scheduled |
 | DEF-089 | Campaign calendar and in-fiction time | sessions carry a date only | post-v1 | scheduled |
+| DEF-090 | Handout PDFs open in the app's own viewer | P5 opens a PDF handout in the browser's tab and offers a download; the viewer is bound to a character's documents today | P6 | scheduled |

@@ -1,3 +1,4 @@
+import { campaignName, rosterCount } from "../campaigns.js";
 import { displayName } from "../schema.js";
 import { sampleCharacter } from "../sample.js";
 import { routeHref } from "../views.js";
@@ -20,6 +21,53 @@ export function createActions({ store, router, toast, confirm, bus }) {
       bus.emit("character:new", character.id);
       router.navigate(routeHref("character", character.id));
       return character;
+    },
+
+    newCampaign() {
+      const campaign = store.addCampaign();
+
+      if (!campaign) {
+        toast("The library is full.", { tone: "error" });
+        return null;
+      }
+
+      bus.emit("campaign:new", campaign.id);
+      router.navigate(routeHref("campaign", campaign.id));
+      return campaign;
+    },
+
+    duplicateCampaign(id) {
+      const copy = store.duplicateCampaign(id);
+
+      if (!copy) {
+        toast("The library is full.", { tone: "error" });
+        return null;
+      }
+
+      toast(`Duplicated as ${campaignName(copy)}.`, { action: { label: "Undo", run: () => store.deleteCampaign(copy.id) } });
+      return copy;
+    },
+
+    async removeCampaign(id) {
+      const campaign = store.getCampaign(id);
+
+      if (!campaign) {
+        return false;
+      }
+
+      const confirmed = await confirm({
+        heading: `Delete ${campaignName(campaign)}?`,
+        body: `This removes the campaign, its ${campaign.roster.length === 1 ? "1 roster member" : `${campaign.roster.length} roster members`} and its sessions from this device. The characters stay. You can undo it right after.`,
+        confirmLabel: "Delete",
+        danger: true
+      });
+
+      if (!confirmed || !store.deleteCampaign(id)) {
+        return false;
+      }
+
+      toast(`Deleted ${campaignName(campaign)}.`, { action: { label: "Undo", run: () => store.restoreCampaign(campaign) } });
+      return true;
     },
 
     addSample() {
@@ -60,9 +108,13 @@ export function createActions({ store, router, toast, confirm, bus }) {
         return false;
       }
 
+      const campaignsBefore = store.getState().campaigns;
+      const inCampaigns = rosterCount(campaignsBefore, id);
       const confirmed = await confirm({
         heading: `Delete ${displayName(character)}?`,
-        body: "This removes the character from this device. You can undo it right after.",
+        body: inCampaigns
+          ? `This removes the character from this device and from the roster of ${inCampaigns === 1 ? "1 campaign" : `${inCampaigns} campaigns`}. You can undo it right after.`
+          : "This removes the character from this device. You can undo it right after.",
         confirmLabel: "Delete",
         danger: true
       });
@@ -72,7 +124,7 @@ export function createActions({ store, router, toast, confirm, bus }) {
       }
 
       toast(`Deleted ${displayName(character)}.`, {
-        action: { label: "Undo", run: () => store.restoreCharacter(character) }
+        action: { label: "Undo", run: () => store.restoreCharacter(character, { campaigns: campaignsBefore }) }
       });
       return true;
     }

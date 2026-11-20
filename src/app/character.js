@@ -1,3 +1,4 @@
+import { campaignsOf, onRoster } from "../campaigns.js";
 import { HEAD_BYTES, checkImage } from "../files.js";
 import { routeHref } from "../views.js";
 import { mountCharacterPage } from "../ui/character.js";
@@ -56,6 +57,13 @@ export function initCharacter(ctx) {
       }
     },
     onPortraitFile: setPortraitFrom,
+    onJoinCampaign(campaignId) {
+      const id = currentId();
+
+      if (id && store.addCampaignRecord(campaignId, "roster", { characterId: id, role: "Player character", status: "Active" })) {
+        toast("Added to the campaign.");
+      }
+    },
     onPortraitRemove() {
       const id = currentId();
       const previous = store.getCharacter(id)?.portraitBlobId;
@@ -86,7 +94,11 @@ export function initCharacter(ctx) {
     const switched = view.render(character, {
       force,
       sub: router.current().sub,
-      portraitUrl: blobId ? blobUrls.peek(blobId) : null
+      portraitUrl: blobId ? blobUrls.peek(blobId) : null,
+      campaigns: {
+        joined: campaignsOf(store.getState().campaigns, id),
+        available: store.getState().campaigns.filter((campaign) => !onRoster(campaign, id))
+      }
     });
 
     if (blobId && blobUrls.peek(blobId) === null) {

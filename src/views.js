@@ -30,6 +30,16 @@ export const CHARACTER_PAGES = Object.freeze([
   { id: "pdf", label: "PDF sheets" }
 ]);
 
+export const CAMPAIGN_PAGES = Object.freeze([
+  { id: "overview", label: "Overview" },
+  { id: "roster", label: "Roster" },
+  { id: "party", label: "Party" },
+  { id: "sessions", label: "Sessions" },
+  { id: "initiative", label: "Initiative" },
+  { id: "handouts", label: "Handouts" }
+]);
+
+const CAMPAIGN_SUBS = new Set(CAMPAIGN_PAGES.map((page) => page.id));
 const HUB_IDS = new Set(VIEWS.map((view) => view.id));
 const SUB_IDS = new Set(CHARACTER_PAGES.map((page) => page.id));
 
@@ -38,7 +48,7 @@ export function isHubView(value) {
 }
 
 export function isEditorView(value) {
-  return value === "character";
+  return value === "character" || value === "campaign";
 }
 
 export function viewForShortcut(key) {
@@ -68,12 +78,26 @@ export function parseRoute(hash) {
     }
   }
 
+  if (head === "campaign" && isValidId(id)) {
+    if (parts.length === 2) {
+      return { view: "campaign", id, sub: "overview" };
+    }
+
+    if (parts.length === 3 && CAMPAIGN_SUBS.has(sub)) {
+      return { view: "campaign", id, sub };
+    }
+  }
+
   return { view: DEFAULT_VIEW, id: null, sub: null };
 }
 
 export function routeHref(view, id = null, sub = "overview") {
   if (view === "character" && id) {
     return sub && sub !== "overview" && SUB_IDS.has(sub) ? `#/character/${id}/${sub}` : `#/character/${id}`;
+  }
+
+  if (view === "campaign" && id) {
+    return sub && sub !== "overview" && CAMPAIGN_SUBS.has(sub) ? `#/campaign/${id}/${sub}` : `#/campaign/${id}`;
   }
 
   if (view === "system" && id) {

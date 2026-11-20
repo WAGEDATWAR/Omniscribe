@@ -1117,5 +1117,24 @@
         "background_text"
       ]
     }
-  ]
+  ],
+  "extensions": {
+    "records": {
+      "party": [
+        {
+          "label": "HP",
+          "ref": "@hp.current"
+        },
+        {
+          "label": "AC",
+          "ref": "@ac"
+        },
+        {
+          "label": "Passive Perception",
+          "ref": "@passive_perception"
+        }
+      ],
+      "initiative": "1d20 + @initiative"
+    }
+  }
 }

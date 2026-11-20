@@ -11,7 +11,7 @@ function makeStorage() {
 test("an empty database loads as empty and unmigrated", async () => {
   const loaded = await makeStorage().load();
 
-  assert.deepEqual(loaded, { characters: [], migrated: false, empty: true });
+  assert.deepEqual(loaded, { characters: [], campaigns: [], migrated: false, empty: true });
 });
 
 test("saved characters load back, normalized", async () => {

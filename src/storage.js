@@ -38,19 +38,21 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
       }
 
       const records = await backend.getAll("characters");
+      const campaigns = await backend.getAll("campaigns");
       const project = normalizeProject(
-        migrateProject({ version: stored ?? SCHEMA_VERSION, characters: records }),
+        migrateProject({ version: stored ?? SCHEMA_VERSION, characters: records, campaigns }),
         { now: now() }
       );
 
       return {
         characters: project.characters,
+        campaigns: project.campaigns,
         migrated: stored !== null && stored < SCHEMA_VERSION,
-        empty: stored === null && records.length === 0
+        empty: stored === null && records.length === 0 && campaigns.length === 0
       };
     },
 
-    save({ upserts = [], deletedIds = [] }) {
+    save({ upserts = [], deletedIds = [], campaignUpserts = [], campaignDeletedIds = [] }) {
       return enqueue(async () => {
         const savedAt = now();
 
@@ -59,6 +61,11 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
             store: "characters",
             delete: deletedIds,
             put: upserts.map((character) => [character.id, character])
+          },
+          {
+            store: "campaigns",
+            delete: campaignDeletedIds,
+            put: campaignUpserts.map((campaign) => [campaign.id, campaign])
           },
           {
             store: "meta",

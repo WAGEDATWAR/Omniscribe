@@ -1,11 +1,13 @@
 export const LIMITS = Object.freeze({
   characters: 5000,
+  campaigns: 1000,
   nameLength: 200,
   playerLength: 200,
   systemLength: 100,
   summaryLength: 2000,
   notesLength: 100000,
   documents: 20,
+  handouts: 100,
   documentNameLength: 200,
   portraitPixels: 512,
   orphanGraceMs: 10 * 60 * 1000,

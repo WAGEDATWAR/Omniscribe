@@ -45,6 +45,28 @@ function tile(item, handlers, urlFor) {
   );
 }
 
+function campaignTile(item, handlers) {
+  return h(
+    "article",
+    { class: "campaign-tile", "data-id": item.id },
+    h(
+      "div",
+      { class: "tile-top" },
+      h("h3", { class: "tile-title" }, h("a", { class: "tile-link campaign-link", href: item.href, text: item.name })),
+      h("span", { class: `badge badge-${item.status}`, text: item.statusLabel })
+    ),
+    item.subtitle ? h("p", { class: "tile-subtitle", text: item.subtitle }) : null,
+    item.excerpt ? h("p", { class: "tile-excerpt", text: item.excerpt }) : null,
+    item.tags.length ? h("ul", { class: "chips", "aria-label": "Tags" }, item.tags.map((tag) => h("li", { class: "chip", text: tag }))) : null,
+    h(
+      "div",
+      { class: "tile-actions" },
+      button({ icon: "copy", variant: "btn-ghost btn-small", label: "Duplicate", ariaLabel: `Duplicate campaign ${item.name}`, onclick: () => handlers.onDuplicateCampaign(item.id) }),
+      button({ icon: "trash", variant: "btn-ghost btn-small btn-danger-text", label: "Delete", ariaLabel: `Delete campaign ${item.name}`, onclick: () => handlers.onDeleteCampaign(item.id) })
+    )
+  );
+}
+
 /** Mounts the Library skeleton once; `render` fills it from the store projection and holds no state. */
 export function mountLibrary(root, handlers) {
   const search = h("input", {
@@ -72,6 +94,13 @@ export function mountLibrary(root, handlers) {
   const grid = h("div", { class: "tile-grid", id: "library-grid" });
   const empty = h("div", { id: "library-empty" });
   const toolbar = h("div", { class: "toolbar" }, search, sort);
+  const campaignGrid = h("div", { class: "tile-grid", id: "library-campaign-grid" });
+  const campaignSection = h(
+    "section",
+    { class: "library-section", id: "library-campaigns", "aria-labelledby": "library-campaigns-title", hidden: true },
+    h("h2", { class: "library-section-title", id: "library-campaigns-title", text: "Campaigns" }),
+    campaignGrid
+  );
 
   replace(
     root,
@@ -86,18 +115,20 @@ export function mountLibrary(root, handlers) {
           label: "New character",
           variant: "btn-primary",
           onclick: handlers.onNew
-        })
+        }),
+        button({ id: "new-campaign-btn", icon: "plus", label: "New campaign", onclick: handlers.onNewCampaign })
       ]
     }),
     toolbar,
     count,
     grid,
-    empty
+    empty,
+    campaignSection
   );
 
   return {
     toolbar,
-    render({ library, search: query, sort: mode, portraitUrl = () => null }) {
+    render({ library, campaigns = { items: [], total: 0 }, search: query, sort: mode, portraitUrl = () => null }) {
       if (document.activeElement !== search) {
         search.value = query;
       }
@@ -109,6 +140,10 @@ export function mountLibrary(root, handlers) {
       count.textContent = library.total
         ? `${plural(library.items.length, "character")}${library.items.length === library.total ? "" : ` of ${library.total}`}`
         : "";
+
+      campaignSection.hidden = campaigns.total === 0;
+      replace(campaignGrid, campaigns.items.map((item) => campaignTile(item, handlers)));
+      toolbar.hidden = library.total === 0 && campaigns.total === 0;
 
       replace(grid, library.items.map((item) => tile(item, handlers, portraitUrl)));
       grid.hidden = !hasItems;

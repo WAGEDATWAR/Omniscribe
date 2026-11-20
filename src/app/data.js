@@ -23,8 +23,8 @@ export function initData(ctx) {
     },
     async onCleanup() {
       try {
-        const { characters } = await storage.load();
-        const removed = await collectUnusedFiles({ storage, characters, graceMs: 0 });
+        const { characters, campaigns } = await storage.load();
+        const removed = await collectUnusedFiles({ storage, characters, campaigns, graceMs: 0 });
         const bytes = removed.reduce((total, blob) => total + (blob.size ?? 0), 0);
 
         toast(removed.length ? `Removed ${plural(removed.length, "unused file")} (${formatBytes(bytes)}).` : "There were no unused files.");
@@ -43,7 +43,7 @@ export function initData(ctx) {
       storage.blobUsage(),
       storage.listBlobs()
     ]);
-    const unused = findOrphanBlobs(store.getState().characters, stored, { graceMs: 0 });
+    const unused = findOrphanBlobs(store.getState().characters, stored, { graceMs: 0, campaigns: store.getState().campaigns });
 
     if (router.current().view !== "data") {
       return;

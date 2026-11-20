@@ -49,9 +49,11 @@ export function mountDicePage(root, handlers) {
   );
   const modeLabels = { normal: "Normal", adv: "Advantage", dis: "Disadvantage" };
 
+  const secret = h("input", { id: "dice-secret", type: "checkbox" });
+
   function mode() {
     const picked = modeInputs.find((input) => input.checked)?.value;
-    return { adv: picked === "adv", dis: picked === "dis" };
+    return { adv: picked === "adv", dis: picked === "dis", secret: secret.checked };
   }
 
   function check() {
@@ -124,6 +126,7 @@ export function mountDicePage(root, handlers) {
           h("legend", { text: "Roll mode (a d20)" }),
           modeInputs.map((input) => h("label", { class: "radio-row", for: input.id }, input, h("span", { text: modeLabels[input.value] })))
         ),
+        h("label", { class: "check-label", for: "dice-secret" }, secret, h("span", { text: "Secret roll (kept out of campaign views and recaps)" })),
         h("div", { class: "toolbar" }, button({ id: "dice-roll", label: "Roll", variant: "btn-primary", onclick: submit })),
         result
       ),
@@ -201,7 +204,7 @@ export function mountDicePage(root, handlers) {
                 h(
                   "p",
                   { class: "field-hint" },
-                  `${when(roll.at)}${who ? ` · ${who}` : ""}`
+                  `${when(roll.at)}${who ? ` · ${who}` : ""}${roll.secret ? " · Secret" : ""}`
                 ),
                 button({ label: "Roll again", ariaLabel: `Roll again: ${roll.label}`, variant: "btn-small", onclick: () => handlers.onAgain(roll.id) })
               )

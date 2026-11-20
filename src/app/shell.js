@@ -1,3 +1,4 @@
+import { campaignName } from "../campaigns.js";
 import { displayName } from "../schema.js";
 import { routeHref, viewForShortcut } from "../views.js";
 import { icon } from "../ui/dom.js";
@@ -10,7 +11,7 @@ const STATE_LABELS = {
   paused: "Saving paused"
 };
 
-const PAGE_TITLES = { library: "Library", data: "Data", settings: "Settings", systems: "Game systems", dice: "Dice", system: "Game system" };
+const PAGE_TITLES = { campaign: "Campaign", library: "Library", data: "Data", settings: "Settings", systems: "Game systems", dice: "Dice", system: "Game system" };
 
 function isTextTarget(target) {
   if (!(target instanceof HTMLElement)) {
@@ -42,7 +43,8 @@ export function initShell(ctx) {
   function updateTitle() {
     const route = router.current();
     const character = route.view === "character" ? store.getCharacter(route.id) : null;
-    const name = character ? displayName(character) : PAGE_TITLES[route.view] ?? "Library";
+    const campaign = route.view === "campaign" ? store.getCampaign(route.id) : null;
+    const name = character ? displayName(character) : campaign ? campaignName(campaign) : PAGE_TITLES[route.view] ?? "Library";
     document.title = `${name} · Omniscribe`;
   }
 
@@ -123,7 +125,7 @@ export function initShell(ctx) {
   });
 
   router.onRoute((route) => {
-    const current = route.view === "character" ? "library" : route.view === "system" ? "systems" : route.view;
+    const current = route.view === "character" || route.view === "campaign" ? "library" : route.view === "system" ? "systems" : route.view;
 
     for (const link of els.sidebar.querySelectorAll("[data-view]")) {
       if (link.dataset.view === current) {

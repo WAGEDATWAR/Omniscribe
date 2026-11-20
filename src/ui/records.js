@@ -83,7 +83,7 @@ function readControl(spec, control) {
   return { value: control.value };
 }
 
-function customEditor(kindId) {
+export function customEditor(kindId) {
   const rows = h("div", { class: "stack custom-rows", id: `rec-${kindId}-custom-rows` });
   const entries = [];
 
@@ -238,6 +238,10 @@ export function mountRecordPage(root, kind, ui, handlers) {
     custom.set([]);
     saveButton.querySelector("span").textContent = `Add ${kind.noun}`;
     cancelButton.hidden = true;
+
+    if (ui.noAdd && typeof form !== "undefined") {
+      form.hidden = true;
+    }
   }
 
   function collect() {
@@ -323,6 +327,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
     custom.set(record.custom);
     saveButton.querySelector("span").textContent = `Save ${kind.noun}`;
     cancelButton.hidden = false;
+    form.hidden = false;
     controls.get(kind.fields[0].key)?.focus();
   }
 
@@ -339,6 +344,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
   search.addEventListener("input", () => handlers.onRefresh?.());
 
   reset();
+  form.hidden = Boolean(ui.noAdd);
 
   replace(
     root,
@@ -358,7 +364,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
   );
 
   function recordRow(record, index, total, character) {
-    const title = String(record[kind.title] ?? "").trim() || `Untitled ${kind.noun}`;
+    const title = (ui.title ? ui.title(record, character) : String(record[kind.title] ?? "").trim()) || `Untitled ${kind.noun}`;
     const api = { character, update: (patch, key) => handlers.onUpdate(record.id, patch, key), record };
     const summary = ui.summary ? ui.summary(record, character) : "";
     const custom = record.custom.length ? record.custom.map((entry) => `${entry.label}: ${entry.type === "checkbox" ? (entry.value ? "yes" : "no") : entry.value}`).join(" · ") : "";

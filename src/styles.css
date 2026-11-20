@@ -330,6 +330,7 @@ kbd {
 
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -625,7 +626,8 @@ textarea.input {
   gap: 12px;
 }
 
-.tile {
+.tile,
+.campaign-tile {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -636,7 +638,9 @@ textarea.input {
 }
 
 .tile:hover,
-.tile:focus-within {
+.tile:focus-within,
+.campaign-tile:hover,
+.campaign-tile:focus-within {
   border-color: var(--accent-border);
 }
 
@@ -1638,4 +1642,48 @@ textarea.input {
 .plain-list {
   margin: 0;
   padding-left: 1.2em;
+}
+
+.library-section {
+  margin-top: 32px;
+}
+
+.library-section-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.handout-image {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.record-row.is-current {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.initiative-status {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.initiative-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.initiative-fields .input {
+  flex: 1 1 120px;
+}
+
+.initiative-input {
+  max-width: 7em;
 }

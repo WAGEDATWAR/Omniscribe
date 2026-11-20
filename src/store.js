@@ -1,5 +1,6 @@
 import { createHistory } from "./history.js";
 import { LIMITS } from "./limits.js";
+import { campaignListOf, campaignListPatch, campaignName, createCampaign, normalizeCampaign, relinkCharacter, sameCampaign, withoutCharacter } from "./campaigns.js";
 import { withoutContainer } from "./inventory.js";
 import { kindOf } from "./records/kinds.js";
 import { createRecord, listOf, listPatch } from "./records/normalize.js";
@@ -14,12 +15,14 @@ const IMMUTABLE_FIELDS = ["id", "createdAt"];
  * previous array and dirty tracking is a reference comparison by id (P-10). The store never touches
  * the DOM or storage.
  */
-export function createStore({ characters = [], now = Date.now, history = createHistory(), sort = "recent" } = {}) {
-  let state = { characters };
+export function createStore({ characters = [], campaigns = [], now = Date.now, history = createHistory(), sort = "recent" } = {}) {
+  let state = { characters, campaigns };
   let ui = { search: "", sort, selectedDocumentId: null };
   const listeners = new Set();
   const dirty = new Set();
   const removed = new Set();
+  const campaignDirty = new Set();
+  const campaignRemoved = new Set();
 
   function emit(type) {
     for (const listener of [...listeners]) {
@@ -27,42 +30,68 @@ export function createStore({ characters = [], now = Date.now, history = createH
     }
   }
 
-  function markDiff(previous, next) {
-    const before = new Map(previous.map((character) => [character.id, character]));
-    const after = new Map(next.map((character) => [character.id, character]));
+  function markDiff(previous, next, dirtySet, removedSet) {
+    const before = new Map(previous.map((record) => [record.id, record]));
+    const after = new Map(next.map((record) => [record.id, record]));
 
-    for (const [id, character] of after) {
-      if (before.get(id) !== character) {
-        dirty.add(id);
-        removed.delete(id);
+    for (const [id, record] of after) {
+      if (before.get(id) !== record) {
+        dirtySet.add(id);
+        removedSet.delete(id);
       }
     }
 
     for (const id of before.keys()) {
       if (!after.has(id)) {
-        removed.add(id);
-        dirty.delete(id);
+        removedSet.add(id);
+        dirtySet.delete(id);
       }
     }
   }
 
-  function commit(next, { key = null, track = true } = {}) {
-    if (next === state.characters) {
+  function commitAll(nextCharacters, nextCampaigns, { key = null, track = true } = {}) {
+    if (nextCharacters === state.characters && nextCampaigns === state.campaigns) {
       return false;
     }
 
     if (track) {
-      history.record(state.characters, { key, at: now() });
+      history.record({ characters: state.characters, campaigns: state.campaigns }, { key, at: now() });
     }
 
-    markDiff(state.characters, next);
-    state = { ...state, characters: next };
+    markDiff(state.characters, nextCharacters, dirty, removed);
+    markDiff(state.campaigns, nextCampaigns, campaignDirty, campaignRemoved);
+    state = { ...state, characters: nextCharacters, campaigns: nextCampaigns };
     emit("change");
     return true;
   }
 
+  function commit(next, options) {
+    return commitAll(next, state.campaigns, options);
+  }
+
   function find(id) {
     return state.characters.find((character) => character.id === id) ?? null;
+  }
+
+  function findCampaign(id) {
+    return state.campaigns.find((campaign) => campaign.id === id) ?? null;
+  }
+
+  function updateCampaign(id, patch, { key = null } = {}) {
+    const current = findCampaign(id);
+
+    if (!current) {
+      return null;
+    }
+
+    const next = normalizeCampaign({ ...current, ...patch, id: current.id, createdAt: current.createdAt, updatedAt: now() }, { now: now() });
+
+    if (sameCampaign(current, next)) {
+      return current;
+    }
+
+    commitAll(state.characters, state.campaigns.map((campaign) => (campaign.id === id ? next : campaign)), { key });
+    return next;
   }
 
   function update(id, patch, { key = null } = {}) {
@@ -97,6 +126,7 @@ export function createStore({ characters = [], now = Date.now, history = createH
     getState: () => state,
     getUi: () => ui,
     getCharacter: find,
+    getCampaign: findCampaign,
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -145,7 +175,10 @@ export function createStore({ characters = [], now = Date.now, history = createH
         return null;
       }
 
-      commit(state.characters.filter((character) => character.id !== id));
+      commitAll(
+        state.characters.filter((character) => character.id !== id),
+        state.campaigns.map((campaign) => withoutCharacter(campaign, id))
+      );
       return current;
     },
     addDocument(characterId, { blobId, name, size }) {
@@ -357,6 +390,100 @@ export function createStore({ characters = [], now = Date.now, history = createH
       commit([...state.characters.map((character) => (character.id === characterId ? linked : character)), made]);
       return made;
     },
+    addCampaign(fields = {}) {
+      if (state.campaigns.length >= LIMITS.campaigns) {
+        return null;
+      }
+
+      const campaign = createCampaign(fields, { now: now() });
+      commitAll(state.characters, [...state.campaigns, campaign]);
+      return campaign;
+    },
+    updateCampaign,
+    duplicateCampaign(id) {
+      const source = findCampaign(id);
+
+      if (!source || state.campaigns.length >= LIMITS.campaigns) {
+        return null;
+      }
+
+      const copy = createCampaign({ ...structuredClone(source), name: `${campaignName(source)} (copy)`, initiative: null }, { now: now() });
+      commitAll(state.characters, [...state.campaigns, copy]);
+      return copy;
+    },
+    deleteCampaign(id) {
+      const current = findCampaign(id);
+
+      if (!current) {
+        return null;
+      }
+
+      commitAll(state.characters, state.campaigns.filter((campaign) => campaign.id !== id));
+      return current;
+    },
+    restoreCampaign(campaign) {
+      if (!campaign || findCampaign(campaign.id) || state.campaigns.length >= LIMITS.campaigns) {
+        return null;
+      }
+
+      commitAll(state.characters, [...state.campaigns, campaign]);
+      return campaign;
+    },
+    addCampaignRecord(campaignId, kindId, fields = {}) {
+      const current = findCampaign(campaignId);
+      const kind = kindOf(kindId);
+
+      if (!current || !kind || campaignListOf(current, kindId).length >= kind.limit) {
+        return null;
+      }
+
+      const record = createRecord(kindId, fields, { now: now(), hooks: RECORD_HOOKS });
+      updateCampaign(campaignId, campaignListPatch(current, kindId, [...campaignListOf(current, kindId), record]));
+      return record;
+    },
+    updateCampaignRecord(campaignId, kindId, recordId, patch, { key = null } = {}) {
+      const current = findCampaign(campaignId);
+      const list = current ? campaignListOf(current, kindId) : [];
+
+      if (!list.some((record) => record.id === recordId)) {
+        return null;
+      }
+
+      updateCampaign(campaignId, campaignListPatch(current, kindId, list.map((record) => (record.id === recordId ? { ...record, ...patch } : record))), {
+        key: key ? `${campaignId}:${kindId}:${recordId}:${key}` : null
+      });
+
+      return campaignListOf(findCampaign(campaignId), kindId).find((record) => record.id === recordId) ?? null;
+    },
+    removeCampaignRecord(campaignId, kindId, recordId) {
+      const current = findCampaign(campaignId);
+      const before = current ? campaignListOf(current, kindId) : [];
+      const index = before.findIndex((record) => record.id === recordId);
+
+      if (index < 0) {
+        return null;
+      }
+
+      updateCampaign(campaignId, campaignListPatch(current, kindId, before.filter((record) => record.id !== recordId)));
+      return { record: before[index], index, before };
+    },
+    restoreCampaignList(campaignId, kindId, list) {
+      const current = findCampaign(campaignId);
+      return current ? updateCampaign(campaignId, campaignListPatch(current, kindId, list)) : null;
+    },
+    moveCampaignRecord(campaignId, kindId, recordId, delta) {
+      const current = findCampaign(campaignId);
+      const list = current ? [...campaignListOf(current, kindId)] : [];
+      const from = list.findIndex((record) => record.id === recordId);
+      const to = from + delta;
+
+      if (from < 0 || to < 0 || to >= list.length) {
+        return null;
+      }
+
+      [list[from], list[to]] = [list[to], list[from]];
+      return updateCampaign(campaignId, campaignListPatch(current, kindId, list));
+    },
     restoreList(characterId, kindId, list) {
       const current = find(characterId);
       return current ? update(characterId, listPatch(current, kindId, list)) : null;
@@ -390,42 +517,49 @@ export function createStore({ characters = [], now = Date.now, history = createH
       const { [currency]: _gone, ...rest } = current.inventory.wallets;
       return update(characterId, { inventory: { ...current.inventory, wallets: rest } });
     },
-    restoreCharacter(character) {
+    restoreCharacter(character, { campaigns: before = [] } = {}) {
       if (!character || find(character.id) || state.characters.length >= LIMITS.characters) {
         return null;
       }
 
-      commit([...state.characters, character]);
+      const relinked = state.campaigns.map((campaign) => {
+        const old = before.find((entry) => entry.id === campaign.id);
+        return old ? relinkCharacter(campaign, old, character.id) : campaign;
+      });
+
+      commitAll([...state.characters, character], relinked);
       return character;
     },
     undo() {
-      const previous = history.undo(state.characters);
+      const previous = history.undo({ characters: state.characters, campaigns: state.campaigns });
 
       if (!previous) {
         return false;
       }
 
-      commit(previous, { track: false });
+      commitAll(previous.characters, previous.campaigns, { track: false });
       emit("history");
       return true;
     },
     redo() {
-      const next = history.redo(state.characters);
+      const next = history.redo({ characters: state.characters, campaigns: state.campaigns });
 
       if (!next) {
         return false;
       }
 
-      commit(next, { track: false });
+      commitAll(next.characters, next.campaigns, { track: false });
       emit("history");
       return true;
     },
     canUndo: () => history.canUndo(),
     canRedo: () => history.canRedo(),
-    replaceAll(characters) {
-      state = { ...state, characters };
+    replaceAll(characters, campaigns = state.campaigns) {
+      state = { ...state, characters, campaigns };
       dirty.clear();
       removed.clear();
+      campaignDirty.clear();
+      campaignRemoved.clear();
       history.clear();
       emit("change");
     },
@@ -434,18 +568,38 @@ export function createStore({ characters = [], now = Date.now, history = createH
         dirty.add(character.id);
       }
 
+      for (const campaign of state.campaigns) {
+        campaignDirty.add(campaign.id);
+      }
+
       emit("change");
     },
-    hasDirty: () => dirty.size > 0 || removed.size > 0,
+    hasDirty: () => dirty.size > 0 || removed.size > 0 || campaignDirty.size > 0 || campaignRemoved.size > 0,
     takeDirty() {
       const upserts = [...dirty].map(find).filter(Boolean);
       const deletedIds = [...removed];
+      const campaignUpserts = [...campaignDirty].map(findCampaign).filter(Boolean);
+      const campaignDeletedIds = [...campaignRemoved];
 
       dirty.clear();
       removed.clear();
-      return { upserts, deletedIds };
+      campaignDirty.clear();
+      campaignRemoved.clear();
+      return { upserts, deletedIds, campaignUpserts, campaignDeletedIds };
     },
-    restoreDirty({ upserts, deletedIds }) {
+    restoreDirty({ upserts, deletedIds, campaignUpserts = [], campaignDeletedIds = [] }) {
+      for (const campaign of campaignUpserts) {
+        if (findCampaign(campaign.id)) {
+          campaignDirty.add(campaign.id);
+        }
+      }
+
+      for (const id of campaignDeletedIds) {
+        if (!findCampaign(id)) {
+          campaignRemoved.add(id);
+        }
+      }
+
       for (const character of upserts) {
         if (find(character.id)) {
           dirty.add(character.id);
