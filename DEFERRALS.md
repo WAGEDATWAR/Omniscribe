@@ -58,10 +58,10 @@ Owners are `P0`-`P7` or `post-v1`.
 
 | # | Item | Notes | Owner | Status |
 |---|---|---|---|---|
-| DEF-030 | Zip backup including every blob | the native container; see `docs/ARCHITECTURE.md` 7 | P6 | scheduled |
+| DEF-030 | Zip backup including every blob | the native container; built as `src/zip.js`, `src/backup.js` and the Data page (`docs/EXCHANGE.md` 5) | P6 | done |
 | DEF-031 | Encrypted local data | passphrase-derived key; a G-12-compatible option | post-v1 | scheduled |
 | DEF-032 | Per-character revisions and restore | P-6 and P-7 | P6 | scheduled |
-| DEF-033 | Storage quota warnings with a per-file size list | extends the P0 storage panel | P6 | scheduled |
+| DEF-033 | Storage quota warnings with a per-file size list | extends the P0 storage panel; warns at 80%, refuses uploads at 95%, lists the largest files | P6 | done |
 
 ## C. Campaigns
 
@@ -98,7 +98,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | # | Item | Notes | Owner | Status |
 |---|---|---|---|---|
 | DEF-070 | Formula and dice step budgets under adversarial input | A-8 and D-3; the formula half is done (budgets, fuzz test); the dice half lands with P3 | P2 | doing |
-| DEF-071 | Zip reader caps inflated size and entry count | avoids a zip bomb on import | P6 | scheduled |
+| DEF-071 | Zip reader caps inflated size and entry count | avoids a zip bomb on import; `openZip` checks every cap before inflating | P6 | done |
 | DEF-072 | Import limits centralised in one `limits.js` | Loreweaver scattered them | P0 | scheduled |
 | DEF-084 | Shared item and ability libraries with give-to actions | across characters; the charter backlog | post-v1 | scheduled |
 | DEF-085 | Journal attachments and images | text only in P4 | post-v1 | scheduled |
@@ -107,3 +107,4 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-088 | Conditions and effects on initiative entries | P5 tracks order, turns and notes only (K-12) | post-v1 | scheduled |
 | DEF-089 | Campaign calendar and in-fiction time | sessions carry a date only | post-v1 | scheduled |
 | DEF-090 | Handout PDFs open in the app's own viewer | P5 opens a PDF handout in the browser's tab and offers a download; the viewer is bound to a character's documents today | P6 | scheduled |
+| DEF-091 | Backup options for settings and the roll log (X-12) | the first backup holds characters, campaigns, systems and files | P6 | scheduled |

@@ -112,6 +112,41 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
       return enqueue(() => backend.apply([{ store: "rolls", delete: remove, put: put.map((roll) => [roll.id, roll]) }]));
     },
 
+    /**
+     * Swaps the whole library in one transaction (X-4): every record, user system and file not in the new set goes,
+     * so a failure leaves the old data. `blobs` are `{ id, type, addedAt, data: Blob }`.
+     */
+    replaceLibrary({ characters = [], campaigns = [], systems = [], blobs = [], keepBlobs = [] }) {
+      return enqueue(async () => {
+        const savedAt = now();
+        const keep = new Set([...blobs.map((blob) => blob.id), ...keepBlobs]);
+        const oldBlobs = (await backend.keys("blobs")).filter((key) => !keep.has(key));
+        const systemKey = (file) => `${file.id}@${file.version}`;
+
+        await backend.apply([
+          { store: "characters", delete: await backend.keys("characters"), put: characters.map((character) => [character.id, character]) },
+          { store: "campaigns", delete: await backend.keys("campaigns"), put: campaigns.map((campaign) => [campaign.id, campaign]) },
+          { store: "templates", delete: await backend.keys("templates"), put: systems.map((file) => [systemKey(file), { key: systemKey(file), file, addedAt: savedAt }]) },
+          { store: "blobs", delete: oldBlobs, put: blobs.map((blob) => [blob.id, { id: blob.id, type: blob.type, size: blob.data.size, addedAt: blob.addedAt ?? savedAt, data: blob.data }]) },
+          { store: "meta", put: [["schemaVersion", SCHEMA_VERSION], ["savedAt", savedAt]] }
+        ]);
+
+        return savedAt;
+      });
+    },
+
+    putBlobs(blobs) {
+      return enqueue(() =>
+        backend.apply([{ store: "blobs", put: blobs.map((blob) => [blob.id, { id: blob.id, type: blob.type, size: blob.data.size, addedAt: blob.addedAt ?? now(), data: blob.data }]) }])
+      );
+    },
+
+    async putSafetyBackup(data) {
+      await enqueue(() => backend.apply([{ store: "revisions", put: [["safety-backup", { id: "safety-backup", at: now(), size: data.size, data }]] }]));
+    },
+
+    getSafetyBackup: () => backend.get("revisions", "safety-backup"),
+
     getBlob: (id) => backend.get("blobs", id),
 
     async listBlobs() {
@@ -134,6 +169,10 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
 
     async meta(key) {
       return backend.get("meta", key);
+    },
+
+    setMeta(key, value) {
+      return enqueue(() => backend.apply([{ store: "meta", put: [[key, value]] }]));
     },
 
     clear() {

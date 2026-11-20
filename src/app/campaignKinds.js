@@ -13,7 +13,7 @@ function nameOf(store, characterId) {
  * attendees and recap, handouts' upload and preview, and the party columns' formula check. Same shape as the
  * character hooks in `recordKinds.js`.
  */
-export function createCampaignKindUi({ store, storage, router, toast, bus, blobUrls, currentId }) {
+export function createCampaignKindUi({ store, storage, router, toast, bus, blobUrls, currentId, room: checkRoom }) {
   function memberOptions(node, campaign, selected) {
     node.replaceChildren();
 
@@ -42,6 +42,13 @@ export function createCampaignKindUi({ store, storage, router, toast, bus, blobU
       if (!verdict.ok) {
         toast(`${name}: ${verdict.reason}`, { tone: "error" });
         continue;
+      }
+
+      const room = await checkRoom(file.size);
+
+      if (!room.ok) {
+        toast(room.message, { tone: "error" });
+        break;
       }
 
       try {

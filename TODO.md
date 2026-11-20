@@ -102,7 +102,7 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
 - [x] `H` `P5` Phase gate twice, release 0.6.0.
 - [x] `H` `P6` `docs/EXCHANGE.md`: the zip container, backup and restore, bundles, revisions, integrity, search,
       the generated sheet (X-1 to X-12).
-- [ ] `H` `P6-A` `src/zip.js` (writer, capped reader), backup and restore with review, quota warnings (DEF-030, DEF-071, DEF-033).
+- [x] `H` `P6-A` `src/zip.js` (writer, capped reader), backup and restore with review, quota warnings (DEF-030, DEF-071, DEF-033).
 - [ ] `H` `P6-B` Character and campaign bundles with an import review (DEF-052).
 - [ ] `H` `P6-C` Revisions and the integrity check with repair (DEF-032).
 - [ ] `M` `P6-D` Search everywhere.

@@ -7,6 +7,9 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 ### Added
 
 - P6 spec: `docs/EXCHANGE.md` and decisions X-1 to X-12 (zip container, backup and restore, bundles, revisions, integrity, search, generated sheet).
+- Backup and restore on the Data page: a zip with every record, game system and file; a review before anything changes; Add (keeps both, remaps ids and links) or Replace (keeps a safety copy you can go back to). Files are checked by SHA-256.
+- The zip reader refuses archives with too many entries, too much inflated data, suspicious compression, unsafe paths, zip64 or encryption before it inflates anything.
+- The Data page warns when storage is 80% full, lists the largest files with their owners, and refuses new uploads at 95%.
 
 ## [0.6.0] - 2026-11-20
 

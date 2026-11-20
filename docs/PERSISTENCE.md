@@ -3,7 +3,7 @@
 > **Scope.** This document owns how data is stored, saved, migrated and protected. The record shapes are
 > `docs/ARCHITECTURE.md` 5; the choices are `DECISIONS.md` P-1 to P-16.
 
-**Status:** built for P0. Backups, revisions and integrity repair are P6 (DEF-030, DEF-032).
+**Status:** built for P0. Backups and restore are built (P6 A); revisions and integrity repair are P6 (DEF-032).
 
 ---
 
@@ -87,5 +87,4 @@ since P1).
 
 ## 8. Not yet built
 
-Backups and restore (DEF-030), revisions (DEF-032), integrity repair, quota warnings (DEF-033) and the
-zip reader caps (DEF-071) belong to P6.
+Backups, restore, quota warnings and the zip reader caps are built (P6 slice A; `docs/EXCHANGE.md`). Revisions (DEF-032) and integrity repair are P6 slice C.

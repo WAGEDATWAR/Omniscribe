@@ -23,5 +23,7 @@ export const LIMITS = Object.freeze({
   zipInflatedBytes: 512 * 1024 * 1024,
   zipEntryBytes: 64 * 1024 * 1024,
   zipRatio: 200,
-  zipRatioFloor: 1024 * 1024
+  zipRatioFloor: 1024 * 1024,
+  backupWarnAt: 0.8,
+  quotaRefuseAt: 0.95
 });

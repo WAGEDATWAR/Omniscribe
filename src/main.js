@@ -24,7 +24,9 @@ import { initSystems } from "./app/systems.js";
 import { applyTheme } from "./app/theme.js";
 import { createAutosave } from "./autosave.js";
 import { loadPrefs, savePrefs } from "./settings.js";
-import { openStorage, requestPersistence } from "./storage.js";
+import { estimateUsage, openStorage, requestPersistence } from "./storage.js";
+import { fitsInQuota } from "./quota.js";
+import { formatBytes } from "./utils.js";
 import { createStore } from "./store.js";
 import { createRegistry } from "./systems.js";
 import { createTabGuard } from "./tabGuard.js";
@@ -117,6 +119,12 @@ async function boot() {
     storage,
     blobUrls: createBlobUrls(storage),
     systems,
+    room: async (size) => {
+      const { usage, quota } = await estimateUsage();
+      return fitsInQuota(usage, quota, size)
+        ? { ok: true }
+        : { ok: false, message: `Storage is nearly full (${formatBytes(usage)} of ${formatBytes(quota)}). Make a backup, then remove large files on the Data page.` };
+    },
     autosave,
     guard,
     router,

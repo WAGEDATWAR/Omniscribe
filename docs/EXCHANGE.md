@@ -5,7 +5,7 @@
 > search, and the generated PDF sheet. Storage layout is `docs/PERSISTENCE.md`; record shapes are
 > `docs/ARCHITECTURE.md` 5; the PDF viewer is `docs/PDF.md`. Choices are `DECISIONS.md` X-1 to X-12 and P-6, P-7, P-9, G-19.
 
-**Status:** designed (P6). Nothing here is built yet.
+**Status:** P6 slice A built (zip, backup, restore, quota); slices B to F designed. Deviations in slice A: a Replace restore is not one Undo step, because the store's history is cleared when the library is swapped; instead a safety copy of the old library is kept and the Data page offers *Restore the previous library*. A restore that adds game systems reloads the page. Backups hold characters, campaigns, systems and files; settings and the roll log are DEF-091.
 
 ---
 
@@ -81,7 +81,7 @@ never uploads anything.
    - *Add* never overwrites. A record whose id already exists keeps both: the incoming one gets a new id and
      `"(imported)"` in its name; links inside the import (roster rows, relation targets, container ids, session
      attendees) are rewritten to the new ids in one pass (X-5). Blobs are matched by hash and reused.
-   Both modes are one Undo step for the records; the safety backup covers the files.
+   Add is one Undo step. Replace is not undoable by Undo; the safety copy is its way back (see Status).
 
 A restore the user abandons changes nothing. The confirmation names what will be replaced and says it can be undone.
 

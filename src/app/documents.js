@@ -36,6 +36,13 @@ export function initDocuments(ctx) {
         continue;
       }
 
+      const room = await ctx.room(file.size);
+
+      if (!room.ok) {
+        toast(room.message, { tone: "error" });
+        break;
+      }
+
       try {
         const meta = await storage.putBlob({ type: "application/pdf", data: new Blob([file], { type: "application/pdf" }) });
         const document = store.addDocument(id, { blobId: meta.id, name, size: file.size });

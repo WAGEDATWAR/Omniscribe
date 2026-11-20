@@ -23,6 +23,13 @@ export function initCharacter(ctx) {
       return;
     }
 
+    const room = await ctx.room(file.size);
+
+    if (!room.ok) {
+      toast(room.message, { tone: "error" });
+      return;
+    }
+
     try {
       const image = await scalePortrait(file);
       const meta = await storage.putBlob({ type: image.type, data: image });

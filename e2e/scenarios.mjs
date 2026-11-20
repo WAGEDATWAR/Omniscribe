@@ -1,4 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { buildArchive } from "../src/backup.js";
+import { createCampaign } from "../src/campaigns.js";
+import { createCharacter, createDocument } from "../src/schema.js";
 import { Page, sleep } from "./harness.mjs";
 
 const q = (selector) => JSON.stringify(selector);
@@ -2018,6 +2024,88 @@ export const scenarios = [
       }
 
       await page.setViewport(1440, 900);
+      assertClean(page);
+    }
+  }
+  ,
+  {
+    name: "a backup file restores in add mode and in replace mode, and replace can be undone",
+    async run(page, context) {
+      await boot(page, context);
+      const pdf = readFileSync(context.fixture("sample.pdf"));
+      const mira = { ...createCharacter({ name: "Mira" }), documents: [createDocument({ name: "Sheet", blobId: "blob_fixture", type: "application/pdf", size: pdf.length })] };
+      const camp = createCampaign({ name: "Imported fight", roster: [{ id: "r1", characterId: mira.id, note: "" }] });
+      const { bytes } = await buildArchive({ characters: [mira], campaigns: [camp], blobs: [{ id: "blob_fixture", type: "application/pdf", bytes: new Uint8Array(pdf) }], now: 1700000000000 });
+      const file = join(mkdtempSync(join(tmpdir(), "omniscribe-")), "backup.zip");
+      writeFileSync(file, bytes);
+
+      await newCharacter(page, "Alder");
+      await saved(page);
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#restore-file")');
+      await page.setFileInput("#restore-file", [file]);
+      await page.waitFor('document.querySelector("#restore-contents")');
+      assert.match(await page.evaluate('document.querySelector("#restore-contents").textContent'), /1 character, 1 campaign, 0 game systems, 1 file/);
+
+      await page.click("#restore-cancel");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+
+      await page.setFileInput("#restore-file", [file]);
+      await page.waitFor('document.querySelector("#restore-go")');
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+      await saved(page);
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelectorAll(".tile").length === 2');
+      assert.equal(await page.evaluate('document.querySelectorAll(".campaign-tile").length'), 1);
+
+      await go(page, "#/data", "#data-title");
+      await page.setFileInput("#restore-file", [file]);
+      await page.waitFor('document.querySelector("#restore-go")');
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+      await saved(page);
+      await go(page, "#/library", "#library-title");
+      assert.match(await page.evaluate('document.querySelector("#library-grid, .tile-grid, body").textContent'), /Mira \(imported\)/);
+
+      await go(page, "#/data", "#data-title");
+      await page.setFileInput("#restore-file", [file]);
+      await page.waitFor('document.querySelector("#restore-go")');
+      await page.evaluate('document.querySelector("input[name=restore-mode][value=replace]").click(); true');
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await sleep(1500);
+      await page.waitFor('document.querySelector("#library-title")');
+      await page.waitFor('document.querySelectorAll(".tile").length >= 1');
+      const names = await page.evaluate('[...document.querySelectorAll(".tile-link")].map((link) => link.textContent.trim()).join("|")');
+      assert.ok(names.includes("Mira") && !names.includes("Alder"), names);
+
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#restore-previous-btn")');
+      assert.match(await page.evaluate('document.querySelector("#storage-files").textContent'), /^1 file,/);
+      await page.click("#restore-previous-btn");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await sleep(1500);
+      await page.waitFor('document.querySelector("#library-title")');
+      await page.waitFor('[...document.querySelectorAll(".tile-link")].some((link) => link.textContent.includes("Alder"))');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a file that is not a backup is refused with a reason and changes nothing",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await saved(page);
+      await go(page, "#/data", "#data-title");
+      await page.setFileInput("#restore-file", [context.fixture("sample.pdf")]);
+      await page.waitFor('!document.querySelector("#restore-message").hidden');
+      assert.match(await page.evaluate('document.querySelector("#restore-message").textContent'), /Could not read this file/);
+      assert.equal(await page.evaluate('document.querySelector("#restore-review").hidden'), true);
+      await go(page, "#/library", "#library-title");
+      assert.equal(await tileCount(page), 1);
       assertClean(page);
     }
   }

@@ -1,6 +1,11 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildArchive } from "../src/backup.js";
+import { createCharacter } from "../src/schema.js";
 import { startStaticServer } from "../scripts/serve.mjs";
 import { launchBrowser, Page, sleep } from "./harness.mjs";
 
@@ -477,6 +482,28 @@ const states = [
   { name: "data page", setup: async (page) => {
     await openPage(page, "#/data", "#data-title");
     await page.waitFor('document.querySelector("#storage-backend")');
+  } },
+  { name: "restore message", setup: async (page) => {
+    await openPage(page, "#/data", "#data-title");
+    await page.setFileInput("#restore-file", [fixture("sample.pdf")]);
+    await page.waitFor('!document.querySelector("#restore-message").hidden');
+  } },
+  { name: "restore review", setup: async (page) => {
+    const { bytes } = await buildArchive({ characters: [createCharacter({ name: "Mira" })], now: 1700000000000 });
+    const file = join(mkdtempSync(join(tmpdir(), "omniscribe-")), "backup.zip");
+    writeFileSync(file, bytes);
+    await openPage(page, "#/data", "#data-title");
+    await page.setFileInput("#restore-file", [file]);
+    await page.waitFor('document.querySelector("#restore-go")');
+  } },
+  { name: "mobile restore review", setup: async (page) => {
+    await page.setViewport(390, 844);
+    const { bytes } = await buildArchive({ characters: [createCharacter({ name: "Mira" })], now: 1700000000000 });
+    const file = join(mkdtempSync(join(tmpdir(), "omniscribe-")), "backup.zip");
+    writeFileSync(file, bytes);
+    await openPage(page, "#/data", "#data-title");
+    await page.setFileInput("#restore-file", [file]);
+    await page.waitFor('document.querySelector("#restore-go")');
   } },
   { name: "settings page", setup: async (page) => {
     await openPage(page, "#/settings", "#settings-title");

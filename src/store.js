@@ -554,6 +554,9 @@ export function createStore({ characters = [], campaigns = [], now = Date.now, h
     },
     canUndo: () => history.canUndo(),
     canRedo: () => history.canRedo(),
+    addMany(characters = [], campaigns = []) {
+      return commitAll([...state.characters, ...characters], [...state.campaigns, ...campaigns]);
+    },
     replaceAll(characters, campaigns = state.campaigns) {
       state = { ...state, characters, campaigns };
       dirty.clear();
