@@ -172,6 +172,30 @@ const states = [
   } },
   { name: "sheet, choosing a system", setup: async (page) => openSheetPicker(page) },
   { name: "sheet, started", setup: async (page) => startSheet(page) },
+  { name: "sheet with a roll result", setup: async (page) => {
+    await startSheet(page);
+    await page.evaluate('document.querySelector("#sheet-rolls button").click(); true');
+    await page.waitFor('document.querySelector("#sheet-roll-result .roll-total")');
+  } },
+  { name: "character rolls page with a saved roll, an error and recent rolls", setup: async (page) => {
+    await startSheet(page);
+    await page.evaluate('document.querySelector("#sheet-rolls button").click(); true');
+    await page.waitFor('document.querySelector("#sheet-roll-result .roll-total")');
+    await page.click('.subnav-link[data-page="rolls"]');
+    await page.waitFor('!document.querySelector("#character-rolls").hidden && document.querySelector("#preset-form")');
+    await page.evaluate(`(() => {
+      for (const [id, value] of [["#preset-label", "Longsword"], ["#preset-expression", "1d20 + 5"]]) {
+        const input = document.querySelector(id);
+        input.value = value;
+      }
+      return true;
+    })()`);
+    await page.click("#preset-save");
+    await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 1');
+    await page.evaluate('document.querySelector("#preset-expression").value = "d20 +"; document.querySelector("#preset-label").value = "Bad"; true');
+    await page.click("#preset-save");
+    await page.waitFor('!document.querySelector("#preset-error").hidden');
+  } },
   { name: "sheet with rows, a condition and a ticked pool", setup: async (page) => {
     await startSheet(page);
     await fillSheet(page);

@@ -1,4 +1,5 @@
 import { formatValue } from "../sheet/template.js";
+import { resultCard } from "./dice.js";
 import { button, emptyState, h, replace, section } from "./dom.js";
 import { createTagInput } from "./tagInput.js";
 
@@ -367,8 +368,9 @@ function createTable(collection, handlers) {
           label: column.label,
           onCommit: (value) => handlers.onRowValue(collection.key, rowId, column.key, value)
         });
-        td.append(control.element, control.error);
-        cells.set(column.key, { kind: "input", control, column });
+        const rollButton = column.type === "roll" ? button({ label: "Roll", variant: "btn-small", onclick: () => handlers.onRowRoll(collection.key, rowId, column.key) }) : null;
+        td.append(control.element, control.error, rollButton);
+        cells.set(column.key, { kind: "input", control, column, rollButton });
       }
 
       tr.append(td);
@@ -466,6 +468,7 @@ function createTable(collection, handlers) {
             cell.restore.disabled = use.used === 0;
           } else {
             cell.control.element.setAttribute("aria-label", `${cell.column.label}, ${rowName}`);
+            cell.rollButton?.setAttribute("aria-label", `Roll ${cell.column.label}: ${rowName}`);
             cell.control.set(row.values[key], errorOf(errors, `collections.${collection.key}.${row.id}.${key}`));
           }
         }
@@ -677,9 +680,31 @@ export function mountSheetPage(root, handlers) {
     const notice = h("div", { id: "sheet-update", class: "sheet-update", hidden: true }, noticeText, button({ id: "sheet-update-review", label: "Review changes", onclick: () => handlers.onReviewUpdate() }));
     const problems = h("div", { id: "sheet-problems" });
     const orphans = h("div", { id: "sheet-orphans" });
+    const rollResult = h("div", { id: "sheet-roll-result", class: "roll-slot", role: "status", "aria-live": "polite" });
+    const rollGroups = new Map();
 
-    replace(content, bar, notice, problems, ...panels, orphans);
-    return { controls, pools, tables, conditions, barTitle, notice, noticeText, problems, orphans, characterName };
+    for (const roll of template.rolls) {
+      const key = roll.group || "Rolls";
+      rollGroups.set(key, [...(rollGroups.get(key) ?? []), roll]);
+    }
+
+    const rollsPanel = template.rolls.length
+      ? section(
+          { id: "sheet-rolls", title: "Rolls", description: "Rolls read this sheet's current values and are kept in the roll log." },
+          [...rollGroups].map(([title, rolls]) =>
+            h(
+              "div",
+              { class: "preset-group" },
+              h("h3", { class: "preset-title", text: title }),
+              h("div", { class: "toolbar" }, rolls.map((roll) => button({ label: roll.label, title: roll.expression, onclick: () => handlers.onRoll(roll.key) })))
+            )
+          ),
+          rollResult
+        )
+      : h("div", {}, rollResult);
+
+    replace(content, bar, notice, problems, rollsPanel, ...panels, orphans);
+    return { controls, pools, tables, conditions, barTitle, notice, noticeText, problems, orphans, characterName, rollResult };
   }
 
   function updateAside(view, computed, sheet) {
@@ -711,6 +736,16 @@ export function mountSheetPage(root, handlers) {
   }
 
   return {
+    showRolls(rolls) {
+      if (built) {
+        replace(built.rollResult, ...rolls.map(({ roll, text }) => resultCard(roll, text)));
+      }
+    },
+    showRollError(reason) {
+      if (built) {
+        replace(built.rollResult, h("p", { class: "field-error", text: reason }));
+      }
+    },
     focusRow(collectionKey, rowId) {
       built?.tables.get(collectionKey)?.focusRow(rowId);
     },

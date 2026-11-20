@@ -9,6 +9,7 @@ import { initDocuments } from "./app/documents.js";
 import { collectUnusedFiles } from "./app/maintenance.js";
 import { initLibrary } from "./app/library.js";
 import { initPalette } from "./app/palette.js";
+import { initRolls } from "./app/rolls.js";
 import { initSheet } from "./app/sheet.js";
 import { createRouter } from "./app/router.js";
 import { initSettings } from "./app/settings.js";
@@ -152,6 +153,7 @@ async function boot() {
   initLibrary(ctx);
   initCharacter(ctx);
   initSheet(ctx);
+  initRolls(ctx);
   initSystems(ctx);
   initDice(ctx);
   initDocuments(ctx);

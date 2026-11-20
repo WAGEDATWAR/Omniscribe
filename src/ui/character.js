@@ -133,8 +133,9 @@ export function mountCharacterPage(root, handlers) {
   );
   const sheetRoot = h("div", { id: "character-sheet", hidden: true });
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
+  const rollsRoot = h("div", { id: "character-rolls", hidden: true });
 
-  replace(root, header, nav, overview, sheetRoot, pdfRoot);
+  replace(root, header, nav, overview, sheetRoot, rollsRoot, pdfRoot);
 
   let shownId = null;
 
@@ -217,6 +218,7 @@ export function mountCharacterPage(root, handlers) {
       overview.hidden = sub !== "overview";
       sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";
+      rollsRoot.hidden = sub !== "rolls";
 
       setValue(name, character.name, force);
       setValue(player, character.player, force);

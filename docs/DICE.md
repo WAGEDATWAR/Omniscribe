@@ -4,7 +4,7 @@
 > the roll log and the dice table page. Sheet values and the formula language are `docs/SHEET.md`; the choices
 > are `DECISIONS.md` G-16, A-8, D-1 to D-15.
 
-**Status:** P3 in progress. Built: the grammar, the roll engine, presets, the log and the dice table page. Still to build: a character's Rolls page and the Sheet roll buttons.
+**Status:** P3 in progress. Built: the grammar, the roll engine, presets, the log and the dice table page. The character's Rolls page and the Sheet roll buttons are built too; what remains is the phase gate.
 
 ---
 

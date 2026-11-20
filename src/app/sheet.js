@@ -29,6 +29,20 @@ export function initSheet(ctx) {
     return verdict;
   }
 
+  function showResults(results) {
+    const good = results.filter((result) => result.ok);
+
+    if (good.length) {
+      view.showRolls(good);
+    }
+
+    const bad = results.find((result) => !result.ok);
+
+    if (bad) {
+      view.showRollError(bad.error.message);
+    }
+  }
+
   function restoreSheet(id, sheet) {
     store.updateCharacter(id, { sheet });
   }
@@ -172,6 +186,35 @@ export function initSheet(ctx) {
       const used = Math.max((row?.[fieldKey]?.used ?? 0) + delta, 0);
 
       store.setRowValue(id, collectionKey, rowId, fieldKey, { used });
+    },
+    async onRoll(rollKey) {
+      const preset = ctx.rolling.findPreset(currentId(), `system:${rollKey}`);
+
+      if (preset) {
+        showResults(await ctx.rolling.fire(preset, { characterId: currentId() }));
+      }
+    },
+    async onRowRoll(collectionKey, rowId, fieldKey) {
+      const template = resolution()?.template;
+      const character = store.getCharacter(currentId());
+      const computed = template && character?.sheet ? evaluateSheet(template, character.sheet) : null;
+      const row = computed?.collections[collectionKey]?.find((entry) => entry.id === rowId);
+      const column = template?.collections.find((entry) => entry.key === collectionKey)?.fields.find((entry) => entry.key === fieldKey);
+      const expression = typeof row?.values[fieldKey] === "string" ? row.values[fieldKey].trim() : "";
+
+      if (!expression) {
+        view.showRollError(`${column?.label ?? "This"} has no roll written yet.`);
+        return;
+      }
+
+      const name = typeof row.values.name === "string" && row.values.name.trim() ? row.values.name.trim() : "Row";
+      const result = await ctx.rolling.roll(expression, {
+        characterId: character.id,
+        label: `${name}: ${column.label}`,
+        item: { get: (field) => row.values[field] }
+      });
+
+      showResults([result]);
     },
     onCondition: (name) => store.toggleCondition(currentId(), name),
     onRest(restId) {

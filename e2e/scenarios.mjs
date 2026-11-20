@@ -1457,5 +1457,72 @@ export const scenarios = [
       await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
       assertClean(page);
     }
+  },
+  {
+    name: "the sheet rolls system rolls and a row's roll field, and both are logged",
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+      await type(page, "#sheet-f-might", "16");
+      await page.click("#sheet-add-attacks");
+      await page.waitFor('document.querySelectorAll("[data-collection=attacks] .sheet-row").length === 1');
+
+      await page.evaluate('[...document.querySelectorAll("#sheet-rolls button")].find((button) => button.textContent === "Might check").click(); true');
+      await page.waitFor('document.querySelector("#sheet-roll-result .roll-total")');
+      assert.match(await page.evaluate('document.querySelector("#sheet-roll-result .roll-explain").textContent'), /@might\.mod \(3\)/);
+
+      await page.evaluate('document.querySelector("[data-collection=attacks] .sheet-row button[aria-label^=\\"Roll Damage\\"]").click(); true');
+      await page.waitFor('document.querySelector("#sheet-roll-result .roll-label").textContent.includes("Damage")');
+      assert.match(await page.evaluate('document.querySelector("#sheet-roll-result .roll-explain").textContent'), /^1d6 \[\d\] = \d$/);
+
+      await go(page, "#/dice", "#dice-title");
+      await page.evaluate('(() => { const select = document.querySelector("#dice-character"); select.value = select.options[1].value; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()');
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a character keeps saved rolls and macros that persist, reorder and delete with an undo",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Roller");
+      await page.click('.subnav-link[data-page="rolls"]');
+      await page.waitFor('!document.querySelector("#character-rolls").hidden && document.querySelector("#preset-form")');
+
+      await type(page, "#preset-label", "Bad");
+      await type(page, "#preset-expression", "d20 +");
+      await page.click("#preset-save");
+      await page.waitFor('!document.querySelector("#preset-error").hidden');
+      assert.equal(await page.evaluate('document.querySelectorAll("#preset-list .preset-row").length'), 0);
+
+      await type(page, "#preset-expression", "1d20 + 5");
+      await type(page, "#preset-label", "Longsword");
+      await page.click("#preset-save");
+      await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 1');
+
+      await type(page, "#preset-label", "Strike");
+      await type(page, "#preset-expression", "");
+      await type(page, "#preset-steps", "Hit = 1d20 + 5\nDamage = 1d8 + 3");
+      await page.click("#preset-save");
+      await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 2');
+
+      await page.evaluate('document.querySelector("#preset-list button[aria-label=\\"Roll Strike\\"]").click(); true');
+      await page.waitFor('document.querySelectorAll("#rolls-result .roll-result").length === 2');
+      assert.match(await page.evaluate('document.querySelector("#rolls-recent").textContent'), /Strike: Damage/);
+
+      await page.evaluate('document.querySelector("#preset-list button[aria-label=\\"Move Strike up\\"]").click(); true');
+      await page.waitFor('document.querySelector("#preset-list .preset-row strong").textContent === "Strike"');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 2');
+      assert.equal(await page.evaluate('document.querySelector("#preset-list .preset-row strong").textContent'), "Strike");
+
+      await page.evaluate('document.querySelector("#preset-list button[aria-label=\\"Delete Strike\\"]").click(); true');
+      await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 1');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll("#preset-list .preset-row").length === 2');
+      assertClean(page);
+    }
   }
 ];

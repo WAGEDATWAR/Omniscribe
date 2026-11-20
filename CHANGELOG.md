@@ -11,6 +11,12 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ### Added (P3, in progress)
 
+- **A character's Rolls page** (`#/character/<id>/rolls`): saved rolls with a name, group and an optional
+  critical threshold; macros written as `name = expression` lines that fire as separate logged rolls sharing a
+  group; add, edit, reorder, delete with undo; the system's rolls; and the character's recent rolls. The Sheet
+  page gains a Rolls panel for the system's rolls and a Roll button on every `roll` field in a list row (which
+  reads its own row through `$`). Pools and macros (DEF-010, DEF-011) are done. 2 more browser scenarios and
+  2 more accessibility states.
 - **The dice table** (`#/dice`, `Alt+5`, under Library): an expression field with live validation, quick dice,
   advantage and disadvantage, "roll as" a character so `@references` read their sheet, the system's saved
   rolls, a result card, and a persistent roll log (500, newest first) with search, a per-character view with
