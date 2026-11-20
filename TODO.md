@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**P0 to P3 are done (0.4.0). P4, characters in depth (inventory, abilities, familiars, relations, journal), is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0 to P4 are done (0.5.0). P5, campaigns (records, roster, party view, sessions, initiative, handouts), is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
@@ -40,7 +40,7 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
       rests, the system editor, derived systems, import and export, the generic system, then 5e and 3.5e.
       (DEF-001, DEF-003, DEF-005, DEF-006, DEF-007, DEF-070, DEF-077)
 - [x] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
-- [~] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
+- [x] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
       (DEF-002, DEF-063, DEF-079)
 - [ ] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P3 is done (0.4.0). P4 has its spec (`docs/CHARACTER.md`); the code is next, in the order of its section 9.
+P4 is done (0.5.0). P5 (campaigns) is next; its spec comes first.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -90,7 +90,7 @@ P3 is done (0.4.0). P4 has its spec (`docs/CHARACTER.md`); the code is next, in 
 - [x] `M` `P4` Familiars: record, present toggle and promotion to a character in one undo step. Editing a familiar's
       own sheet in place is DEF-087.
 - [x] `M` `P4` Palette entries, Overview summary, browser scenarios and accessibility states for every page.
-- [ ] `H` `P4` Phase gate twice, release 0.5.0.
+- [x] `H` `P4` Phase gate twice, release 0.5.0.
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed

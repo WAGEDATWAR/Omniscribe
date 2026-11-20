@@ -4,7 +4,9 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
-### Added (P4, in progress)
+## [0.5.0] - P4 characters in depth
+
+### Added
 
 - `docs/CHARACTER.md`, written before the code: inventory with containers, carry weight and wallets,
   abilities, journal, relations with a derived reciprocal view, a progression log and familiars with their
