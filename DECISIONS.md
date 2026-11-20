@@ -83,9 +83,16 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | D-2 | **The RNG is injected.** Production uses `crypto.getRandomValues`; tests use a seeded generator. | locked |
 | D-3 | **Limits:** at most 1,000 dice per term, 1,000,000 sides, 500 characters per expression, and an explosion cap. Over a limit is an error, not a clamp. | locked |
 | D-4 | **Every roll records its explanation:** the resolved expression, each die and the total. A total with no breakdown is a bug. | locked |
-| D-5 | **The roll log is bounded** (default 500) and persists. | provisional |
+| D-5 | **The roll log is bounded** (default 500) and persists, oldest dropped first. | locked |
 | D-6 | **The dice table is a roller page plus a log.** An optional 3D animated scene is a later layer on top; the result always comes from the engine, and the scene only plays it back (DEF-012). | locked |
 | D-8 | **The 3D scene uses vendored three.js** (G-4 exception, recorded here and in `src/vendor/three/SOURCE.md`), lazy-loaded only when the scene is enabled. Dice tumble by scripted animation that lands on the face the engine already chose; there is no physics engine, which keeps it small and makes the result deterministic. Chosen over a bespoke renderer because polyhedral dice (d4 to d20) are costly to hand-build. | locked |
+| D-9 | **Dice are an opt-in mode of the formula language.** A dice expression is a formula plus dice terms, parsed by the same parser with dice enabled, so references, functions, `if`, limits and errors are one thing. A sheet formula can never roll. | locked |
+| D-10 | **The random source is `int(max)`, uniform from 1 to max**, by rejection sampling over `crypto.getRandomValues`; tests use a seeded and a scripted source. | locked |
+| D-11 | **Advantage and disadvantage apply to a single d20 term** (`d20adv`, or a roll option on the first d20 term without one); `adv` is shorthand for `2d20kh1`. | locked |
+| D-12 | **A pool counts successes minus failures** (`cs`, `cf`) after rerolls, explosions and keep or drop; a pool with failures and no successes is a botch. Modifiers apply in a fixed order, not the order written. | locked |
+| D-13 | **A roll records every die and every reference it read**, plus flags (critical, fumble, botch); one pure `explain` sentence serves the log, the result card and screen readers. | locked |
+| D-14 | **System presets live in the system file; character presets live on the character** (`rollPresets`, migration 4). A macro is an ordered list of rolls sharing a group id, each recorded on its own. | locked |
+| D-15 | **A roll is one action from the sheet and has no animation in P3**; the result is announced in a polite live region. | locked |
 | D-7 | **Random tables (loot, encounters) are data on the dice engine.** A table is rows with weights or ranges that can roll dice, reference other tables and award items; it ships after v1 (DEF-014). The roll record already carries nested terms, so no model change is needed. | locked |
 
 ## Persistence (P-series)

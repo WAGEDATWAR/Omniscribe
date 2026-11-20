@@ -4,6 +4,13 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added (P3, in progress)
+
+- `docs/DICE.md`, written before the code: dice as an opt-in mode of the formula language, the term grammar
+  (keep, drop, explode, reroll, min, max, pools, advantage), resolution and the roll record, presets and
+  macros, the bounded log, the dice table page, limits and the test plan. Decisions D-9 to D-15; deferrals
+  DEF-082 and DEF-083.
+
 ## [0.3.0] - P2 the sheet engine and game systems
 
 ### Added

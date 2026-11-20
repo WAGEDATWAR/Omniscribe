@@ -229,6 +229,9 @@ the confirmation.
 
 ### Roll
 
+`docs/DICE.md` 5 owns the current shape (every die, every reference read, flags and an explanation). The block
+below is the original sketch and is superseded where they differ.
+
 ```text
 Roll {
   id, at, characterId | null, campaignId | null,

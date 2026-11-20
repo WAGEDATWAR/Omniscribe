@@ -38,6 +38,8 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-010 | Dice pools with success counting | grammar term and fixtures | P3 | scheduled |
 | DEF-011 | Macros: one preset that fires several rolls | attack then damage | P3 | scheduled |
 | DEF-012 | Optional animated 3D dice scene | D-6; plays back an engine result, never decides one; vendored three.js, no physics (D-8) | post-v1 | scheduled |
+| DEF-082 | Custom-face dice such as `d[1,2,2,3]` | beyond the P3 grammar | post-v1 | scheduled |
+| DEF-083 | Roll log export and a statistics view | after the log exists | post-v1 | scheduled |
 | DEF-013 | Secret rolls hidden from the shared log | needs campaign context | P5 | scheduled |
 | DEF-014 | Random tables (loot, encounters) with nested rolls and item awards | D-7; `docs/TABLES.md` is written first | post-v1 | scheduled |
 

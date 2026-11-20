@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**P0, P1 and P2 are done (0.3.0). P3, the dice table, is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0 to P2 are done (0.3.0, CI green). P3, the dice table, has its spec (`docs/DICE.md`); the code is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
@@ -39,7 +39,7 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [x] **P2 - The sheet engine and game systems.** Templates, formulas, value sheet, pools, conditions,
       rests, the system editor, derived systems, import and export, the generic system, then 5e and 3.5e.
       (DEF-001, DEF-003, DEF-005, DEF-006, DEF-007, DEF-070, DEF-077)
-- [ ] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011)
+- [~] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
 - [ ] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
       (DEF-002, DEF-063, DEF-079)
 - [ ] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
@@ -63,38 +63,21 @@ are resolved.
 
 ## Next Up
 
-P2 is done. P3 is next: write `docs/DICE.md` first, then the grammar, the roller and the dice table.
-The items below are small follow-ups.
+P3, in order. Spec first: `docs/DICE.md` is written; the code follows it.
 
-- [ ] `L` Commit the P2 engine work (needs your go-ahead).
-- [ ] `L` Watch one transient failure seen once locally: Chrome exiting before DevTools was ready on a
-      first launch. The other transient (a scenario that cancelled and reopened a confirmation) was a real
-      app bug, fixed in 0.2.0 and now covered by a deterministic scenario. If the launch failure recurs,
-      the runner prints the scenario name and saves a screenshot to `test-results/e2e/`.
-- [ ] `L` Bump `actions/checkout` and `actions/setup-node` in CI (GitHub is retiring Node 20 for actions).
-- [x] `H` `P2` `docs/SHEET.md`: the template format, the formula language, evaluation, pools, rests,
-      orphans and derivation (S-1 to S-16, A-8).
-- [x] `VH` `P2` `src/sheet/formula.js`: tokenizer, parser, static checks, budgeted evaluator; unit tests
-      and a 4,000-case hostile-input fuzz test (formula half of DEF-070).
-- [x] `H` `P2` `src/sheet/template.js`, `resolve.js`, `evaluate.js`: validation with cycle detection,
-      derivation, evaluation, reconcile and rests.
-- [x] `H` `P2` The generic system as JSON, plus a d20-style core and a derived fixture that exercise every
-      pattern in the reference sheets.
-- [x] `H` `P2` Character `sheet` record and `template` pin: schema, migration 3, store actions with undo,
-      the versioned system registry and its storage.
-- [x] `H` `P2` The Sheet page (`#/character/<id>/sheet`): system picker, typed inputs that explain a refusal,
-      derived values and modifiers, pools as numbers or boxes, row tables with use counters, conditions,
-      orphans, rests, errors beside the value, change system with Undo.
-- [x] `H` `P2` The Game systems page and editor: list, new (from a base or empty), derive, import, export,
-      delete, and a JSON editor with live validation by path that saves new versions.
-- [x] `M` `P2` Browser scenarios and accessibility states for the Sheet page, the systems page, the editor
-      and the new-system dialog.
-- [x] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006).
-- [x] `M` `P2` The newer-version diff (DEF-003).
-- [x] `M` `L` The navigation is a collapsible left sidebar (a drawer on phones) instead of a popup.
-- [x] `H` `P2` The visual system editor (DEF-078).
-- [ ] `M` Review the Sheet page and the visual editor by eye on a real phone (both pass the accessibility
-      audit; layout has not been judged on a device).
+- [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
+      tests (D-9 to D-15).
+- [ ] `H` `P3` Dice mode in `src/sheet/formula.js` (dice terms and every modifier, with static checks) and
+      `src/dice/rng.js`; exact fixtures on a scripted source.
+- [ ] `H` `P3` `src/dice/roll.js` and `explain.js`: resolution, the result record, flags, limits; distribution
+      tests on a seeded source and a hostile-input fuzz test (dice half of DEF-070).
+- [ ] `M` `P3` Schema migration 4 (`character.rollPresets`), `src/dice/presets.js`, the `rolls` store and a
+      bounded persistent log with undoable clear.
+- [ ] `H` `P3` The dice table page (`#/dice`, `Alt+5`): roller, roll as, presets, result, log.
+- [ ] `M` `P3` A character's Rolls page and roll buttons on the Sheet page (system presets, row rolls).
+- [ ] `M` `P3` Pools (DEF-010) and macros (DEF-011) in the grammar, the presets and the page.
+- [ ] `M` `P3` Browser scenarios and accessibility states for every page and dialog above.
+- [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed
 
