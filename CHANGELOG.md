@@ -4,12 +4,14 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [0.4.0] - P3 the dice table
+
 ### Fixed
 
 - On a phone the navigation drawer opened behind its own scrim, so taps dismissed it instead of navigating.
   Below 900px the sidebar is now a fixed overlay above the scrim. The scenario hit-tests the real stacking.
 
-### Added (P3, in progress)
+### Added
 
 - **A character's Rolls page** (`#/character/<id>/rolls`): saved rolls with a name, group and an optional
   critical threshold; macros written as `name = expression` lines that fire as separate logged rolls sharing a

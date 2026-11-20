@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**P0 to P2 are done (0.3.0, CI green). P3, the dice table, has its spec (`docs/DICE.md`); the code is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0 to P3 are done (0.4.0). P4, characters in depth (inventory, abilities, familiars, relations, journal), is next.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
