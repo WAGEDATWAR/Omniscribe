@@ -42,9 +42,9 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [x] **P3 - The dice table.** Grammar, roller, `@refs`, presets, log. (DEF-010, DEF-011, DEF-082, DEF-083)
 - [x] **P4 - Character pages.** Inventory, abilities, familiars, relations, journal, progression.
       (DEF-002, DEF-063, DEF-079)
-- [~] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
+- [x] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
-- [ ] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
+- [~] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
       PDF sheet with the upload override. (DEF-022, DEF-030, DEF-032, DEF-033, DEF-052, DEF-064,
       DEF-071, DEF-080)
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P4 is done (0.5.0). P5 has its spec (`docs/CAMPAIGN.md`); the code is next, in the order of its section 12.
+P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in slices A to F.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -100,6 +100,15 @@ P4 is done (0.5.0). P5 has its spec (`docs/CAMPAIGN.md`); the code is next, in t
 - [x] `H` `P5` Initiative tracker (DEF-040).
 - [x] `M` `P5` Secret rolls (DEF-013), palette entries, scenarios and accessibility states for every page.
 - [x] `H` `P5` Phase gate twice, release 0.6.0.
+- [x] `H` `P6` `docs/EXCHANGE.md`: the zip container, backup and restore, bundles, revisions, integrity, search,
+      the generated sheet (X-1 to X-12).
+- [ ] `H` `P6-A` `src/zip.js` (writer, capped reader), backup and restore with review, quota warnings (DEF-030, DEF-071, DEF-033).
+- [ ] `H` `P6-B` Character and campaign bundles with an import review (DEF-052).
+- [ ] `H` `P6-C` Revisions and the integrity check with repair (DEF-032).
+- [ ] `M` `P6-D` Search everywhere.
+- [ ] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
+- [ ] `M` `P6-F` Portrait cropping, handout PDFs in the viewer, familiar sheet editor, translation (DEF-022, DEF-090, DEF-087, DEF-080).
+- [ ] `H` `P6` Phase gate twice, release 0.7.0.
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 

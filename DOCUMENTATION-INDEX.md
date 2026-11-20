@@ -43,8 +43,8 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record, presets, the log, the dice table | designed (P3) |
 | `docs/PDF.md` | PDF attachments, portraits, the vendored reader, the viewer, the upload override; the generated sheet arrives in P6 | built |
 | `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | built (P4) |
-| `docs/CAMPAIGN.md` | Campaigns: roster, party view, sessions, initiative, handouts, secrets | designed (P5) |
-| `docs/CAMPAIGNS.md` | Campaigns, roster, party view, sessions, initiative, handouts | planned (P5) |
+| `docs/CAMPAIGN.md` | Campaigns: roster, party view, sessions, initiative, handouts, secrets | built (P5) |
+| `docs/EXCHANGE.md` | Zip container, backup and restore, bundles, revisions, integrity, search, the generated sheet | designed (P6) |
 | `docs/PERSISTENCE.md` | Storage backends, autosave, the tab guard, migration; backups and revisions arrive in P6 | built |
 | `docs/UI.md` | Layout, tokens, page anatomy, interaction, accessibility, responsive | built |
 

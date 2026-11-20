@@ -18,5 +18,10 @@ export const LIMITS = Object.freeze({
   rollLog: 500,
   pdfBytes: 25 * 1024 * 1024,
   portraitBytes: 8 * 1024 * 1024,
-  importBytes: 25 * 1024 * 1024
+  importBytes: 25 * 1024 * 1024,
+  zipEntries: 6000,
+  zipInflatedBytes: 512 * 1024 * 1024,
+  zipEntryBytes: 64 * 1024 * 1024,
+  zipRatio: 200,
+  zipRatioFloor: 1024 * 1024
 });

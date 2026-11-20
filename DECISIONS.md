@@ -168,6 +168,23 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | K-11 | **Campaigns appear in the Library as tiles** beside characters, with shared search and a status filter; there is no separate hub page. | locked |
 | K-12 | **Automation stays out of P5:** no attack or damage resolution, no ticking conditions, no maps. Conditions on initiative are DEF-088. | locked |
 
+## Exchange (X-series)
+
+| # | Decision | Status |
+|---|---|---|
+| X-1 | **The zip container is our own, over the platform's deflate.** `src/zip.js` writes and reads stored and deflate-raw entries with `CompressionStream` and `DecompressionStream` and its own CRC-32, so nothing is vendored. Already-compressed files are stored. | locked |
+| X-2 | **The zip reader refuses before it inflates.** Caps on entries, total and per-entry size and ratio; no traversal paths, duplicates, zip64, encryption or unknown methods (DEF-071). A refused file changes nothing. | locked |
+| X-3 | **One container shape for backup and bundles:** `manifest.json`, `project.json`, `files/<blobId>`, `files.json`, told apart by `manifest.kind`. Import migrates older schemas and refuses a newer one; blobs are checked by SHA-256. | locked |
+| X-4 | **Restore is a review, then a choice of Replace or Add.** Replace writes a safety backup first and swaps in one transaction; Add never overwrites. Both are one Undo step for the records. | locked |
+| X-5 | **Imported ids are remapped on collision and every link is rewritten in one pass** (roster, relations, containers, attendees); blobs match by hash and are reused. | locked |
+| X-6 | **A bundle is the exchange format between people:** one character or one campaign, its files and the systems it needs; no settings, no roll log. Import shows a review and commits only on confirmation. | locked |
+| X-7 | **Revisions are per character, bounded and labelled-last** (20 each, 50 MB total), taken before risky changes and once per editing session; a deleted character's revisions last 30 days; a revision keeps its blobs reachable (P-6, P-7). | locked |
+| X-8 | **Shared exports leave secrets out by default** (secret session notes, secret rolls); a personal backup keeps everything (K-9). | locked |
+| X-9 | **Backups are user-initiated and local.** The app shows when the last one was made and nags only inside the Data page; it never uploads or schedules one. | locked |
+| X-10 | **Search is a pure in-memory index over records,** rebuilt lazily, capped at 50 hits, accent-insensitive, every word must match, and it never surfaces secrets in a shared view. | locked |
+| X-11 | **The generated sheet uses our own minimal PDF writer** (built-in Helvetica and Courier, WinAnsi), no vendored library; an uploaded PDF overrides it only when marked as the main sheet (G-19). | locked |
+| X-12 | **A backup may carry settings and the roll log as options; a bundle never does.** | locked |
+
 ## Open
 
 | # | Question | Needed by |

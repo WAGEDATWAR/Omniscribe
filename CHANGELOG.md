@@ -4,6 +4,10 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added
+
+- P6 spec: `docs/EXCHANGE.md` and decisions X-1 to X-12 (zip container, backup and restore, bundles, revisions, integrity, search, generated sheet).
+
 ## [0.6.0] - 2026-11-20
 
 ### Fixed
