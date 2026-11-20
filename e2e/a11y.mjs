@@ -76,6 +76,25 @@ async function createSystem(page) {
 
 /* Every new dialog or page joins this list in the same change (U-3). */
 const states = [
+  { name: "dice page, empty", setup: async (page) => openPage(page, "#/dice", "#dice-title") },
+  { name: "dice page with a result, a bad expression and a log", setup: async (page) => {
+    await openPage(page, "#/dice", "#dice-title");
+    await page.evaluate(`(() => {
+      const input = document.querySelector("#dice-expression");
+      input.value = "4d6kh3";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    await page.click("#dice-roll");
+    await page.waitFor('document.querySelector("#dice-result .roll-total")');
+    await page.evaluate(`(() => {
+      const input = document.querySelector("#dice-expression");
+      input.value = "4d6x";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    await page.waitFor('document.querySelector("#dice-expression-message").classList.contains("field-error")');
+  } },
   { name: "game systems page", setup: async (page) => openPage(page, "#/systems", "#systems-title") },
   { name: "new game system dialog", setup: async (page) => {
     await openPage(page, "#/systems", "#systems-title");

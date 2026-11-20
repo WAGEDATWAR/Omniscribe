@@ -99,6 +99,12 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
       return enqueue(() => backend.apply([{ store: "templates", delete: [`${id}@${version}`] }]));
     },
 
+    listRolls: () => backend.getAll("rolls"),
+
+    saveRolls({ put = [], remove = [] }) {
+      return enqueue(() => backend.apply([{ store: "rolls", delete: remove, put: put.map((roll) => [roll.id, roll]) }]));
+    },
+
     getBlob: (id) => backend.get("blobs", id),
 
     async listBlobs() {

@@ -13,6 +13,7 @@ test("the game systems hub and editor routes parse and round trip", () => {
   assert.equal(routeHref("systems"), "#/systems");
   assert.equal(viewForShortcut("4"), "systems");
   assert.ok(VIEWS.some((view) => view.id === "systems" && view.shortcut === "Alt+4"));
+  assert.ok(VIEWS.some((view) => view.id === "dice" && view.shortcut === "Alt+5"));
 });
 
 test("slugify makes a valid id from a name", () => {

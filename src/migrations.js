@@ -20,7 +20,15 @@ function addSheet(project) {
   return { ...project, characters };
 }
 
-export const MIGRATIONS = Object.freeze([addDocuments, addSheet]);
+function addRollPresets(project) {
+  const characters = (project.characters ?? []).map((character) => (
+    character && typeof character === "object" ? { rollPresets: [], ...character } : character
+  ));
+
+  return { ...project, characters };
+}
+
+export const MIGRATIONS = Object.freeze([addDocuments, addSheet, addRollPresets]);
 
 export const SCHEMA_VERSION = 1 + MIGRATIONS.length;
 

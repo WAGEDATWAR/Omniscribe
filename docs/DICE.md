@@ -4,7 +4,7 @@
 > the roll log and the dice table page. Sheet values and the formula language are `docs/SHEET.md`; the choices
 > are `DECISIONS.md` G-16, A-8, D-1 to D-15.
 
-**Status:** designed (P3). Nothing below is built yet; `TODO.md` says which parts exist.
+**Status:** P3 in progress. Built: the grammar, the roll engine, presets, the log and the dice table page. Still to build: a character's Rolls page and the Sheet roll buttons.
 
 ---
 
@@ -146,7 +146,7 @@ Term {
 ```text
 1d20 [14] + @str.mod (3) = 17
 4d6kh3 [6, 5, 3, ~2~] = 14
-8d10cs>=8cf=1 [9, 8, 8, 5, 3, 1, 1, 10] = 3 successes (4 - 1)
+8d10cs>=8cf=1 [9, 8, 8, 5, 3, 1, 1, 10] = 2 (4 successes - 2 failures)
 ```
 
 Dropped dice are struck (`~2~`), exploded dice are marked `!`, rerolled dice show `r`. A total with no
@@ -177,7 +177,7 @@ A preset's expression is validated when it is saved, with the same errors as a t
 
 - Every roll is appended to a **bounded, persistent log**: 500 entries by default, oldest dropped first. It
   lives in the `rolls` store, one record per roll, saved with the rest of the data (P-10).
-- The log can be filtered by character and searched by label or expression, and one entry can be **rolled
+- The log is shown per character when one is chosen, with an option to show every character's rolls, and can be searched by label or expression, and one entry can be **rolled
   again** with the same expression and character (a new roll, never a replay).
 - **Clear log** asks first and is undoable for the session.
 - The log is not part of a character export unless asked; it is not secret by default (secret rolls are

@@ -11,6 +11,12 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ### Added (P3, in progress)
 
+- **The dice table** (`#/dice`, `Alt+5`, under Library): an expression field with live validation, quick dice,
+  advantage and disadvantage, "roll as" a character so `@references` read their sheet, the system's saved
+  rolls, a result card, and a persistent roll log (500, newest first) with search, a per-character view with
+  an every-character option, roll again, and a clear that can be undone. Schema migration 4 adds
+  `character.rollPresets`; `src/dice/presets.js` validates presets and macros. 3 new browser scenarios, 2 new
+  accessibility states, 10 more unit tests.
 - The formula parser has an opt-in dice mode (`parseFormula(source, { dice: true })`): terms with keep, drop,
   explode, reroll, min, max, pools and advantage. `src/dice/rng.js`, `roll.js` and `explain.js` roll an
   expression against a character's values and record every die. 21 new unit tests (exact scripted fixtures,

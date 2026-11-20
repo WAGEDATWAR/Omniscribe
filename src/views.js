@@ -10,7 +10,8 @@ export const VIEWS = Object.freeze([
   { id: "library", label: "Library", shortcut: "Alt+1", key: "1", description: "Your characters." },
   { id: "data", label: "Data", shortcut: "Alt+2", key: "2", description: "Storage, backup and files." },
   { id: "settings", label: "Settings", shortcut: "Alt+3", key: "3", description: "Appearance, shortcuts and about." },
-  { id: "systems", label: "Game systems", shortcut: "Alt+4", key: "4", description: "Create, derive, import and export game systems." }
+  { id: "systems", label: "Game systems", shortcut: "Alt+4", key: "4", description: "Create, derive, import and export game systems." },
+  { id: "dice", label: "Dice", shortcut: "Alt+5", key: "5", description: "Roll dice with a character's values and keep the log." }
 ]);
 
 export const DEFAULT_VIEW = "library";

@@ -56,12 +56,12 @@ test("the sheet choice must name an existing document and stays in sync", () => 
   );
 });
 
-test("migrations 2 and 3 give stored characters documents, a sheet choice and an empty sheet without touching other fields", () => {
+test("migrations 2 to 4 give stored characters documents, a sheet choice, an empty sheet and no roll presets without touching other fields", () => {
   assert.equal(SCHEMA_VERSION, 1 + MIGRATIONS.length);
 
   const migrated = migrateProject({ version: 1, characters: [{ id: "char_a", name: "Old" }, null, { id: "char_b", documents: [{ keep: true }] }] });
 
-  assert.deepEqual(migrated.characters[0], { documents: [], pdf: { preference: "generated", uploadedId: null }, sheet: null, id: "char_a", name: "Old" });
+  assert.deepEqual(migrated.characters[0], { documents: [], pdf: { preference: "generated", uploadedId: null }, sheet: null, rollPresets: [], id: "char_a", name: "Old" });
   assert.equal(migrated.characters[1], null);
   assert.deepEqual(migrated.characters[2].documents, [{ keep: true }]);
   assert.equal(migrated.version, SCHEMA_VERSION);

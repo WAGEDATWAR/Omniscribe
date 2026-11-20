@@ -1,3 +1,4 @@
+import { normalizePresets } from "./dice/presets.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION } from "./migrations.js";
 import { ID_PATTERN } from "./sheet/template.js";
@@ -25,6 +26,7 @@ const CHARACTER_FIELDS = new Set([
   "documents",
   "pdf",
   "sheet",
+  "rollPresets",
   "extensions",
   "createdAt",
   "updatedAt"
@@ -159,6 +161,7 @@ export function normalizeCharacter(raw, { now = Date.now() } = {}) {
     documents,
     pdf: normalizePdfChoice(raw.pdf, documents),
     sheet: normalizeSheet(raw.sheet),
+    rollPresets: normalizePresets(raw.rollPresets),
     extensions,
     createdAt,
     updatedAt: finiteNumber(raw.updatedAt, createdAt)

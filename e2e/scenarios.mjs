@@ -808,7 +808,7 @@ export const scenarios = [
         return { value, documents: record.documents, pdf: record.pdf };
       })()`);
 
-      assert.equal(stored.value, 3);
+      assert.equal(stored.value, 4);
       assert.deepEqual(stored.documents, []);
       assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
 
@@ -1373,6 +1373,88 @@ export const scenarios = [
       await page.click('.subnav-link[data-page="overview"]');
       await page.waitFor('!document.querySelector("#character-overview").hidden');
       assert.equal(await page.evaluate('document.querySelector("#character-name").value'), "Navigator");
+      assertClean(page);
+    }
+  },
+  {
+    name: "the dice page rolls a typed expression, validates as you type and opens with Alt+5",
+    async run(page, context) {
+      await boot(page, context);
+      await page.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { code: "Digit5", key: "5", altKey: true, bubbles: true })); true');
+      await page.waitFor('location.hash === "#/dice" && !document.querySelector("#page-dice").hidden');
+      assert.equal(await page.evaluate('document.querySelector(".side-link[data-view=dice]").getAttribute("aria-current")'), "page");
+
+      await type(page, "#dice-expression", "4d6x");
+      await page.waitFor('document.querySelector("#dice-expression-message").classList.contains("field-error")');
+      assert.match(await page.evaluate('document.querySelector("#dice-expression-message").textContent'), /Unknown dice modifier/);
+
+      await type(page, "#dice-expression", "2d6 + 3");
+      await page.waitFor('document.querySelector("#dice-expression-message").textContent === "Looks good."');
+      await page.click("#dice-roll");
+      await page.waitFor('document.querySelector("#dice-result .roll-total")');
+      const total = Number(await page.evaluate('document.querySelector("#dice-result .roll-total").textContent'));
+      assert.ok(total >= 5 && total <= 15);
+      assert.match(await page.evaluate('document.querySelector("#dice-result .roll-explain").textContent'), /^2d6 \+ 3 \[\d, \d\]|2d6 \[\d, \d\]/);
+      assert.equal(await page.evaluate('document.querySelectorAll("#dice-log .roll-entry").length'), 1);
+
+      await page.click("#dice-roll");
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a character's values and system rolls feed the dice, and the log persists across a reload",
+    async run(page, context) {
+      await boot(page, context);
+      await startGeneric(page);
+      await type(page, "#sheet-f-might", "16");
+      await saved(page);
+
+      await go(page, "#/dice", "#dice-title");
+      await page.waitFor('document.querySelector("#dice-character").options.length === 2');
+      await page.evaluate('(() => { const select = document.querySelector("#dice-character"); select.value = select.options[1].value; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()');
+      await page.waitFor('document.querySelector("#dice-presets").textContent.includes("Might check")');
+
+      await page.evaluate('[...document.querySelectorAll("#dice-presets button")].find((button) => button.textContent === "Might check").click(); true');
+      await page.waitFor('document.querySelector("#dice-result .roll-total")');
+      const total = Number(await page.evaluate('document.querySelector("#dice-result .roll-total").textContent'));
+      assert.ok(total >= 4 && total <= 23, `total ${total}`);
+      assert.match(await page.evaluate('document.querySelector("#dice-result .roll-explain").textContent'), /@might\.mod \(3\)/);
+
+      await type(page, "#dice-expression", "1d20 + @nothing");
+      await page.click("#dice-roll");
+      await page.waitFor('document.querySelector("#dice-result .field-error")');
+      assert.match(await page.evaluate('document.querySelector("#dice-result .field-error").textContent'), /@nothing has no value/);
+
+      await page.reload();
+      await go(page, "#/dice", "#dice-title");
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#dice-log .roll-entry").textContent'), /Might check/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "the roll log rolls again, filters by character and clears with an undo",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/dice", "#dice-title");
+      await type(page, "#dice-expression", "d20");
+      await page.click("#dice-roll");
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 1');
+      await page.evaluate('document.querySelector("#dice-log .roll-entry .btn").click(); true');
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
+
+      await type(page, "#dice-search", "nomatch");
+      await page.waitFor('document.querySelector("#dice-log .roll-empty")');
+      await type(page, "#dice-search", "d20");
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
+
+      await page.click("#dice-clear");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#dice-log .roll-empty")');
+      await page.evaluate('document.querySelector(".toast button").click(); true');
+      await page.waitFor('document.querySelectorAll("#dice-log .roll-entry").length === 2');
       assertClean(page);
     }
   }

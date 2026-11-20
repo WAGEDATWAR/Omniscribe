@@ -2,7 +2,9 @@ import { createActions } from "./app/actions.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
 import { initCharacter } from "./app/character.js";
+import { createRolling } from "./app/rolling.js";
 import { initData } from "./app/data.js";
+import { initDice } from "./app/dice.js";
 import { initDocuments } from "./app/documents.js";
 import { collectUnusedFiles } from "./app/maintenance.js";
 import { initLibrary } from "./app/library.js";
@@ -142,6 +144,8 @@ async function boot() {
   };
 
   ctx.actions = createActions(ctx);
+  ctx.rolling = createRolling(ctx);
+  await ctx.rolling.log.load();
   sync = initSync(ctx);
 
   initShell(ctx);
@@ -149,6 +153,7 @@ async function boot() {
   initCharacter(ctx);
   initSheet(ctx);
   initSystems(ctx);
+  initDice(ctx);
   initDocuments(ctx);
   initData(ctx);
   initSettings(ctx);

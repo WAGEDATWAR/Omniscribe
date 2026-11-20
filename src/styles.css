@@ -1359,6 +1359,101 @@ textarea.input {
 
 /* Responsive */
 
+/* Dice */
+
+.radio-row,
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 14px;
+  min-height: 32px;
+}
+
+.preset-title {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.roll-slot:empty {
+  display: none;
+}
+
+.roll-result {
+  padding: 14px 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.roll-result + .roll-result {
+  margin-top: 8px;
+}
+
+.roll-result.is-critical {
+  border-color: var(--success);
+}
+
+.roll-result.is-fumble {
+  border-color: var(--danger);
+}
+
+.roll-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.roll-total {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.roll-explain {
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.roll-flags {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.roll-log {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roll-entry,
+.roll-empty {
+  padding: 10px 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.roll-entry-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roll-entry-total {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.roll-entry .btn {
+  margin-top: 6px;
+}
+
 @media (max-width: 899px) {
   .sidebar {
     position: fixed;

@@ -63,17 +63,17 @@ are resolved.
 
 ## Next Up
 
-P3, in order. Spec first: `docs/DICE.md` is written; the code follows it.
+P3 is part built: the engine, presets, log and the dice table are in; the Rolls page and Sheet buttons remain. Spec first: `docs/DICE.md` is written; the code follows it.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
-- [ ] `H` `P3` Dice mode in `src/sheet/formula.js` (dice terms and every modifier, with static checks) and
+- [x] `H` `P3` Dice mode in `src/sheet/formula.js` (dice terms and every modifier, with static checks) and
       `src/dice/rng.js`; exact fixtures on a scripted source.
-- [ ] `H` `P3` `src/dice/roll.js` and `explain.js`: resolution, the result record, flags, limits; distribution
+- [x] `H` `P3` `src/dice/roll.js` and `explain.js`: resolution, the result record, flags, limits; distribution
       tests on a seeded source and a hostile-input fuzz test (dice half of DEF-070).
-- [ ] `M` `P3` Schema migration 4 (`character.rollPresets`), `src/dice/presets.js`, the `rolls` store and a
+- [x] `M` `P3` Schema migration 4 (`character.rollPresets`), `src/dice/presets.js`, the `rolls` store and a
       bounded persistent log with undoable clear.
-- [ ] `H` `P3` The dice table page (`#/dice`, `Alt+5`): roller, roll as, presets, result, log.
+- [x] `H` `P3` The dice table page (`#/dice`, `Alt+5`): roller, roll as, presets, result, log.
 - [ ] `M` `P3` A character's Rolls page and roll buttons on the Sheet page (system presets, row rolls).
 - [ ] `M` `P3` Pools (DEF-010) and macros (DEF-011) in the grammar, the presets and the page.
 - [ ] `M` `P3` Browser scenarios and accessibility states for every page and dialog above.
