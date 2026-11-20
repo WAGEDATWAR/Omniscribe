@@ -1,6 +1,6 @@
 # Omniscribe - Live Status
 
-**Planned. Nothing is built.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
+**P0 is built and gated; it awaits its first commit and CI run.** The charter is `docs/OMNISCRIBE.md`; this file is reality.
 
 **How to read this file.** Status is `[ ]` open, `[~]` in progress, `[x]` done. Every open item carries an
 effort (`L`, `M`, `H`, `VH`) and its phase. The ledger (`DEFERRALS.md`) is authoritative for deferrals.
@@ -11,15 +11,20 @@ revision.
 
 ## Where we are
 
-The planning documents are written. No code, tooling or git history exists yet. The foundations, tooling
-and process are taken from Loreweaver, with the improvements its review found built in from the start
-(tab guard, persistent storage, per-record saves, a split `main.js`, a size cap).
+Omniscribe runs: a library of characters, a character page that autosaves, undo and redo, a command
+palette, light and dark themes, a Data page, per-record IndexedDB storage with a blob store, and a tab
+guard. The tooling and process come from Loreweaver, with the improvements its review found built in
+from the start (tab guard, persistent storage, per-record saves, a split `main.js`, a size cap).
+
+Gates run green locally: syntax, lint, format, 75 unit tests, 16 browser scenarios, accessibility over
+17 states (zero violations), contrast, deferrals, deferral scan and release check. P0 is not called done
+until the work is committed and the same gates pass in CI on GitHub (DEF-068).
 
 ## Phases
 
 Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression blocks the next phase.
 
-- [ ] **P0 - Foundation.** Tooling, shell, schema, store, persistence with blobs, tab guard, library,
+- [~] **P0 - Foundation.** Tooling, shell, schema, store, persistence with blobs, tab guard, library,
       character stub, palette, git and the GitHub repository. (DEF-068, DEF-072)
 - [ ] **P1 - Characters and PDFs.** Identity record, portrait, PDF attachments, the vendored PDF viewer,
       tags, status.
@@ -37,8 +42,8 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
       accessibility. (DEF-060, DEF-061, DEF-062, DEF-065, DEF-066, DEF-067)
 - [ ] **v1.**
-- [ ] **P8 - Expansion (post-v1).** Random tables, 3D dice, PDF form mapping, importers, encryption.
-      (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051)
+- [ ] **P8 - Expansion (post-v1, DEF-014).** Random tables, 3D dice, PDF form mapping, importers,
+      encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051)
 
 ## Decisions needed
 
@@ -50,31 +55,33 @@ are resolved.
 
 ## Next Up
 
-P0, in order. Nothing outside P0.
+Finish P0, then P1. Nothing past P1.
 
-- [ ] `H` `P0` Scaffold: copy and adapt the Loreweaver tooling (`check`, `lint`, `format`, `serve`,
-      `deferrals`, `deferral-scan`, `release-check`, `contrast`, the e2e harness, runner and a11y
-      scenarios), `package.json`, `RELEASING.md` and CI. Rename the namespace. Add the `eval`,
-      file-size and vendor-`SOURCE.md` checks.
+- [ ] `L` `P0` Commit the work, push, and confirm every gate is green in CI (needs your go-ahead to commit).
 - [ ] `L` `P0` Branch protection and Pages settings on the GitHub repository (DEF-068).
-- [ ] `M` `P0` Shell: `index.html`, design tokens (dark and light), header, brand menu, toast, dialog
-      helpers, the one page anatomy (U-6).
-- [ ] `M` `P0` `views.js` route table and hash router; `projects.js` library item model.
-- [ ] `H` `P0` `schema.js`, `migrations.js` (version 1), `store.js` and `history.js` with a character
-      factory and undo and redo.
-- [ ] `H` `P0` `storage.js` and `storage/idb.js`: record stores, the blob store, a serialized write queue,
-      dirty tracking (P-10), autosave status, persistent-storage request (P-12).
-- [ ] `M` `P0` `tabGuard.js` and the cross-tab pause (P-11).
-- [ ] `M` `P0` Library hub: tiles, search, sort, New, Duplicate, Delete with confirmation. Centralised
-      `limits.js` (DEF-072).
-- [ ] `M` `P0` Character page stub with the shared anatomy: name, system label, tags, notes.
-- [ ] `M` `P0` Command palette and shortcuts dialog; the Data and Settings stubs.
-- [ ] `M` `P0` Tests: schema, store, history, migrations, storage, views; e2e: boot, create, reload,
-      two-tab guard; a11y over every dialog.
-- [ ] `L` `P0` A sample character shown on first run.
+- [ ] `L` `P0` Watch two transient failures seen once each locally: Chrome exiting before DevTools was
+      ready on a first launch, and one browser scenario failing in a full gate pass (the name was not
+      captured). Neither reproduced in 10 further runs, four of them under CPU load. If either recurs,
+      the runner prints the scenario name and saves a screenshot to `test-results/e2e/`.
+- [ ] `H` `P1` Write `docs/PDF.md` first: libraries and versions, limits, the viewer, the active-content
+      risk and the upload override (G-19, P-14).
+- [ ] `H` `P1` Vendor the PDF reader under `src/vendor/` with `SOURCE.md`; lazy-load it on PDF pages.
+- [ ] `M` `P1` `src/files.js`: magic-byte and size checks (P-13), refused with a reason.
+- [ ] `H` `P1` Character `documents`: upload, list, rename, remove, set as the override; blobs through
+      `storage.putBlob`.
+- [ ] `M` `P1` Portrait upload, shown on tiles and the character page.
+- [ ] `M` `P1` Decide how Duplicate treats blobs (copy, or share with a reference count); today a copy
+      would share `portraitBlobId`.
+- [ ] `M` `P1` PDF viewer page, with e2e for upload, reload, view and refusal, and a11y states.
 
 ## Recently landed
 
+- **P0 foundation (0.1.0, uncommitted).** Tooling adapted from Loreweaver (with `eval`, file-size and
+  vendor checks added), the shell and page anatomy, routes, the pure schema, migrations, history and
+  store, per-record storage with a blob store and an in-memory twin, autosave, the tab guard with a
+  stale-tab dialog, the Library, the character page, the command palette, Data and Settings pages,
+  `docs/PERSISTENCE.md` and `docs/UI.md`. The browser scenarios caught and fixed a real bug: a focused
+  field was not refreshed after loading another tab's changes.
 - Planning documents: charter, architecture, decisions, deferrals, plan, agents notes, index.
 - Decisions from the first review: generic system first with in-app custom and derived systems, 5e and
   3.5e as built-in bases, GitHub Pages plus Windows and Android releases, a vendored PDF library with a

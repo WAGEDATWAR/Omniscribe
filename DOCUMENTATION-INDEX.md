@@ -37,14 +37,14 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 |---|---|---|
 | `docs/ARCHITECTURE.md` | Application shape, data flow, canonical model, storage layout, module map | designed |
 | `docs/SHEET.md` | Game systems, derivation, the formula language, evaluation, pools, conditions, orphans | planned (P2) |
-| `docs/TABLES.md` | Random tables: loot and encounters as data on the dice engine | planned (post-v1) |
+| `docs/TABLES.md` | Random tables: loot and encounters as data on the dice engine (DEF-014) | planned (P8) |
 | `docs/DISTRIBUTION.md` | Pages, the Windows build, the APK, the release workflow | planned (P7) |
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record | planned (P3) |
 | `docs/PDF.md` | PDF attachments, the vendored libraries, the viewer, the generated sheet and the upload override | planned (P1) |
 | `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | planned (P4) |
 | `docs/CAMPAIGNS.md` | Campaigns, roster, party view, sessions, initiative, handouts | planned (P5) |
-| `docs/PERSISTENCE.md` | Storage backends, migration, integrity, backups, revisions, recovery | planned (P0) |
-| `docs/UI.md` | Layout, tokens, page anatomy, interaction, accessibility, responsive | planned (P0) |
+| `docs/PERSISTENCE.md` | Storage backends, autosave, the tab guard, migration; backups and revisions arrive in P6 | built |
+| `docs/UI.md` | Layout, tokens, page anatomy, interaction, accessibility, responsive | built |
 
 A "planned" document is written **before** the code in its phase (spec first) and is listed as built
 once the phase's gate holds.

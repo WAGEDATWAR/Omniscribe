@@ -3,7 +3,7 @@
 > **Scope.** This document owns the application shape, data flow, the canonical model, module boundaries
 > and the storage layout. Product intent is `docs/OMNISCRIBE.md`; choices are `DECISIONS.md`.
 
-**Status:** designed. No module below exists yet; P0 builds the foundation rows.
+**Status:** designed; the P0 rows of the module map are built.
 
 ---
 
@@ -268,11 +268,13 @@ Records reference blobs by id. A record with a missing blob shows a visible "fil
 | Path | Purpose | Phase |
 |---|---|---|
 | `index.html` | Shell, dialogs, toast region | P0 |
-| `src/main.js` | Boot and route dispatch only | P0 |
-| `src/app/*.js` | One controller per surface | P0+ |
+| `src/main.js` | Boot and wiring only | P0 built |
+| `src/app/*.js` | One controller per surface (`shell`, `library`, `character`, `data`, `settings`, `palette`, `shortcuts`, `sync`) plus the `router`, `bus`, `actions` and `theme` helpers | P0 built |
 | `src/schema.js`, `src/migrations.js` | Factories, normalization, append-only upgrades | P0 |
 | `src/store.js`, `src/history.js` | The only writer; bounded undo | P0 |
-| `src/storage.js`, `src/storage/idb.js` | Records, blobs, write queue, autosave state | P0 |
+| `src/storage.js`, `src/storage/idb.js`, `src/storage/memory.js` | Records, blobs, serialized writes; the IndexedDB and in-memory backends | P0 built |
+| `src/autosave.js` | Debounced autosave over the dirty set | P0 built |
+| `src/ui/*.js` | Renderers: `dom` helpers and page anatomy, `library`, `character`, `tagInput`, `data`, `settings`, `commandPalette`, `feedback` | P0 built |
 | `src/tabGuard.js` | One writer tab over `BroadcastChannel` | P0 |
 | `src/views.js`, `src/projects.js` | Routes; the library item model | P0 |
 | `src/commands.js`, `src/ui/commandPalette.js` | Palette | P0 |

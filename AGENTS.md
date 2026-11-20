@@ -44,7 +44,7 @@ Built on the same foundations as Loreweaver (`C:\Dev\Web Projects\Loreweaver`).
 `npm run contrast`, `npm run deferrals`, `npm run deferral-scan`, `npm run release:check`.
 
 `npm test` is the fast tier; a filename always runs that file. `npm start` serves the app locally.
-These scripts do not exist until P0 copies and adapts them from Loreweaver.
+`npm run a11y` and `npm run test:e2e` need Chrome or Edge (set `CHROME_PATH` to override).
 
 ## Conventions
 

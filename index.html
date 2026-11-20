@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="app-version" content="0.1.0">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="description" content="A local-first app that keeps tabletop RPG characters in one place.">
+  <title>Omniscribe</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="src/styles.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <button id="brand-btn" class="brand" type="button" popovertarget="app-menu" aria-label="Omniscribe app menu">
+      <svg class="brand-mark" viewBox="0 0 64 64" width="26" height="26" aria-hidden="true" focusable="false">
+        <path d="M32 7 54 20v24L32 57 10 44V20z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="32" cy="32" r="8" fill="none" stroke="currentColor" stroke-width="5"/>
+      </svg>
+      <span class="brand-name">Omniscribe</span>
+    </button>
+
+    <nav id="app-menu" class="menu" popover aria-label="App">
+      <a class="menu-item" href="#/library" data-menu-close>Library <kbd>Alt+1</kbd></a>
+      <a class="menu-item" href="#/data" data-menu-close>Data <kbd>Alt+2</kbd></a>
+      <a class="menu-item" href="#/settings" data-menu-close>Settings <kbd>Alt+3</kbd></a>
+      <hr class="menu-rule">
+      <button class="menu-item" id="menu-palette" type="button" data-menu-close>Command palette <kbd>Ctrl+K</kbd></button>
+      <button class="menu-item" id="menu-shortcuts" type="button" data-menu-close>Keyboard shortcuts <kbd>?</kbd></button>
+    </nav>
+
+    <div class="topbar-spacer"></div>
+
+    <span id="save-state" class="save-state" role="status" data-state="saved">Saved</span>
+
+    <div class="topbar-actions">
+      <button id="undo-btn" class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled></button>
+      <button id="redo-btn" class="icon-btn" type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled></button>
+      <button id="palette-btn" class="icon-btn" type="button" aria-label="Command palette" title="Command palette (Ctrl+K)"></button>
+    </div>
+  </header>
+
+  <div id="storage-notice" class="notice notice-warning" role="alert" hidden>
+    Storage is unavailable in this browser, so nothing you change will be kept after you close the app.
+  </div>
+
+  <section id="fatal" class="fatal" role="alert" hidden>
+    <h1 id="fatal-title" class="page-title">Omniscribe cannot start</h1>
+    <p id="fatal-message"></p>
+  </section>
+
+  <main id="main" tabindex="-1">
+    <section id="page-library" class="page" aria-labelledby="library-title" hidden></section>
+    <section id="page-character" class="page" aria-labelledby="character-title" hidden></section>
+    <section id="page-data" class="page" aria-labelledby="data-title" hidden></section>
+    <section id="page-settings" class="page" aria-labelledby="settings-title" hidden></section>
+  </main>
+
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+  <dialog id="palette-dialog" class="dialog palette" aria-label="Command palette">
+    <input id="palette-input" class="input palette-input" type="text" role="combobox" aria-label="Search commands" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" autocomplete="off" placeholder="Type a command or a character name">
+    <ul id="palette-list" class="palette-list" role="listbox" aria-label="Commands"></ul>
+    <p id="palette-empty" class="palette-empty" hidden>No matching commands.</p>
+  </dialog>
+
+  <dialog id="shortcuts-dialog" class="dialog" aria-labelledby="shortcuts-title">
+    <h2 id="shortcuts-title" class="dialog-title">Keyboard shortcuts</h2>
+    <table class="shortcut-table">
+      <caption class="visually-hidden">Keyboard shortcuts</caption>
+      <thead><tr><th scope="col">Keys</th><th scope="col">Action</th></tr></thead>
+      <tbody id="shortcuts-body"></tbody>
+    </table>
+    <form method="dialog" class="dialog-actions">
+      <button class="btn btn-primary" value="close">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <h2 id="confirm-title" class="dialog-title">Confirm</h2>
+    <p id="confirm-message"></p>
+    <form method="dialog" class="dialog-actions">
+      <button id="confirm-cancel" class="btn" value="cancel">Cancel</button>
+      <button id="confirm-ok" class="btn btn-primary" value="confirm">Confirm</button>
+    </form>
+  </dialog>
+
+  <dialog id="stale-dialog" class="dialog" aria-labelledby="stale-title" aria-describedby="stale-message">
+    <h2 id="stale-title" class="dialog-title">Changed in another tab</h2>
+    <p id="stale-message">Omniscribe is open in another tab and saved changes there. Saving is paused here so nothing is overwritten by accident.</p>
+    <form method="dialog" class="dialog-actions">
+      <button id="stale-keep" class="btn" value="keep">Keep my changes</button>
+      <button id="stale-reload" class="btn btn-primary" value="reload">Load the other tab's changes</button>
+    </form>
+  </dialog>
+</body>
+</html>

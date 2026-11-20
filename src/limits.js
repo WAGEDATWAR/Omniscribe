@@ -1,0 +1,16 @@
+export const LIMITS = Object.freeze({
+  characters: 5000,
+  nameLength: 200,
+  playerLength: 200,
+  systemLength: 100,
+  summaryLength: 2000,
+  notesLength: 100000,
+  tags: 50,
+  tagLength: 40,
+  searchLength: 200,
+  historySteps: 100,
+  rollLog: 500,
+  pdfBytes: 25 * 1024 * 1024,
+  portraitBytes: 8 * 1024 * 1024,
+  importBytes: 25 * 1024 * 1024
+});

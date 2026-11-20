@@ -85,7 +85,7 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 
 | # | Decision | Status |
 |---|---|---|
-| P-1 | **IndexedDB primary.** Blobs need it, so the `localStorage` fallback covers only the small project index and a read-only notice. | locked |
+| P-1 | **IndexedDB primary, no `localStorage` copy.** Blobs need IndexedDB and a second copy would be a second source of truth, so when it is unavailable the app runs in memory with a persistent warning (see `docs/PERSISTENCE.md`). | locked |
 | P-2 | **Schema migrations are append-only**; a released migration is never edited. | locked |
 | P-3 | **Storage uses the `omniscribe` namespace.** | locked |
 | P-4 | **Autosave with explicit status**, never manual-save-only. | locked |

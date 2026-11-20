@@ -5,7 +5,16 @@ value-based sheet the program can compute with, inventory, familiars, relations,
 dice table that rolls with a character's own values. No account, no backend; your browser is the
 database.
 
-**Status:** planned. See `TODO.md`.
+**Status:** P0 foundation built: a library of characters with autosave, undo, a command palette and local storage. Sheets, PDFs, dice and campaigns are the next phases. See `TODO.md`.
+
+## Run it
+
+```
+npm install
+npm start
+```
+
+Then open http://localhost:4173. `npm run test:all` runs the unit and browser tests.
 
 ## The one idea
 

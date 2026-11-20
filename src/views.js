@@ -1,0 +1,52 @@
+import { isValidId } from "./utils.js";
+
+/**
+ * Pages and routes. The location hash is the only view state (U-5).
+ *
+ * Hub pages have no editor menu. A character route opens one character.
+ */
+export const VIEWS = Object.freeze([
+  { id: "library", label: "Library", shortcut: "Alt+1", key: "1", description: "Your characters." },
+  { id: "data", label: "Data", shortcut: "Alt+2", key: "2", description: "Storage, backup and files." },
+  { id: "settings", label: "Settings", shortcut: "Alt+3", key: "3", description: "Appearance, shortcuts and about." }
+]);
+
+export const DEFAULT_VIEW = "library";
+
+const HUB_IDS = new Set(VIEWS.map((view) => view.id));
+
+export function isHubView(value) {
+  return HUB_IDS.has(value);
+}
+
+export function isEditorView(value) {
+  return value === "character";
+}
+
+export function viewForShortcut(key) {
+  return VIEWS.find((view) => view.key === key)?.id ?? null;
+}
+
+/** `#/character/<id>` becomes `{ view, id }`; anything unknown is the library. */
+export function parseRoute(hash) {
+  const parts = String(hash ?? "").replace(/^#\/?/, "").split("?")[0].split("/").filter(Boolean);
+  const [head, id] = parts;
+
+  if (isHubView(head) && parts.length === 1) {
+    return { view: head, id: null };
+  }
+
+  if (head === "character" && isValidId(id) && parts.length === 2) {
+    return { view: "character", id };
+  }
+
+  return { view: DEFAULT_VIEW, id: null };
+}
+
+export function routeHref(view, id = null) {
+  if (view === "character" && id) {
+    return `#/character/${id}`;
+  }
+
+  return `#/${isHubView(view) ? view : DEFAULT_VIEW}`;
+}
