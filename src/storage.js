@@ -87,6 +87,18 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
       });
     },
 
+    async listSystems() {
+      return (await backend.getAll("templates")).map((record) => record.file);
+    },
+
+    putSystem(file) {
+      return enqueue(() => backend.apply([{ store: "templates", put: [[`${file.id}@${file.version}`, { key: `${file.id}@${file.version}`, file, addedAt: now() }]] }]));
+    },
+
+    deleteSystem(id, version) {
+      return enqueue(() => backend.apply([{ store: "templates", delete: [`${id}@${version}`] }]));
+    },
+
     getBlob: (id) => backend.get("blobs", id),
 
     async listBlobs() {

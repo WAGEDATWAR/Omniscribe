@@ -12,7 +12,15 @@ function addDocuments(project) {
  * Append-only project migrations (P-2). `MIGRATIONS[k]` upgrades schema version `k + 1` to `k + 2`.
  * A released migration is never edited; a new one is appended and the version follows from the length.
  */
-export const MIGRATIONS = Object.freeze([addDocuments]);
+function addSheet(project) {
+  const characters = (project.characters ?? []).map((character) => (
+    character && typeof character === "object" ? { sheet: null, ...character } : character
+  ));
+
+  return { ...project, characters };
+}
+
+export const MIGRATIONS = Object.freeze([addDocuments, addSheet]);
 
 export const SCHEMA_VERSION = 1 + MIGRATIONS.length;
 

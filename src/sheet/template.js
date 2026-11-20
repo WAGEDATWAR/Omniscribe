@@ -489,6 +489,12 @@ function checkField(field, path, errors, warnings, { inCollection }) {
     }
   }
 
+  if (field.subFormats !== undefined) {
+    if (!isObject(field.subFormats) || Object.entries(field.subFormats).some(([name, format]) => !isObject(field.subs) || !Object.hasOwn(field.subs, name) || !DISPLAY_FORMATS.includes(format))) {
+      err("subFormats", "subFormats must map a sub name to one of " + DISPLAY_FORMATS.join(", "));
+    }
+  }
+
   if (field.subs !== undefined) {
     if (inCollection) {
       err("subs", "subs are not available on collection fields");

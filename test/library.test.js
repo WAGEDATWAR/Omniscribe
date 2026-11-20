@@ -18,6 +18,7 @@ test("parseRoute reads hub and character routes and falls back to the library", 
   assert.deepEqual(parseRoute("#/settings?x=1"), { view: "settings", id: null, sub: null });
   assert.deepEqual(parseRoute("#/character/char_ab12"), { view: "character", id: "char_ab12", sub: "overview" });
   assert.deepEqual(parseRoute("#/character/char_ab12/pdf"), { view: "character", id: "char_ab12", sub: "pdf" });
+  assert.deepEqual(parseRoute("#/character/char_ab12/sheet"), { view: "character", id: "char_ab12", sub: "sheet" });
   assert.deepEqual(parseRoute("#/character/char_ab12/overview"), { view: "character", id: "char_ab12", sub: "overview" });
   assert.deepEqual(parseRoute("#/character/bad id"), library);
   assert.deepEqual(parseRoute("#/character/char_a/extra"), library);

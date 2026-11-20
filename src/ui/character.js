@@ -131,9 +131,10 @@ export function mountCharacterPage(root, handlers) {
       field({ id: "character-notes", label: "Notes", wide: true }, notes)
     )
   );
+  const sheetRoot = h("div", { id: "character-sheet", hidden: true });
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
 
-  replace(root, header, nav, overview, pdfRoot);
+  replace(root, header, nav, overview, sheetRoot, pdfRoot);
 
   let shownId = null;
 
@@ -180,6 +181,7 @@ export function mountCharacterPage(root, handlers) {
   }
 
   return {
+    sheetRoot,
     pdfRoot,
     render(character, { force: forced = false, sub = "overview", portraitUrl = null } = {}) {
       const force = forced || character.id !== shownId;
@@ -213,6 +215,7 @@ export function mountCharacterPage(root, handlers) {
 
       drawNav(character.id, sub);
       overview.hidden = sub !== "overview";
+      sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";
 
       setValue(name, character.name, force);

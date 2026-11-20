@@ -53,7 +53,7 @@ rule is the content of a system file (G-1, G-5).
 ```text
 { "key", "label", "type", "default", "min", "max", "integer", "maxLength",
   "choices": [ { "value", "label" } ], "formula", "format", "marker", "hint",
-  "subs": { "name": "formula" } }
+  "subs": { "name": "formula" }, "subFormats": { "name": "signed" } }
 ```
 
 | `type` | Stored value | Rules |
@@ -67,7 +67,7 @@ rule is the content of a system file (G-1, G-5).
 
 `subs` attach named derived values to any field, addressed as `@key.name`. A d20 ability field `str` with
 `"subs": { "mod": "floor((@str - 10) / 2)" }` is read as `@str.mod`, which is exactly the reference the
-dice use (G-16). `marker` is a display-only string such as a dagger; it has no effect on any value.
+dice use (G-16). `subFormats` chooses how a sub is shown (`signed` makes a modifier read `+3`). `marker` is a display-only string such as a dagger; neither has any effect on a value.
 
 ### Pool
 

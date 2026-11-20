@@ -63,7 +63,7 @@ async function sampleToPdfPage(page) {
   await page.evaluate('document.querySelector(".tile-link").click(); true');
   await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
   await page.click('.subnav-link[data-page="pdf"]');
-  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")');
+  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")?.textContent.includes("No PDF sheets yet")');
 }
 
 function samplePixels(page) {
@@ -700,7 +700,7 @@ export const scenarios = [
         return { value, documents: record.documents, pdf: record.pdf };
       })()`);
 
-      assert.equal(stored.value, 2);
+      assert.equal(stored.value, 3);
       assert.deepEqual(stored.documents, []);
       assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
 

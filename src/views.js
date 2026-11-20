@@ -15,6 +15,7 @@ export const DEFAULT_VIEW = "library";
 
 export const CHARACTER_PAGES = Object.freeze([
   { id: "overview", label: "Overview" },
+  { id: "sheet", label: "Sheet" },
   { id: "pdf", label: "PDF sheets" }
 ]);
 

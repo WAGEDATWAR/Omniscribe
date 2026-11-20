@@ -1,6 +1,8 @@
 import { createHistory } from "./history.js";
 import { LIMITS } from "./limits.js";
 import { createCharacter, createDocument, normalizeCharacter, sameCharacter } from "./schema.js";
+import { applyRest as applySheetRest, createSheet, reconcileSheet } from "./sheet/evaluate.js";
+import { TEMPLATE_LIMITS } from "./sheet/template.js";
 
 const IMMUTABLE_FIELDS = ["id", "createdAt"];
 
@@ -81,6 +83,11 @@ export function createStore({ characters = [], now = Date.now, history = createH
 
     commit(state.characters.map((character) => (character.id === id ? next : character)), { key });
     return next;
+  }
+
+  function updateSheet(id, recipe, key = null) {
+    const current = find(id);
+    return current?.sheet ? update(id, { sheet: recipe(current.sheet) }, { key }) : null;
   }
 
   return {
@@ -197,6 +204,85 @@ export function createStore({ characters = [], now = Date.now, history = createH
     selectDocument(documentId) {
       ui = { ...ui, selectedDocumentId: documentId };
       emit("ui");
+    },
+    startSheet(characterId, ref, template) {
+      return find(characterId) ? update(characterId, { sheet: { template: { id: ref.id, version: ref.version }, ...createSheet(template) } }) : null;
+    },
+    changeSystem(characterId, ref, template) {
+      const current = find(characterId);
+
+      if (!current?.sheet) {
+        return null;
+      }
+
+      const { sheet, moved, restored } = reconcileSheet(template, current.sheet);
+      const next = update(characterId, { sheet: { ...sheet, template: { id: ref.id, version: ref.version } } });
+      return next ? { character: next, moved, restored } : null;
+    },
+    setSheetValue(characterId, key, value) {
+      return updateSheet(characterId, (sheet) => ({ ...sheet, values: { ...sheet.values, [key]: value } }), `${characterId}:v:${key}`);
+    },
+    setPool(characterId, poolKey, patch) {
+      return updateSheet(
+        characterId,
+        (sheet) => ({ ...sheet, pools: { ...sheet.pools, [poolKey]: { current: null, temp: 0, ...(sheet.pools[poolKey] ?? {}), ...patch } } }),
+        `${characterId}:p:${poolKey}`
+      );
+    },
+    addRow(characterId, collectionKey, row) {
+      const rows = find(characterId)?.sheet?.collections[collectionKey] ?? [];
+
+      if (rows.length >= TEMPLATE_LIMITS.rows) {
+        return null;
+      }
+
+      return updateSheet(characterId, (sheet) => ({ ...sheet, collections: { ...sheet.collections, [collectionKey]: [...rows, row] } })) ? row : null;
+    },
+    setRowValue(characterId, collectionKey, rowId, field, value) {
+      return updateSheet(
+        characterId,
+        (sheet) => ({
+          ...sheet,
+          collections: {
+            ...sheet.collections,
+            [collectionKey]: (sheet.collections[collectionKey] ?? []).map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+          }
+        }),
+        `${characterId}:r:${collectionKey}:${rowId}:${field}`
+      );
+    },
+    removeRow(characterId, collectionKey, rowId) {
+      const rows = find(characterId)?.sheet?.collections[collectionKey] ?? [];
+      const index = rows.findIndex((row) => row.id === rowId);
+
+      if (index < 0) {
+        return null;
+      }
+
+      updateSheet(characterId, (sheet) => ({ ...sheet, collections: { ...sheet.collections, [collectionKey]: rows.filter((row) => row.id !== rowId) } }));
+      return { row: rows[index], index };
+    },
+    restoreRow(characterId, collectionKey, { row, index }) {
+      const rows = find(characterId)?.sheet?.collections[collectionKey];
+
+      if (!rows || rows.some((item) => item.id === row.id) || rows.length >= TEMPLATE_LIMITS.rows) {
+        return null;
+      }
+
+      const next = [...rows];
+      next.splice(Math.min(index, next.length), 0, row);
+      return updateSheet(characterId, (sheet) => ({ ...sheet, collections: { ...sheet.collections, [collectionKey]: next } })) ? row : null;
+    },
+    toggleCondition(characterId, name) {
+      return updateSheet(characterId, (sheet) => ({
+        ...sheet,
+        conditions: sheet.conditions.some((entry) => entry.name === name)
+          ? sheet.conditions.filter((entry) => entry.name !== name)
+          : [...sheet.conditions, { name, note: "" }]
+      }));
+    },
+    applyRest(characterId, restId, template) {
+      return updateSheet(characterId, (sheet) => applySheetRest(template, sheet, restId));
     },
     restoreCharacter(character) {
       if (!character || find(character.id) || state.characters.length >= LIMITS.characters) {

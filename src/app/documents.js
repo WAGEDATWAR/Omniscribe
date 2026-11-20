@@ -142,6 +142,8 @@ export function initDocuments(ctx) {
       : character.pdf.uploadedId ?? character.documents[0]?.id ?? null;
     const blobKey = `${id}|${character.documents.map((item) => item.blobId).join(",")}`;
 
+    view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing });
+
     if (blobKey !== checkedKey) {
       const present = new Set((await storage.listBlobs()).map((blob) => blob.id));
 
@@ -151,9 +153,8 @@ export function initDocuments(ctx) {
 
       missing = new Set(character.documents.filter((item) => !present.has(item.blobId)).map((item) => item.blobId));
       checkedKey = blobKey;
+      view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing });
     }
-
-    view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing });
 
     const selected = character.documents.find((item) => item.id === selectedId);
     const key = selected && !missing.has(selected.blobId) ? `${selected.id}:${selected.blobId}` : null;

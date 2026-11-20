@@ -7,6 +7,7 @@ import { initDocuments } from "./app/documents.js";
 import { collectUnusedFiles } from "./app/maintenance.js";
 import { initLibrary } from "./app/library.js";
 import { initPalette } from "./app/palette.js";
+import { initSheet } from "./app/sheet.js";
 import { createRouter } from "./app/router.js";
 import { initSettings } from "./app/settings.js";
 import { initShell } from "./app/shell.js";
@@ -17,7 +18,9 @@ import { createAutosave } from "./autosave.js";
 import { loadPrefs, savePrefs } from "./settings.js";
 import { openStorage, requestPersistence } from "./storage.js";
 import { createStore } from "./store.js";
+import { createRegistry } from "./systems.js";
 import { createTabGuard } from "./tabGuard.js";
+import { BUILTIN_FILES } from "./templates/index.js";
 import { createConfirm, createToaster } from "./ui/feedback.js";
 
 const query = (selector) => document.querySelector(selector);
@@ -34,6 +37,20 @@ function showFatal(message) {
   query("#fatal-message").textContent = message;
   query("#fatal").hidden = false;
   query("#main").hidden = true;
+}
+
+async function loadBuiltins() {
+  try {
+    return await Promise.all(BUILTIN_FILES.map((name) => fetch(new URL(`./templates/${name}.json`, import.meta.url)).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Could not load ${name}`);
+      }
+
+      return response.json();
+    })));
+  } catch {
+    return [];
+  }
 }
 
 async function boot() {
@@ -57,6 +74,10 @@ async function boot() {
     return;
   }
 
+  const systems = createRegistry({
+    builtins: await loadBuiltins(),
+    custom: storage.degraded ? [] : await storage.listSystems().catch(() => [])
+  });
   const bus = createBus();
   const router = createRouter();
   const toast = createToaster(query("#toasts"));
@@ -87,6 +108,7 @@ async function boot() {
     store,
     storage,
     blobUrls: createBlobUrls(storage),
+    systems,
     autosave,
     guard,
     router,
@@ -122,6 +144,7 @@ async function boot() {
   initShell(ctx);
   initLibrary(ctx);
   initCharacter(ctx);
+  initSheet(ctx);
   initDocuments(ctx);
   initData(ctx);
   initSettings(ctx);

@@ -24,7 +24,7 @@ async function openPdfPage(page) {
   await page.evaluate('document.querySelector(".tile-link").click(); true');
   await page.waitFor('document.querySelector(".subnav-link[data-page=pdf]")');
   await page.click('.subnav-link[data-page="pdf"]');
-  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")');
+  await page.waitFor('!document.querySelector("#character-pdf").hidden && document.querySelector("#pdf-empty")?.textContent.includes("No PDF sheets yet")');
 }
 
 async function uploadSample(page) {
