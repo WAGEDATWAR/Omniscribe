@@ -427,6 +427,14 @@ export const scenarios = [
       await page.waitFor('!document.querySelector("#sidebar").hidden');
       assert.equal(await page.evaluate('document.querySelector("#sidebar-scrim").hidden'), false);
 
+      const hit = await page.evaluate(`(() => {
+        const link = document.querySelector('#sidebar a[href="#/settings"]');
+        const box = link.getBoundingClientRect();
+        const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return { atPoint: top === link || link.contains(top), sidebarOnTop: Boolean(top?.closest("#sidebar")) };
+      })()`);
+      assert.deepEqual(hit, { atPoint: true, sidebarOnTop: true });
+
       await page.click('#sidebar a[href="#/settings"]');
       await page.waitFor('location.hash === "#/settings"');
       await page.waitFor('document.querySelector("#sidebar").hidden');

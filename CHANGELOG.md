@@ -4,8 +4,17 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Fixed
+
+- On a phone the navigation drawer opened behind its own scrim, so taps dismissed it instead of navigating.
+  Below 900px the sidebar is now a fixed overlay above the scrim. The scenario hit-tests the real stacking.
+
 ### Added (P3, in progress)
 
+- The formula parser has an opt-in dice mode (`parseFormula(source, { dice: true })`): terms with keep, drop,
+  explode, reroll, min, max, pools and advantage. `src/dice/rng.js`, `roll.js` and `explain.js` roll an
+  expression against a character's values and record every die. 21 new unit tests (exact scripted fixtures,
+  seeded distributions, limits, hostile-input fuzz).
 - `docs/DICE.md`, written before the code: dice as an opt-in mode of the formula language, the term grammar
   (keep, drop, explode, reroll, min, max, pools, advantage), resolution and the roll record, presets and
   macros, the bounded log, the dice table page, limits and the test plan. Decisions D-9 to D-15; deferrals

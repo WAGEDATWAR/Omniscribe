@@ -1359,6 +1359,19 @@ textarea.input {
 
 /* Responsive */
 
+@media (max-width: 899px) {
+  .sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    width: min(280px, 85vw);
+    height: auto;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+}
+
 @media (max-width: 640px) {
   .visual-split,
   .field-grid,

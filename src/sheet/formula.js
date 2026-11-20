@@ -52,14 +52,18 @@ function readName(source, start) {
   return end;
 }
 
-function tokenize(source) {
+function tokenize(source, dice = false) {
   const tokens = [];
   let index = 0;
 
   while (index < source.length) {
     const char = source[index];
+    const term = dice && char !== " " ? lexDiceTerm(source, index) : null;
 
-    if (char === " " || char === "\t" || char === "\n" || char === "\r") {
+    if (term) {
+      tokens.push(term);
+      index = term.end;
+    } else if (char === " " || char === "\t" || char === "\n" || char === "\r") {
       index += 1;
     } else if (isDigit(char)) {
       let end = index;
@@ -160,6 +164,216 @@ function tokenize(source) {
   }
 
   return tokens;
+}
+
+
+/* ---- dice terms (dice mode only, docs/DICE.md 2) ---- */
+
+const DICE_LIMITS = Object.freeze({ digits: 9 });
+const COMPARATORS = [">=", "<=", ">", "<", "="];
+
+function matchParen(source, open) {
+  let depth = 0;
+
+  for (let index = open; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (char === '"') {
+      index += 1;
+
+      while (index < source.length && source[index] !== '"') {
+        index += source[index] === "\\" ? 2 : 1;
+      }
+    } else if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function diceStartOk(source, index) {
+  const char = source[index] ?? "";
+  return isDigit(char) || char === "%" || char === "(" || (char === "F" && !isNameChar(source[index + 1] ?? ""));
+}
+
+function readInteger(source, position) {
+  let end = position;
+
+  while (isDigit(source[end] ?? "")) {
+    end += 1;
+  }
+
+  if (end === position) {
+    return null;
+  }
+
+  if (end - position > DICE_LIMITS.digits) {
+    throw new FormulaError("That number is too large for a dice modifier", position);
+  }
+
+  return { value: Number(source.slice(position, end)), end };
+}
+
+function readComparator(source, position) {
+  for (const op of COMPARATORS) {
+    if (source.startsWith(op, position)) {
+      return { op, end: position + op.length };
+    }
+  }
+
+  return null;
+}
+
+const KEEP_DROP = new Set(["kh", "kl", "dh", "dl"]);
+
+function lexModifiers(source, start) {
+  const mods = [];
+  let position = start;
+
+  while (position < source.length) {
+    const rest = source.slice(position, position + 3);
+    let word = null;
+
+    for (const candidate of ["adv", "dis", "min", "max", "kh", "kl", "dh", "dl", "cs", "cf", "ro", "r"]) {
+      if (rest.startsWith(candidate)) {
+        word = candidate;
+        break;
+      }
+    }
+
+    if (source[position] === "!") {
+      let cursor = position + 1;
+      const comparator = readComparator(source, cursor);
+      cursor = comparator ? comparator.end : cursor;
+      const number = readInteger(source, cursor);
+
+      if (comparator && !number) {
+        throw new FormulaError("An explode condition needs a number after the comparison", cursor);
+      }
+
+      mods.push({ kind: "explode", cond: number ? { op: comparator?.op ?? "=", n: number.value } : { op: "max" } });
+      position = number ? number.end : cursor;
+    } else if (word === "adv" || word === "dis") {
+      mods.push({ kind: word });
+      position += 3;
+    } else if (word === "min" || word === "max") {
+      const number = readInteger(source, position + 3);
+
+      if (!number) {
+        throw new FormulaError(`${word} needs a number`, position);
+      }
+
+      mods.push({ kind: word, n: number.value });
+      position = number.end;
+    } else if (word && KEEP_DROP.has(word)) {
+      const number = readInteger(source, position + 2);
+      mods.push({ kind: word, n: number ? number.value : 1 });
+      position = number ? number.end : position + 2;
+    } else if (word === "cs" || word === "cf") {
+      const comparator = readComparator(source, position + 2);
+      const number = comparator ? readInteger(source, comparator.end) : null;
+
+      if (!comparator || !number) {
+        throw new FormulaError(`${word} needs a comparison and a number, such as ${word}>=8`, position);
+      }
+
+      mods.push({ kind: word, cond: { op: comparator.op, n: number.value } });
+      position = number.end;
+    } else if (word === "ro" || word === "r") {
+      const cursor = position + word.length;
+      const comparator = readComparator(source, cursor);
+      const number = readInteger(source, comparator ? comparator.end : cursor);
+
+      if (!number) {
+        throw new FormulaError("A reroll needs a number, such as r1 or r<=2", position);
+      }
+
+      mods.push({ kind: "reroll", once: word === "ro", cond: { op: comparator?.op ?? "=", n: number.value } });
+      position = number.end;
+    } else if (isNameStart(source[position])) {
+      let end = position;
+
+      while (isNameChar(source[end] ?? "")) {
+        end += 1;
+      }
+
+      throw new FormulaError(`Unknown dice modifier "${source.slice(position, end)}"`, position);
+    } else {
+      break;
+    }
+  }
+
+  return { mods, end: position };
+}
+
+/** Reads one whole dice term starting at `start`, or returns null when none starts there. */
+function lexDiceTerm(source, start) {
+  const char = source[start];
+  let count = null;
+  let countSource = null;
+  let afterD;
+
+  if (isDigit(char)) {
+    const number = readInteger(source, start);
+    const mark = source[number.end];
+
+    if (!(mark === "d" || mark === "D") || !diceStartOk(source, number.end + 1)) {
+      return null;
+    }
+
+    count = number.value;
+    afterD = number.end + 1;
+  } else if (char === "(") {
+    const close = matchParen(source, start);
+    const mark = close >= 0 ? source[close + 1] : "";
+
+    if (close < 0 || !(mark === "d" || mark === "D") || !diceStartOk(source, close + 2)) {
+      return null;
+    }
+
+    countSource = source.slice(start + 1, close);
+    afterD = close + 2;
+  } else if ((char === "d" || char === "D") && diceStartOk(source, start + 1)) {
+    afterD = start + 1;
+  } else {
+    return null;
+  }
+
+  let sides = null;
+  let sidesSource = null;
+  let cursor = afterD;
+  const next = source[cursor];
+
+  if (isDigit(next)) {
+    const number = readInteger(source, cursor);
+    sides = number.value;
+    cursor = number.end;
+  } else if (next === "%") {
+    sides = "%";
+    cursor += 1;
+  } else if (next === "F") {
+    sides = "F";
+    cursor += 1;
+  } else {
+    const close = matchParen(source, cursor);
+
+    if (close < 0) {
+      throw new FormulaError("The sides of a die are missing their closing bracket", cursor);
+    }
+
+    sidesSource = source.slice(cursor + 1, close);
+    cursor = close + 1;
+  }
+
+  const { mods, end } = lexModifiers(source, cursor);
+  return { type: "dice", index: start, end, text: source.slice(start, end), count, countSource, sides, sidesSource, mods };
 }
 
 class Parser {
@@ -324,6 +538,25 @@ class Parser {
       throw new FormulaError("The formula ends too soon", this.tokens.at(-1)?.index ?? 0);
     }
 
+    if (token.type === "dice") {
+      const inner = (inputText) => {
+        const parser = new Parser(tokenize(inputText, false));
+        parser.depth = this.depth + 1;
+        parser.nodes = 0;
+        const ast = parser.parse();
+        this.nodes += parser.nodes;
+        return ast;
+      };
+
+      return this.node("dice", {
+        count: token.countSource !== null ? inner(token.countSource) : token.count ?? 1,
+        sides: token.sidesSource !== null ? inner(token.sidesSource) : token.sides,
+        mods: token.mods,
+        text: token.text,
+        end: token.end
+      }, token.index);
+    }
+
     if (token.type === "number") {
       return this.node("number", { value: token.value }, token.index);
     }
@@ -385,11 +618,17 @@ function walk(node, visit) {
     walk(node.operand, visit);
   } else if (node.kind === "call") {
     node.args.forEach((argument) => walk(argument, visit));
+  } else if (node.kind === "dice") {
+    for (const part of [node.count, node.sides]) {
+      if (part && typeof part === "object") {
+        walk(part, visit);
+      }
+    }
   }
 }
 
 /** Parses without throwing: `{ ok, ast, refs, itemFields, error }`. `refs` are `@` paths such as `["str", "mod"]`. */
-export function parseFormula(source) {
+export function parseFormula(source, { dice = false } = {}) {
   if (typeof source !== "string") {
     return { ok: false, error: { message: "A formula must be text", index: null } };
   }
@@ -399,7 +638,7 @@ export function parseFormula(source) {
   }
 
   try {
-    const ast = new Parser(tokenize(source)).parse();
+    const ast = new Parser(tokenize(source, dice)).parse();
     const refs = [];
     const itemFields = new Set();
 
@@ -440,6 +679,12 @@ export function checkFormula(parsed, env) {
       visit(node.right, item);
     } else if (node.kind === "unary") {
       visit(node.operand, item);
+    } else if (node.kind === "dice") {
+      for (const part of [node.count, node.sides]) {
+        if (part && typeof part === "object") {
+          visit(part, item);
+        }
+      }
     } else if (node.kind === "item") {
       if (!item) {
         report("$ can only be used inside a collection row formula or a sum, count or avg test", node);
@@ -629,6 +874,12 @@ function evaluateNode(node, context, budget) {
       return binary(node, context, budget);
     case "call":
       return callFunction(node, context, budget);
+    case "dice":
+      if (!context.dice) {
+        throw new FormulaError("Dice can only be used when rolling", node.index);
+      }
+
+      return context.dice(node, (sub) => evaluateNode(sub, context, budget));
     default:
       throw new FormulaError("Unknown formula part", node.index);
   }
