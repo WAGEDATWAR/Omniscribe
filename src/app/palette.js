@@ -38,6 +38,8 @@ export function initPalette(ctx) {
       }
     });
 
+    commands.push({ id: "sidebar", title: "Show or hide navigation", keywords: "menu sidebar", run: () => bus.emit("sidebar:toggle") });
+
     commands.push({ id: "shortcuts", title: "Show keyboard shortcuts", hint: "?", run: () => bus.emit("shortcuts:open") });
 
     for (const character of store.getState().characters) {

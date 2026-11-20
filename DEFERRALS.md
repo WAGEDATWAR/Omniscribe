@@ -21,10 +21,10 @@ Owners are `P0`-`P7` or `post-v1`.
 |---|---|---|---|---|
 | DEF-001 | An in-app game system editor with create, derive, import and export | S-8 and S-9; built as a validated JSON editor with new, derive, import, export and delete; the visual editor is DEF-078 | P2 | done |
 | DEF-078 | A visual system editor | forms for fields, pools, collections, tables and overlay operations, on top of the JSON editor | P2 | scheduled |
-| DEF-006 | Built-in D&D 5e system as a read-only base | structure and formulas only (G-13); lands after the generic system | P2 | scheduled |
-| DEF-007 | Built-in D&D 3.5e system as a read-only base | same rule as DEF-006 | P2 | scheduled |
+| DEF-006 | Built-in D&D 5e system as a read-only base | structure and formulas only (G-13); built with pre-filled skills, spell slot boxes and hit dice rests | P2 | done |
+| DEF-007 | Built-in D&D 3.5e system as a read-only base | same rule as DEF-006; multiclass base attack and saves, iterative attacks, size, skills and spells | P2 | done |
 | DEF-002 | Item effects that modify sheet values (an equipped item adds to AC) | needs effect records evaluated by the sheet engine, behind the same budget | P4 | scheduled |
-| DEF-003 | Move a character to a newer template version with a diff | S-3; shows added, removed and orphaned fields before applying | P2 | scheduled |
+| DEF-003 | Move a character to a newer template version with a diff | S-3; the Sheet page offers a review of added, removed and changed parts and which values would be kept aside, then moves with Undo | P2 | done |
 | DEF-004 | Level-up assistant driven by template data | automation of progression steps per template | post-v1 | scheduled |
 | DEF-005 | Rest actions: short and long rest reset pools | S-7; `applyRest` is built and tested, the buttons and undo come with the Sheet page | P2 | doing |
 

@@ -363,7 +363,7 @@ test("an overlay that leaves something dangling fails validation after it is app
 test("the built-in systems load through the registry", async () => {
   const { resolved: map, lookup } = await loadBuiltinSystems(async (name) => read(`src/templates/${name}.json`));
 
-  assert.deepEqual(BUILTIN_FILES, ["generic"]);
+  assert.deepEqual(BUILTIN_FILES, ["generic", "dnd35", "dnd5e"]);
   assert.equal(map.get("generic").ok, true);
   assert.equal(lookup("generic", 1).id, "generic");
   assert.equal(lookup("generic", 9), null);
@@ -714,4 +714,26 @@ test("a rest never takes a pool above its maximum or below zero, and the origina
 
   assert.equal(evaluateSheet(setSystem, applyRest(setSystem, damaged, "short")).pools.hp.current, 0);
   assert.equal(applyRest(setSystem, damaged, "nonexistent").pools.hp.current, 5);
+});
+
+test("default rows start every new sheet and are validated by the system", () => {
+  const withDefaults = resolved(mutate(core, (file) => {
+    file.collections[0].defaultRows = [{ name: "Climb", ability: "str" }, { name: "Hide", ability: "dex", ranks: 2 }];
+  }));
+  const sheet = createSheet(withDefaults);
+
+  assert.deepEqual(sheet.collections.skills.map((row) => [row.name, row.ability, row.ranks]), [["Climb", "str", 0], ["Hide", "dex", 2]]);
+  assert.match(sheet.collections.skills[0].id, /^row_/);
+  assert.notEqual(sheet.collections.skills[0].id, createSheet(withDefaults).collections.skills[0].id);
+  assert.equal(evaluateSheet(withDefaults, sheet).collections.skills[1].derived.total, 2 + 0 + 0);
+
+  const bad = validateTemplate(mutate(core, (file) => {
+    file.collections[0].defaultRows = [{ name: "X", ability: "luck" }, { total: 5 }, "junk"];
+  }));
+  const text = messages(bad).join("\n");
+
+  assert.match(text, /defaultRows\.0\.ability: Ability must be one of its listed choices/);
+  assert.match(text, /defaultRows\.1\.total: "total" is not an authored field/);
+  assert.match(text, /defaultRows\.2: a default row must be an object/);
+  assert.match(messages(validateTemplate(mutate(core, (file) => { file.collections[0].defaultRows = "x"; }))).join("\n"), /defaultRows must be a list/);
 });

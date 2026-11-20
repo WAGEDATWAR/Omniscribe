@@ -97,14 +97,16 @@ test("filterCommands ranks prefix matches first and requires every word", () => 
 
 test("preferences normalize, load and save safely", () => {
   assert.deepEqual(normalizePrefs({ theme: "neon", sort: "nope" }), DEFAULT_PREFS);
-  assert.deepEqual(normalizePrefs({ theme: "light", sort: "name" }), { theme: "light", sort: "name" });
+  assert.deepEqual(normalizePrefs({ theme: "light", sort: "name" }), { theme: "light", sort: "name", sidebar: null });
+  assert.equal(normalizePrefs({ sidebar: "closed" }).sidebar, "closed");
+  assert.equal(normalizePrefs({ sidebar: "wide" }).sidebar, null);
 
   const area = { data: {}, getItem(key) { return this.data[key] ?? null; }, setItem(key, value) { this.data[key] = value; } };
 
   assert.deepEqual(loadPrefs(area), DEFAULT_PREFS);
   assert.equal(savePrefs(area, { theme: "light", sort: "name" }), true);
   assert.ok(area.data[PREFS_KEY]);
-  assert.deepEqual(loadPrefs(area), { theme: "light", sort: "name" });
+  assert.deepEqual(loadPrefs(area), { theme: "light", sort: "name", sidebar: null });
   assert.deepEqual(loadPrefs({ getItem() { throw new Error("blocked"); } }), DEFAULT_PREFS);
   assert.equal(savePrefs({ setItem() { throw new Error("blocked"); } }, DEFAULT_PREFS), false);
 });

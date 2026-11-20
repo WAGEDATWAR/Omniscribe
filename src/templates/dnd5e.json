@@ -1,0 +1,1121 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "id": "dnd5e",
+  "version": 1,
+  "name": "D&D 5e",
+  "system": "D&D 5e",
+  "description": "The fifth edition character sheet: ability scores and modifiers, proficiency, saves, skills with expertise, hit points and hit dice, spell slots, spellcasting numbers, attacks and features. Structure and formulas only; no rules text. Derive your own house version from it.",
+  "base": null,
+  "overlay": [],
+  "fields": [
+    {
+      "key": "race",
+      "label": "Race or species",
+      "type": "text"
+    },
+    {
+      "key": "background_name",
+      "label": "Background",
+      "type": "text"
+    },
+    {
+      "key": "alignment",
+      "label": "Alignment",
+      "type": "text"
+    },
+    {
+      "key": "xp",
+      "label": "Experience points",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "level",
+      "label": "Character level",
+      "type": "derived",
+      "formula": "sum(@classes.level)"
+    },
+    {
+      "key": "proficiency",
+      "label": "Proficiency bonus",
+      "type": "derived",
+      "formula": "2 + floor((@level - 1) / 4)",
+      "format": "signed"
+    },
+    {
+      "key": "str",
+      "label": "Strength",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@str - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "dex",
+      "label": "Dexterity",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@dex - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "con",
+      "label": "Constitution",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@con - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "int",
+      "label": "Intelligence",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@int - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "wis",
+      "label": "Wisdom",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@wis - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "cha",
+      "label": "Charisma",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@cha - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "save_prof_str",
+      "label": "Strength save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_prof_dex",
+      "label": "Dexterity save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_prof_con",
+      "label": "Constitution save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_prof_int",
+      "label": "Intelligence save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_prof_wis",
+      "label": "Wisdom save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_prof_cha",
+      "label": "Charisma save proficiency",
+      "type": "flag"
+    },
+    {
+      "key": "save_str",
+      "label": "Strength save",
+      "type": "derived",
+      "formula": "@str.mod + if(@save_prof_str, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "save_dex",
+      "label": "Dexterity save",
+      "type": "derived",
+      "formula": "@dex.mod + if(@save_prof_dex, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "save_con",
+      "label": "Constitution save",
+      "type": "derived",
+      "formula": "@con.mod + if(@save_prof_con, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "save_int",
+      "label": "Intelligence save",
+      "type": "derived",
+      "formula": "@int.mod + if(@save_prof_int, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "save_wis",
+      "label": "Wisdom save",
+      "type": "derived",
+      "formula": "@wis.mod + if(@save_prof_wis, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "save_cha",
+      "label": "Charisma save",
+      "type": "derived",
+      "formula": "@cha.mod + if(@save_prof_cha, @proficiency, 0)",
+      "format": "signed"
+    },
+    {
+      "key": "ac",
+      "label": "Armor class",
+      "type": "number",
+      "default": 10,
+      "min": 0
+    },
+    {
+      "key": "speed",
+      "label": "Speed (ft)",
+      "type": "number",
+      "default": 30,
+      "min": 0
+    },
+    {
+      "key": "initiative_bonus",
+      "label": "Initiative bonus",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "initiative",
+      "label": "Initiative",
+      "type": "derived",
+      "formula": "@dex.mod + @initiative_bonus",
+      "format": "signed"
+    },
+    {
+      "key": "passive_perception",
+      "label": "Passive Perception",
+      "type": "derived",
+      "formula": "sum(@skills.total, $.name == \"Perception\") + 10"
+    },
+    {
+      "key": "inspiration",
+      "label": "Inspiration",
+      "type": "flag"
+    },
+    {
+      "key": "exhaustion",
+      "label": "Exhaustion",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 6
+    },
+    {
+      "key": "death_successes",
+      "label": "Death save successes",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3
+    },
+    {
+      "key": "death_failures",
+      "label": "Death save failures",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3
+    },
+    {
+      "key": "hp_max",
+      "label": "Hit points (maximum)",
+      "type": "number",
+      "default": 1,
+      "min": 1
+    },
+    {
+      "key": "hit_die",
+      "label": "Hit die",
+      "type": "text",
+      "default": "d8"
+    },
+    {
+      "key": "spell_ability",
+      "label": "Spellcasting ability",
+      "type": "choice",
+      "default": "none",
+      "choices": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "str",
+          "label": "Strength"
+        },
+        {
+          "value": "dex",
+          "label": "Dexterity"
+        },
+        {
+          "value": "con",
+          "label": "Constitution"
+        },
+        {
+          "value": "int",
+          "label": "Intelligence"
+        },
+        {
+          "value": "wis",
+          "label": "Wisdom"
+        },
+        {
+          "value": "cha",
+          "label": "Charisma"
+        }
+      ]
+    },
+    {
+      "key": "spell_save_dc",
+      "label": "Spell save DC",
+      "type": "derived",
+      "formula": "if(@spell_ability == \"none\", 0, 8 + @proficiency + if(@spell_ability == \"str\", @str.mod, if(@spell_ability == \"dex\", @dex.mod, if(@spell_ability == \"con\", @con.mod, if(@spell_ability == \"int\", @int.mod, if(@spell_ability == \"wis\", @wis.mod, if(@spell_ability == \"cha\", @cha.mod, 0)))))))"
+    },
+    {
+      "key": "spell_attack",
+      "label": "Spell attack bonus",
+      "type": "derived",
+      "formula": "if(@spell_ability == \"none\", 0, @proficiency + if(@spell_ability == \"str\", @str.mod, if(@spell_ability == \"dex\", @dex.mod, if(@spell_ability == \"con\", @con.mod, if(@spell_ability == \"int\", @int.mod, if(@spell_ability == \"wis\", @wis.mod, if(@spell_ability == \"cha\", @cha.mod, 0)))))))",
+      "format": "signed"
+    },
+    {
+      "key": "slots_1",
+      "label": "Level 1 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_2",
+      "label": "Level 2 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_3",
+      "label": "Level 3 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_4",
+      "label": "Level 4 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_5",
+      "label": "Level 5 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_6",
+      "label": "Level 6 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_7",
+      "label": "Level 7 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_8",
+      "label": "Level 8 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "slots_9",
+      "label": "Level 9 slots (total)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9
+    },
+    {
+      "key": "cp",
+      "label": "Copper",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "sp",
+      "label": "Silver",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "ep",
+      "label": "Electrum",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "gp",
+      "label": "Gold",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "pp",
+      "label": "Platinum",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "background_text",
+      "label": "Personality, ideals, bonds, flaws and notes",
+      "type": "longtext"
+    }
+  ],
+  "pools": [
+    {
+      "key": "hp",
+      "label": "Hit points",
+      "max": "@hp_max",
+      "temp": true,
+      "display": "number",
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "hit_dice",
+      "label": "Hit dice",
+      "max": "@level",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": {
+          "add": "max(1, floor(@level / 2))"
+        }
+      }
+    },
+    {
+      "key": "spell_1",
+      "label": "Level 1 spell slots",
+      "max": "@slots_1",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_2",
+      "label": "Level 2 spell slots",
+      "max": "@slots_2",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_3",
+      "label": "Level 3 spell slots",
+      "max": "@slots_3",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_4",
+      "label": "Level 4 spell slots",
+      "max": "@slots_4",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_5",
+      "label": "Level 5 spell slots",
+      "max": "@slots_5",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_6",
+      "label": "Level 6 spell slots",
+      "max": "@slots_6",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_7",
+      "label": "Level 7 spell slots",
+      "max": "@slots_7",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_8",
+      "label": "Level 8 spell slots",
+      "max": "@slots_8",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    },
+    {
+      "key": "spell_9",
+      "label": "Level 9 spell slots",
+      "max": "@slots_9",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": {
+        "long": "full"
+      }
+    }
+  ],
+  "collections": [
+    {
+      "key": "classes",
+      "label": "Classes",
+      "maxItems": 20,
+      "defaultRows": [
+        {
+          "name": "Class",
+          "level": 1
+        }
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Class",
+          "type": "text"
+        },
+        {
+          "key": "level",
+          "label": "Level",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "max": 20
+        },
+        {
+          "key": "subclass",
+          "label": "Subclass",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "skills",
+      "label": "Skills",
+      "maxItems": 60,
+      "columns": [
+        "name",
+        "ability",
+        "prof",
+        "total"
+      ],
+      "defaultRows": [
+        {
+          "name": "Acrobatics",
+          "ability": "dex"
+        },
+        {
+          "name": "Animal Handling",
+          "ability": "wis"
+        },
+        {
+          "name": "Arcana",
+          "ability": "int"
+        },
+        {
+          "name": "Athletics",
+          "ability": "str"
+        },
+        {
+          "name": "Deception",
+          "ability": "cha"
+        },
+        {
+          "name": "History",
+          "ability": "int"
+        },
+        {
+          "name": "Insight",
+          "ability": "wis"
+        },
+        {
+          "name": "Intimidation",
+          "ability": "cha"
+        },
+        {
+          "name": "Investigation",
+          "ability": "int"
+        },
+        {
+          "name": "Medicine",
+          "ability": "wis"
+        },
+        {
+          "name": "Nature",
+          "ability": "int"
+        },
+        {
+          "name": "Perception",
+          "ability": "wis"
+        },
+        {
+          "name": "Performance",
+          "ability": "cha"
+        },
+        {
+          "name": "Persuasion",
+          "ability": "cha"
+        },
+        {
+          "name": "Religion",
+          "ability": "int"
+        },
+        {
+          "name": "Sleight of Hand",
+          "ability": "dex"
+        },
+        {
+          "name": "Stealth",
+          "ability": "dex"
+        },
+        {
+          "name": "Survival",
+          "ability": "wis"
+        }
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Skill",
+          "type": "text"
+        },
+        {
+          "key": "ability",
+          "label": "Ability",
+          "type": "choice",
+          "default": "wis",
+          "choices": [
+            {
+              "value": "str",
+              "label": "STR"
+            },
+            {
+              "value": "dex",
+              "label": "DEX"
+            },
+            {
+              "value": "con",
+              "label": "CON"
+            },
+            {
+              "value": "int",
+              "label": "INT"
+            },
+            {
+              "value": "wis",
+              "label": "WIS"
+            },
+            {
+              "value": "cha",
+              "label": "CHA"
+            }
+          ]
+        },
+        {
+          "key": "prof",
+          "label": "Proficiency",
+          "type": "choice",
+          "default": "none",
+          "choices": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "proficient",
+              "label": "Proficient"
+            },
+            {
+              "value": "expertise",
+              "label": "Expertise"
+            }
+          ]
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "type": "derived",
+          "formula": "if($.ability == \"str\", @str.mod, if($.ability == \"dex\", @dex.mod, if($.ability == \"con\", @con.mod, if($.ability == \"int\", @int.mod, if($.ability == \"wis\", @wis.mod, if($.ability == \"cha\", @cha.mod, 0)))))) + if($.prof == \"expertise\", 2, if($.prof == \"proficient\", 1, 0)) * @proficiency",
+          "format": "signed"
+        }
+      ]
+    },
+    {
+      "key": "attacks",
+      "label": "Attacks",
+      "columns": [
+        "name",
+        "bonus",
+        "damage",
+        "notes"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Attack",
+          "type": "text"
+        },
+        {
+          "key": "bonus",
+          "label": "Attack bonus",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "key": "damage",
+          "label": "Damage",
+          "type": "roll",
+          "default": "1d8"
+        },
+        {
+          "key": "notes",
+          "label": "Notes",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "spells",
+      "label": "Spells",
+      "groupBy": "level",
+      "sortBy": "name",
+      "columns": [
+        "name",
+        "level",
+        "school",
+        "prepared",
+        "concentration"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Spell",
+          "type": "text"
+        },
+        {
+          "key": "level",
+          "label": "Level",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "max": 9
+        },
+        {
+          "key": "school",
+          "label": "School",
+          "type": "text"
+        },
+        {
+          "key": "prepared",
+          "label": "Prepared",
+          "type": "flag"
+        },
+        {
+          "key": "concentration",
+          "label": "Concentration",
+          "type": "flag"
+        },
+        {
+          "key": "notes",
+          "label": "Notes",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "features",
+      "label": "Features and traits",
+      "columns": [
+        "name",
+        "source",
+        "use"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Feature",
+          "type": "text"
+        },
+        {
+          "key": "source",
+          "label": "Source",
+          "type": "text"
+        },
+        {
+          "key": "use",
+          "label": "Uses",
+          "type": "uses",
+          "max": 1,
+          "resetOn": "long"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "longtext"
+        }
+      ]
+    }
+  ],
+  "tables": {},
+  "conditions": [
+    "Blinded",
+    "Charmed",
+    "Deafened",
+    "Frightened",
+    "Grappled",
+    "Incapacitated",
+    "Invisible",
+    "Paralyzed",
+    "Petrified",
+    "Poisoned",
+    "Prone",
+    "Restrained",
+    "Stunned",
+    "Unconscious"
+  ],
+  "rests": [
+    {
+      "id": "short",
+      "label": "Short rest"
+    },
+    {
+      "id": "long",
+      "label": "Long rest"
+    }
+  ],
+  "rolls": [
+    {
+      "key": "str_check",
+      "label": "Strength check",
+      "expression": "1d20 + @str.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "dex_check",
+      "label": "Dexterity check",
+      "expression": "1d20 + @dex.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "con_check",
+      "label": "Constitution check",
+      "expression": "1d20 + @con.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "int_check",
+      "label": "Intelligence check",
+      "expression": "1d20 + @int.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "wis_check",
+      "label": "Wisdom check",
+      "expression": "1d20 + @wis.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "cha_check",
+      "label": "Charisma check",
+      "expression": "1d20 + @cha.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "str_save_roll",
+      "label": "Strength save",
+      "expression": "1d20 + @save_str",
+      "group": "Saves"
+    },
+    {
+      "key": "dex_save_roll",
+      "label": "Dexterity save",
+      "expression": "1d20 + @save_dex",
+      "group": "Saves"
+    },
+    {
+      "key": "con_save_roll",
+      "label": "Constitution save",
+      "expression": "1d20 + @save_con",
+      "group": "Saves"
+    },
+    {
+      "key": "int_save_roll",
+      "label": "Intelligence save",
+      "expression": "1d20 + @save_int",
+      "group": "Saves"
+    },
+    {
+      "key": "wis_save_roll",
+      "label": "Wisdom save",
+      "expression": "1d20 + @save_wis",
+      "group": "Saves"
+    },
+    {
+      "key": "cha_save_roll",
+      "label": "Charisma save",
+      "expression": "1d20 + @save_cha",
+      "group": "Saves"
+    },
+    {
+      "key": "initiative_roll",
+      "label": "Initiative",
+      "expression": "1d20 + @initiative",
+      "group": "Combat"
+    },
+    {
+      "key": "spell_attack_roll",
+      "label": "Spell attack",
+      "expression": "1d20 + @spell_attack",
+      "group": "Combat"
+    }
+  ],
+  "sections": [
+    {
+      "id": "identity",
+      "title": "Identity",
+      "layout": "fields",
+      "items": [
+        "race",
+        "background_name",
+        "alignment",
+        "xp",
+        "level",
+        "proficiency",
+        "inspiration"
+      ]
+    },
+    {
+      "id": "classes",
+      "title": "Classes",
+      "layout": "table",
+      "items": [
+        "classes"
+      ]
+    },
+    {
+      "id": "abilities",
+      "title": "Ability scores",
+      "layout": "fields",
+      "items": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "id": "saves",
+      "title": "Saving throws",
+      "layout": "fields",
+      "items": [
+        "save_str",
+        "save_prof_str",
+        "save_dex",
+        "save_prof_dex",
+        "save_con",
+        "save_prof_con",
+        "save_int",
+        "save_prof_int",
+        "save_wis",
+        "save_prof_wis",
+        "save_cha",
+        "save_prof_cha"
+      ]
+    },
+    {
+      "id": "combat",
+      "title": "Combat",
+      "layout": "fields",
+      "items": [
+        "ac",
+        "initiative",
+        "initiative_bonus",
+        "speed",
+        "passive_perception",
+        "hp_max",
+        "hp",
+        "hit_die",
+        "hit_dice",
+        "exhaustion",
+        "death_successes",
+        "death_failures"
+      ]
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "layout": "table",
+      "items": [
+        "skills"
+      ]
+    },
+    {
+      "id": "attacks",
+      "title": "Attacks",
+      "layout": "table",
+      "items": [
+        "attacks"
+      ]
+    },
+    {
+      "id": "casting",
+      "title": "Spellcasting",
+      "layout": "fields",
+      "items": [
+        "spell_ability",
+        "spell_save_dc",
+        "spell_attack",
+        "slots_1",
+        "spell_1",
+        "slots_2",
+        "spell_2",
+        "slots_3",
+        "spell_3",
+        "slots_4",
+        "spell_4",
+        "slots_5",
+        "spell_5",
+        "slots_6",
+        "spell_6",
+        "slots_7",
+        "spell_7",
+        "slots_8",
+        "spell_8",
+        "slots_9",
+        "spell_9"
+      ]
+    },
+    {
+      "id": "spells",
+      "title": "Spells",
+      "layout": "table",
+      "items": [
+        "spells"
+      ]
+    },
+    {
+      "id": "features",
+      "title": "Features",
+      "layout": "table",
+      "items": [
+        "features"
+      ]
+    },
+    {
+      "id": "money",
+      "title": "Money",
+      "layout": "fields",
+      "items": [
+        "cp",
+        "sp",
+        "ep",
+        "gp",
+        "pp"
+      ]
+    },
+    {
+      "id": "notes",
+      "title": "Notes",
+      "layout": "text",
+      "items": [
+        "background_text"
+      ]
+    }
+  ]
+}

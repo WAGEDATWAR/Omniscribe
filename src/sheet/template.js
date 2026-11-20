@@ -697,6 +697,30 @@ export function validateTemplate(template) {
       err(`${path}.columns`, "columns must name fields of this collection");
     }
 
+    if (collection.defaultRows !== undefined) {
+      const limit = Math.min(collection.maxItems ?? TEMPLATE_LIMITS.defaultRows, TEMPLATE_LIMITS.rows);
+
+      if (!Array.isArray(collection.defaultRows) || collection.defaultRows.length > limit) {
+        err(`${path}.defaultRows`, `defaultRows must be a list of up to ${limit} rows`);
+      } else {
+        collection.defaultRows.forEach((row, rowPosition) => {
+          if (!isObject(row)) {
+            err(`${path}.defaultRows.${rowPosition}`, "a default row must be an object");
+            return;
+          }
+
+          for (const [key, value] of Object.entries(row)) {
+            const field = collection.fields.find((entry) => entry.key === key && entry.type !== "derived");
+            const verdict = field ? validateValue(field, value) : { ok: false, reason: `"${key}" is not an authored field of this collection` };
+
+            if (!verdict.ok) {
+              err(`${path}.defaultRows.${rowPosition}.${key}`, verdict.reason);
+            }
+          }
+        });
+      }
+    }
+
     if (collection.maxItems !== undefined && !(Number.isInteger(collection.maxItems) && collection.maxItems >= 1 && collection.maxItems <= TEMPLATE_LIMITS.rows)) {
       err(`${path}.maxItems`, `maxItems must be a whole number from 1 to ${TEMPLATE_LIMITS.rows}`);
     }

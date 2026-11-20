@@ -1,0 +1,1241 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "id": "dnd35",
+  "version": 1,
+  "name": "D&D 3.5e",
+  "system": "D&D 3.5e",
+  "description": "The d20 System 3.5 character sheet: classes with base attack and save progressions, skills with ranks, armour class variants, saves, attacks, feats and spells. Structure and formulas only; no rules text. Derive your own house version from it.",
+  "base": null,
+  "overlay": [],
+  "fields": [
+    {
+      "key": "race",
+      "label": "Race",
+      "type": "text"
+    },
+    {
+      "key": "alignment",
+      "label": "Alignment",
+      "type": "choice",
+      "default": "n",
+      "choices": [
+        {
+          "value": "lg",
+          "label": "Lawful good"
+        },
+        {
+          "value": "ng",
+          "label": "Neutral good"
+        },
+        {
+          "value": "cg",
+          "label": "Chaotic good"
+        },
+        {
+          "value": "ln",
+          "label": "Lawful neutral"
+        },
+        {
+          "value": "n",
+          "label": "True neutral"
+        },
+        {
+          "value": "cn",
+          "label": "Chaotic neutral"
+        },
+        {
+          "value": "le",
+          "label": "Lawful evil"
+        },
+        {
+          "value": "ne",
+          "label": "Neutral evil"
+        },
+        {
+          "value": "ce",
+          "label": "Chaotic evil"
+        }
+      ]
+    },
+    {
+      "key": "deity",
+      "label": "Deity",
+      "type": "text"
+    },
+    {
+      "key": "size",
+      "label": "Size",
+      "type": "choice",
+      "default": "medium",
+      "choices": [
+        {
+          "value": "fine",
+          "label": "Fine"
+        },
+        {
+          "value": "diminutive",
+          "label": "Diminutive"
+        },
+        {
+          "value": "tiny",
+          "label": "Tiny"
+        },
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        },
+        {
+          "value": "huge",
+          "label": "Huge"
+        },
+        {
+          "value": "gargantuan",
+          "label": "Gargantuan"
+        },
+        {
+          "value": "colossal",
+          "label": "Colossal"
+        }
+      ]
+    },
+    {
+      "key": "xp",
+      "label": "Experience points",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "level",
+      "label": "Character level",
+      "type": "derived",
+      "formula": "sum(@classes.level)"
+    },
+    {
+      "key": "str",
+      "label": "Strength",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@str - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "dex",
+      "label": "Dexterity",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@dex - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "con",
+      "label": "Constitution",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@con - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "int",
+      "label": "Intelligence",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@int - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "wis",
+      "label": "Wisdom",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@wis - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "cha",
+      "label": "Charisma",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 99,
+      "subs": {
+        "mod": "floor((@cha - 10) / 2)"
+      },
+      "subFormats": {
+        "mod": "signed"
+      }
+    },
+    {
+      "key": "bab",
+      "label": "Base attack bonus",
+      "type": "derived",
+      "formula": "sum(@classes.bab)",
+      "format": "signed"
+    },
+    {
+      "key": "attack_line",
+      "label": "Attacks per round",
+      "type": "derived",
+      "formula": "concat(signed(@bab), if(@bab > 5, concat(\" / \", signed(@bab - 5)), \"\"), if(@bab > 10, concat(\" / \", signed(@bab - 10)), \"\"), if(@bab > 15, concat(\" / \", signed(@bab - 15)), \"\"))",
+      "format": "text"
+    },
+    {
+      "key": "size_mod",
+      "label": "Size modifier",
+      "type": "derived",
+      "formula": "lookup(\"size_mod\", @size)",
+      "format": "signed"
+    },
+    {
+      "key": "grapple_size",
+      "label": "Grapple size modifier",
+      "type": "derived",
+      "formula": "lookup(\"grapple_size\", @size)",
+      "format": "signed"
+    },
+    {
+      "key": "melee_attack",
+      "label": "Melee attack",
+      "type": "derived",
+      "formula": "@bab + @str.mod + @size_mod",
+      "format": "signed"
+    },
+    {
+      "key": "ranged_attack",
+      "label": "Ranged attack",
+      "type": "derived",
+      "formula": "@bab + @dex.mod + @size_mod",
+      "format": "signed"
+    },
+    {
+      "key": "grapple",
+      "label": "Grapple",
+      "type": "derived",
+      "formula": "@bab + @str.mod + @grapple_size",
+      "format": "signed"
+    },
+    {
+      "key": "init_misc",
+      "label": "Initiative misc",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "initiative",
+      "label": "Initiative",
+      "type": "derived",
+      "formula": "@dex.mod + @init_misc",
+      "format": "signed"
+    },
+    {
+      "key": "speed",
+      "label": "Speed (ft)",
+      "type": "number",
+      "default": 30,
+      "min": 0
+    },
+    {
+      "key": "armor_bonus",
+      "label": "Armor bonus",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "shield_bonus",
+      "label": "Shield bonus",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "natural_armor",
+      "label": "Natural armor",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "deflection_bonus",
+      "label": "Deflection bonus",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "dodge_bonus",
+      "label": "Dodge bonus",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "ac_misc",
+      "label": "AC misc",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "ac",
+      "label": "Armor class",
+      "type": "derived",
+      "formula": "10 + @armor_bonus + @shield_bonus + @dex.mod + @size_mod + @natural_armor + @deflection_bonus + @dodge_bonus + @ac_misc"
+    },
+    {
+      "key": "touch_ac",
+      "label": "Touch AC",
+      "type": "derived",
+      "formula": "10 + @dex.mod + @size_mod + @deflection_bonus + @dodge_bonus + @ac_misc"
+    },
+    {
+      "key": "flat_footed_ac",
+      "label": "Flat-footed AC",
+      "type": "derived",
+      "formula": "@ac - @dodge_bonus - max(@dex.mod, 0)"
+    },
+    {
+      "key": "fort_misc",
+      "label": "Fortitude misc",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "ref_misc",
+      "label": "Reflex misc",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "will_misc",
+      "label": "Will misc",
+      "type": "number",
+      "default": 0
+    },
+    {
+      "key": "fort",
+      "label": "Fortitude",
+      "type": "derived",
+      "formula": "sum(@classes.fort_base) + @con.mod + @fort_misc",
+      "format": "signed"
+    },
+    {
+      "key": "ref",
+      "label": "Reflex",
+      "type": "derived",
+      "formula": "sum(@classes.ref_base) + @dex.mod + @ref_misc",
+      "format": "signed"
+    },
+    {
+      "key": "will",
+      "label": "Will",
+      "type": "derived",
+      "formula": "sum(@classes.will_base) + @wis.mod + @will_misc",
+      "format": "signed"
+    },
+    {
+      "key": "hp_max",
+      "label": "Hit points (maximum)",
+      "type": "number",
+      "default": 1,
+      "min": 1
+    },
+    {
+      "key": "cp",
+      "label": "Copper",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "sp",
+      "label": "Silver",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "gp",
+      "label": "Gold",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "pp",
+      "label": "Platinum",
+      "type": "number",
+      "default": 0,
+      "min": 0
+    },
+    {
+      "key": "background",
+      "label": "Background and notes",
+      "type": "longtext"
+    }
+  ],
+  "pools": [
+    {
+      "key": "hp",
+      "label": "Hit points",
+      "max": "@hp_max",
+      "temp": true,
+      "display": "number",
+      "rests": {
+        "long": {
+          "add": "@level"
+        }
+      }
+    }
+  ],
+  "collections": [
+    {
+      "key": "classes",
+      "label": "Classes",
+      "maxItems": 20,
+      "defaultRows": [
+        {
+          "name": "Class",
+          "level": 1,
+          "bab_rate": "average",
+          "fort": "poor",
+          "ref": "poor",
+          "will": "poor"
+        }
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Class",
+          "type": "text"
+        },
+        {
+          "key": "level",
+          "label": "Level",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "max": 99
+        },
+        {
+          "key": "bab_rate",
+          "label": "Attack bonus",
+          "type": "choice",
+          "default": "average",
+          "choices": [
+            {
+              "value": "good",
+              "label": "Good"
+            },
+            {
+              "value": "average",
+              "label": "Average"
+            },
+            {
+              "value": "poor",
+              "label": "Poor"
+            }
+          ]
+        },
+        {
+          "key": "fort",
+          "label": "Fortitude",
+          "type": "choice",
+          "default": "poor",
+          "choices": [
+            {
+              "value": "good",
+              "label": "Good"
+            },
+            {
+              "value": "poor",
+              "label": "Poor"
+            }
+          ]
+        },
+        {
+          "key": "ref",
+          "label": "Reflex",
+          "type": "choice",
+          "default": "poor",
+          "choices": [
+            {
+              "value": "good",
+              "label": "Good"
+            },
+            {
+              "value": "poor",
+              "label": "Poor"
+            }
+          ]
+        },
+        {
+          "key": "will",
+          "label": "Will",
+          "type": "choice",
+          "default": "poor",
+          "choices": [
+            {
+              "value": "good",
+              "label": "Good"
+            },
+            {
+              "value": "poor",
+              "label": "Poor"
+            }
+          ]
+        },
+        {
+          "key": "bab",
+          "label": "Base attack",
+          "type": "derived",
+          "formula": "if($.bab_rate == \"good\", $.level, if($.bab_rate == \"average\", floor($.level * 3 / 4), floor($.level / 2)))"
+        },
+        {
+          "key": "fort_base",
+          "label": "Fort base",
+          "type": "derived",
+          "formula": "if($.level < 1, 0, if($.fort == \"good\", 2 + floor($.level / 2), floor($.level / 3)))"
+        },
+        {
+          "key": "ref_base",
+          "label": "Ref base",
+          "type": "derived",
+          "formula": "if($.level < 1, 0, if($.ref == \"good\", 2 + floor($.level / 2), floor($.level / 3)))"
+        },
+        {
+          "key": "will_base",
+          "label": "Will base",
+          "type": "derived",
+          "formula": "if($.level < 1, 0, if($.will == \"good\", 2 + floor($.level / 2), floor($.level / 3)))"
+        }
+      ]
+    },
+    {
+      "key": "skills",
+      "label": "Skills",
+      "maxItems": 100,
+      "columns": [
+        "name",
+        "ability",
+        "class_skill",
+        "ranks",
+        "misc",
+        "total"
+      ],
+      "defaultRows": [
+        {
+          "name": "Appraise",
+          "ability": "int"
+        },
+        {
+          "name": "Balance",
+          "ability": "dex"
+        },
+        {
+          "name": "Bluff",
+          "ability": "cha"
+        },
+        {
+          "name": "Climb",
+          "ability": "str"
+        },
+        {
+          "name": "Concentration",
+          "ability": "con"
+        },
+        {
+          "name": "Craft",
+          "ability": "int"
+        },
+        {
+          "name": "Decipher Script",
+          "ability": "int"
+        },
+        {
+          "name": "Diplomacy",
+          "ability": "cha"
+        },
+        {
+          "name": "Disable Device",
+          "ability": "int"
+        },
+        {
+          "name": "Disguise",
+          "ability": "cha"
+        },
+        {
+          "name": "Escape Artist",
+          "ability": "dex"
+        },
+        {
+          "name": "Forgery",
+          "ability": "int"
+        },
+        {
+          "name": "Gather Information",
+          "ability": "cha"
+        },
+        {
+          "name": "Handle Animal",
+          "ability": "cha"
+        },
+        {
+          "name": "Heal",
+          "ability": "wis"
+        },
+        {
+          "name": "Hide",
+          "ability": "dex"
+        },
+        {
+          "name": "Intimidate",
+          "ability": "cha"
+        },
+        {
+          "name": "Jump",
+          "ability": "str"
+        },
+        {
+          "name": "Knowledge (arcana)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (dungeoneering)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (history)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (local)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (nature)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (nobility)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (religion)",
+          "ability": "int"
+        },
+        {
+          "name": "Knowledge (the planes)",
+          "ability": "int"
+        },
+        {
+          "name": "Listen",
+          "ability": "wis"
+        },
+        {
+          "name": "Move Silently",
+          "ability": "dex"
+        },
+        {
+          "name": "Open Lock",
+          "ability": "dex"
+        },
+        {
+          "name": "Perform",
+          "ability": "cha"
+        },
+        {
+          "name": "Profession",
+          "ability": "wis"
+        },
+        {
+          "name": "Ride",
+          "ability": "dex"
+        },
+        {
+          "name": "Search",
+          "ability": "int"
+        },
+        {
+          "name": "Sense Motive",
+          "ability": "wis"
+        },
+        {
+          "name": "Sleight of Hand",
+          "ability": "dex"
+        },
+        {
+          "name": "Spellcraft",
+          "ability": "int"
+        },
+        {
+          "name": "Spot",
+          "ability": "wis"
+        },
+        {
+          "name": "Survival",
+          "ability": "wis"
+        },
+        {
+          "name": "Swim",
+          "ability": "str"
+        },
+        {
+          "name": "Tumble",
+          "ability": "dex"
+        },
+        {
+          "name": "Use Magic Device",
+          "ability": "cha"
+        },
+        {
+          "name": "Use Rope",
+          "ability": "dex"
+        }
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Skill",
+          "type": "text"
+        },
+        {
+          "key": "ability",
+          "label": "Ability",
+          "type": "choice",
+          "default": "int",
+          "choices": [
+            {
+              "value": "str",
+              "label": "STR"
+            },
+            {
+              "value": "dex",
+              "label": "DEX"
+            },
+            {
+              "value": "con",
+              "label": "CON"
+            },
+            {
+              "value": "int",
+              "label": "INT"
+            },
+            {
+              "value": "wis",
+              "label": "WIS"
+            },
+            {
+              "value": "cha",
+              "label": "CHA"
+            }
+          ]
+        },
+        {
+          "key": "class_skill",
+          "label": "Class skill",
+          "type": "flag"
+        },
+        {
+          "key": "ranks",
+          "label": "Ranks",
+          "type": "number",
+          "default": 0,
+          "integer": false,
+          "min": 0
+        },
+        {
+          "key": "misc",
+          "label": "Misc",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "key": "ability_mod",
+          "label": "Ability modifier",
+          "type": "derived",
+          "formula": "if($.ability == \"str\", @str.mod, if($.ability == \"dex\", @dex.mod, if($.ability == \"con\", @con.mod, if($.ability == \"int\", @int.mod, if($.ability == \"wis\", @wis.mod, if($.ability == \"cha\", @cha.mod, 0))))))",
+          "format": "signed"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "type": "derived",
+          "formula": "$.ranks + $.ability_mod + $.misc + if($.class_skill && $.ranks > 0, 3, 0)",
+          "format": "signed"
+        }
+      ]
+    },
+    {
+      "key": "attacks",
+      "label": "Attacks",
+      "columns": [
+        "name",
+        "attack_bonus",
+        "damage",
+        "critical",
+        "range"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Weapon",
+          "type": "text"
+        },
+        {
+          "key": "attack_bonus",
+          "label": "Attack bonus",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "key": "damage",
+          "label": "Damage",
+          "type": "roll",
+          "default": "1d8"
+        },
+        {
+          "key": "critical",
+          "label": "Critical",
+          "type": "text",
+          "default": "x2"
+        },
+        {
+          "key": "range",
+          "label": "Range",
+          "type": "text"
+        },
+        {
+          "key": "notes",
+          "label": "Notes",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "feats",
+      "label": "Feats",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Feat",
+          "type": "text"
+        },
+        {
+          "key": "notes",
+          "label": "Notes",
+          "type": "longtext"
+        }
+      ]
+    },
+    {
+      "key": "spells",
+      "label": "Spells",
+      "groupBy": "level",
+      "sortBy": "name",
+      "columns": [
+        "name",
+        "level",
+        "school",
+        "prepared",
+        "cast"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Spell",
+          "type": "text"
+        },
+        {
+          "key": "level",
+          "label": "Level",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "max": 9
+        },
+        {
+          "key": "school",
+          "label": "School",
+          "type": "text"
+        },
+        {
+          "key": "prepared",
+          "label": "Prepared",
+          "type": "number",
+          "default": 0,
+          "min": 0
+        },
+        {
+          "key": "cast",
+          "label": "Cast",
+          "type": "uses",
+          "max": "max(1, $.prepared)",
+          "resetOn": "long"
+        },
+        {
+          "key": "notes",
+          "label": "Notes",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "features",
+      "label": "Class and racial features",
+      "columns": [
+        "name",
+        "source",
+        "use"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Feature",
+          "type": "text"
+        },
+        {
+          "key": "source",
+          "label": "Source",
+          "type": "text"
+        },
+        {
+          "key": "use",
+          "label": "Uses",
+          "type": "uses",
+          "max": 1,
+          "resetOn": "long"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "longtext"
+        }
+      ]
+    }
+  ],
+  "tables": {
+    "size_mod": {
+      "fine": 8,
+      "diminutive": 4,
+      "tiny": 2,
+      "small": 1,
+      "medium": 0,
+      "large": -1,
+      "huge": -2,
+      "gargantuan": -4,
+      "colossal": -8
+    },
+    "grapple_size": {
+      "fine": -16,
+      "diminutive": -12,
+      "tiny": -8,
+      "small": -4,
+      "medium": 0,
+      "large": 4,
+      "huge": 8,
+      "gargantuan": 12,
+      "colossal": 16
+    }
+  },
+  "conditions": [
+    "Blinded",
+    "Confused",
+    "Dazed",
+    "Dazzled",
+    "Deafened",
+    "Disabled",
+    "Dying",
+    "Entangled",
+    "Exhausted",
+    "Fascinated",
+    "Fatigued",
+    "Flat-footed",
+    "Frightened",
+    "Grappling",
+    "Helpless",
+    "Invisible",
+    "Nauseated",
+    "Panicked",
+    "Paralyzed",
+    "Petrified",
+    "Pinned",
+    "Prone",
+    "Shaken",
+    "Sickened",
+    "Stable",
+    "Staggered",
+    "Stunned",
+    "Turned",
+    "Unconscious"
+  ],
+  "rests": [
+    {
+      "id": "long",
+      "label": "Rest for the night"
+    }
+  ],
+  "rolls": [
+    {
+      "key": "str_check",
+      "label": "Strength check",
+      "expression": "1d20 + @str.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "dex_check",
+      "label": "Dexterity check",
+      "expression": "1d20 + @dex.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "con_check",
+      "label": "Constitution check",
+      "expression": "1d20 + @con.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "int_check",
+      "label": "Intelligence check",
+      "expression": "1d20 + @int.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "wis_check",
+      "label": "Wisdom check",
+      "expression": "1d20 + @wis.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "cha_check",
+      "label": "Charisma check",
+      "expression": "1d20 + @cha.mod",
+      "group": "Checks"
+    },
+    {
+      "key": "initiative_roll",
+      "label": "Initiative",
+      "expression": "1d20 + @initiative",
+      "group": "Combat"
+    },
+    {
+      "key": "melee_roll",
+      "label": "Melee attack",
+      "expression": "1d20 + @melee_attack",
+      "group": "Combat"
+    },
+    {
+      "key": "ranged_roll",
+      "label": "Ranged attack",
+      "expression": "1d20 + @ranged_attack",
+      "group": "Combat"
+    },
+    {
+      "key": "grapple_roll",
+      "label": "Grapple check",
+      "expression": "1d20 + @grapple",
+      "group": "Combat"
+    },
+    {
+      "key": "fort_roll",
+      "label": "Fortitude save",
+      "expression": "1d20 + @fort",
+      "group": "Saves"
+    },
+    {
+      "key": "ref_roll",
+      "label": "Reflex save",
+      "expression": "1d20 + @ref",
+      "group": "Saves"
+    },
+    {
+      "key": "will_roll",
+      "label": "Will save",
+      "expression": "1d20 + @will",
+      "group": "Saves"
+    }
+  ],
+  "sections": [
+    {
+      "id": "identity",
+      "title": "Identity",
+      "layout": "fields",
+      "items": [
+        "race",
+        "alignment",
+        "deity",
+        "size",
+        "xp",
+        "level"
+      ]
+    },
+    {
+      "id": "abilities",
+      "title": "Ability scores",
+      "layout": "fields",
+      "items": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "id": "classes",
+      "title": "Classes",
+      "layout": "table",
+      "items": [
+        "classes"
+      ]
+    },
+    {
+      "id": "vitals",
+      "title": "Hit points and speed",
+      "layout": "fields",
+      "items": [
+        "hp_max",
+        "hp",
+        "speed",
+        "initiative",
+        "init_misc"
+      ]
+    },
+    {
+      "id": "defense",
+      "title": "Armor class",
+      "layout": "fields",
+      "items": [
+        "ac",
+        "touch_ac",
+        "flat_footed_ac",
+        "armor_bonus",
+        "shield_bonus",
+        "natural_armor",
+        "deflection_bonus",
+        "dodge_bonus",
+        "ac_misc"
+      ]
+    },
+    {
+      "id": "saves",
+      "title": "Saving throws",
+      "layout": "fields",
+      "items": [
+        "fort",
+        "ref",
+        "will",
+        "fort_misc",
+        "ref_misc",
+        "will_misc"
+      ]
+    },
+    {
+      "id": "offense",
+      "title": "Attack",
+      "layout": "fields",
+      "items": [
+        "bab",
+        "attack_line",
+        "melee_attack",
+        "ranged_attack",
+        "grapple",
+        "size_mod",
+        "grapple_size"
+      ]
+    },
+    {
+      "id": "attacks",
+      "title": "Weapons",
+      "layout": "table",
+      "items": [
+        "attacks"
+      ]
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "layout": "table",
+      "items": [
+        "skills"
+      ]
+    },
+    {
+      "id": "feats",
+      "title": "Feats",
+      "layout": "table",
+      "items": [
+        "feats"
+      ]
+    },
+    {
+      "id": "features",
+      "title": "Features",
+      "layout": "table",
+      "items": [
+        "features"
+      ]
+    },
+    {
+      "id": "spells",
+      "title": "Spells",
+      "layout": "table",
+      "items": [
+        "spells"
+      ]
+    },
+    {
+      "id": "money",
+      "title": "Money",
+      "layout": "fields",
+      "items": [
+        "cp",
+        "sp",
+        "gp",
+        "pp"
+      ]
+    },
+    {
+      "id": "notes",
+      "title": "Background",
+      "layout": "text",
+      "items": [
+        "background"
+      ]
+    }
+  ]
+}

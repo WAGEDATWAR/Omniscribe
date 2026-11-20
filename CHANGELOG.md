@@ -31,6 +31,18 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - 23 more unit tests (191), 12 browser scenarios (39 in all) and 14 accessibility states (40 in all, zero
   violations).
 
+- Built-in game systems **D&D 3.5e** and **D&D 5e** (structure and formulas only): 3.5e has classes with
+  base attack and save progressions that sum across multiclassing, iterative attacks, size, armour class
+  variants, saves, a 42-skill list with class-skill bonuses, weapons, feats, spells with prepared casts and
+  nightly healing; 5e has proficiency by level, saves, 18 skills with expertise, passive Perception,
+  spellcasting numbers, spell slots as boxes, hit dice and short and long rests.
+- `defaultRows` on a collection, so a new sheet starts with its skill list; validated like any stored value.
+- The newer-version diff (DEF-003): when a system has a newer version, the Sheet page offers a review of
+  what was added, removed or changed and which stored values would be kept aside, then moves with Undo.
+- The navigation is now a collapsible left sidebar (remembered; a drawer on phones, closing after you
+  choose a page) instead of a popup under the brand. The brand links to the Library.
+- 14 more unit tests (205), 3 more browser scenarios (41 in all) and 4 more accessibility states.
+
 ### Fixed
 
 - A PDF page race: the empty state waited on an asynchronous file check before drawing; it now draws

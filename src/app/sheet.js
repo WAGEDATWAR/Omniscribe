@@ -1,6 +1,9 @@
 import { createRow, evaluateSheet } from "../sheet/evaluate.js";
 import { validateValue } from "../sheet/template.js";
+import { diffSystems } from "../sheet/diff.js";
+import { reconcileSheet } from "../sheet/evaluate.js";
 import { mountSheetPage } from "../ui/sheet.js";
+import { h, replace } from "../ui/dom.js";
 
 /** The Sheet page of a character: start, edit values, pools, rows and conditions, rest, change system. */
 export function initSheet(ctx) {
@@ -47,6 +50,19 @@ export function initSheet(ctx) {
       }
 
       toast(`Started a ${resolved.template.name} sheet.`);
+    },
+    onReviewUpdate() {
+      const character = store.getCharacter(currentId());
+      const latest = character?.sheet ? systems.latest(character.sheet.template.id) : null;
+      const before = character?.sheet ? systems.resolve(character.sheet.template) : null;
+      const after = latest ? systems.resolve({ id: character.sheet.template.id, version: latest }) : null;
+
+      if (!before?.ok || !after?.ok) {
+        toast("That version cannot be compared.", { tone: "error" });
+        return;
+      }
+
+      openDiff({ character, before: before.template, after: after.template, ref: { id: character.sheet.template.id, version: latest } });
     },
     onOpenChange() {
       const character = store.getCharacter(currentId());
@@ -173,6 +189,51 @@ export function initSheet(ctx) {
     }
   });
 
+  const diffDialog = document.querySelector("#diff-dialog");
+  const diffBody = document.querySelector("#diff-body");
+  let pending = null;
+
+  function openDiff(state) {
+    const diff = diffSystems(state.before, state.after);
+    const moved = reconcileSheet(state.after, state.character.sheet).moved;
+    const word = { added: "Added", removed: "Removed", changed: "Changed" };
+
+    pending = state;
+    document.querySelector("#diff-title").textContent = `Move to ${state.after.name}, version ${state.ref.version}?`;
+    replace(
+      diffBody,
+      h("p", { id: "diff-summary", text: diff.empty ? "Nothing that changes a value or a rule differs between these versions." : `${diff.counts.added} added, ${diff.counts.removed} removed, ${diff.counts.changed} changed.` }),
+      diff.changes.length
+        ? h("ul", { class: "problem-list", id: "diff-list" }, diff.changes.slice(0, 60).map((entry) => h("li", {}, h("strong", { text: `${word[entry.change]} ${entry.kind}` }), ` ${entry.label}`, entry.details.length ? h("span", { class: "muted", text: ` (${entry.details.join("; ")})` }) : null)))
+        : null,
+      moved.length
+        ? h("p", { id: "diff-moved", text: `${moved.length} stored value${moved.length === 1 ? " has" : "s have"} no place in the new version and will be kept aside, not deleted: ${moved.slice(0, 8).join(", ")}${moved.length > 8 ? ", and more" : ""}.` })
+        : h("p", { id: "diff-moved", class: "muted", text: "Every stored value still has a place." })
+    );
+    diffDialog.showModal();
+    document.querySelector("#diff-cancel").focus();
+  }
+
+  document.querySelector("#diff-cancel").addEventListener("click", () => diffDialog.close("cancel"));
+  document.querySelector("#diff-confirm").addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if (!pending) {
+      return;
+    }
+
+    const { character, after, ref } = pending;
+    const before = character.sheet;
+    const result = store.changeSystem(character.id, ref, after);
+
+    diffDialog.close("confirm");
+    pending = null;
+
+    if (result) {
+      toast(`Now following ${after.name}, version ${ref.version}.`, { action: { label: "Undo", run: () => restoreSheet(character.id, before) } });
+    }
+  });
+
   function show() {
     const id = currentId();
 
@@ -189,7 +250,10 @@ export function initSheet(ctx) {
     const resolved = character.sheet ? systems.resolve(character.sheet.template) : null;
     const computed = resolved?.ok ? evaluateSheet(resolved.template, character.sheet) : null;
 
-    view.render({ character, systems: systems.list(), resolution: resolved ?? { ok: false, errors: [] }, computed });
+    const latest = character.sheet ? systems.latest(character.sheet.template.id) : null;
+    const update = latest && latest > character.sheet.template.version && systems.resolve({ id: character.sheet.template.id, version: latest }).ok ? { version: latest } : null;
+
+    view.render({ character, systems: systems.list(), resolution: resolved ?? { ok: false, errors: [] }, computed, update });
   }
 
   router.onRoute(() => show());

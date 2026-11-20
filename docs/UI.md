@@ -14,9 +14,11 @@ Two modes (U-4). **Hub pages** have no side menu: the **Library** (home), **Data
 (U-11): Overview and PDF sheets today, and later Sheet, Inventory and the rest. The current page carries
 `aria-current`, and the bar scrolls sideways on a phone.
 
-The **brand** (logo and name, top left) opens the app menu: Library, Data, Settings, the command palette
-and the shortcuts. It is a native `popover`, so it closes on outside click and `Esc`. The top bar also
-holds the save state, Undo, Redo and the palette button.
+The **sidebar** on the left holds the app's pages (Library, Game systems, Data, Settings, each with its
+shortcut), the command palette and the shortcuts. The button at the top left shows or hides it and the
+choice is remembered. Below 900 px it becomes a drawer over the page with a scrim that closes after you pick
+a page or press `Esc`. The current page carries `aria-current`. The brand links to the Library. The top
+bar also holds the save state, Undo, Redo and the palette button.
 
 Routes are the location hash and the only view state (U-5, `src/views.js`):
 

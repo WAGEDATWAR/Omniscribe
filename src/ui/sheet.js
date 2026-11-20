@@ -673,11 +673,13 @@ export function mountSheetPage(root, handlers) {
       barTitle,
       h("div", { class: "section-actions" }, restButtons, button({ id: "sheet-change", label: "Change system", onclick: () => handlers.onOpenChange() }))
     );
+    const noticeText = h("span", { class: "sheet-update-text" });
+    const notice = h("div", { id: "sheet-update", class: "sheet-update", hidden: true }, noticeText, button({ id: "sheet-update-review", label: "Review changes", onclick: () => handlers.onReviewUpdate() }));
     const problems = h("div", { id: "sheet-problems" });
     const orphans = h("div", { id: "sheet-orphans" });
 
-    replace(content, bar, problems, ...panels, orphans);
-    return { controls, pools, tables, conditions, barTitle, problems, orphans, characterName };
+    replace(content, bar, notice, problems, ...panels, orphans);
+    return { controls, pools, tables, conditions, barTitle, notice, noticeText, problems, orphans, characterName };
   }
 
   function updateAside(view, computed, sheet) {
@@ -725,7 +727,7 @@ export function mountSheetPage(root, handlers) {
       replace(picker);
       picker.hidden = true;
     },
-    render({ character, systems, resolution, computed }) {
+    render({ character, systems, resolution, computed, update = null }) {
       const sheet = character.sheet;
 
       if (!sheet) {
@@ -781,6 +783,8 @@ export function mountSheetPage(root, handlers) {
       }
 
       built.barTitle.textContent = `Following ${resolution.template.name}, version ${sheet.template.version}.`;
+      built.notice.hidden = !update;
+      built.noticeText.textContent = update ? `Version ${update.version} of this system is available.` : "";
 
       for (const control of built.controls.values()) {
         control.update(computed, computed.errors);

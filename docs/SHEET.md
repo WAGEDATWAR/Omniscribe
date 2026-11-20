@@ -86,13 +86,13 @@ impossible value. `display: "boxes"` draws one box per `boxSize` points. A rest 
 
 ```text
 { "key", "label", "fields": [ ItemField ], "groupBy": "fieldKey", "sortBy": "fieldKey",
-  "columns": [ "fieldKey" ], "maxItems": 200, "hint" }
+  "columns": [ "fieldKey" ], "maxItems": 200, "defaultRows": [ { "field": value } ], "hint" }
 ```
 
 An **item field** is a Field (without `subs`) plus two types: `uses` (stored as `{ used }`, with a `max`
 formula and `resetOn`, a rest id) and `roll` (a roll expression string, `docs/DICE.md`). Item formulas read
 their own row with `$.field` and the sheet with `@key`. A row is stored as `{ id: "row_...", field: value }`.
-`@powers.cost` is the column of that name across all rows, and is only meaningful inside an aggregate
+`defaultRows` are rows a new sheet starts with (a skill list, say); each value is checked like any stored value. `@powers.cost` is the column of that name across all rows, and is only meaningful inside an aggregate
 function.
 
 ### Tables
@@ -249,8 +249,9 @@ The tests use two fixtures with neutral names, `test/fixtures/systems/d20-core.j
 ## 9. Status
 
 **Built and tested:** the formula language, template validation with cycle detection, derivation by base and
-overlay, evaluation, `reconcileSheet`, `applyRest`, and the generic system.
+overlay, evaluation, `reconcileSheet`, `applyRest`, `defaultRows`, the Generic, D&D 3.5e and D&D 5e systems,
+the version diff (`src/sheet/diff.js`), the character `sheet` record, the Sheet page, and the Game systems page
+with a JSON editor.
 
-**Not built yet:** a character's `sheet` record and its migration, the Sheet page, the Game systems page and
-editor (DEF-001), the 5e and 3.5e systems (DEF-006, DEF-007), the newer-version diff (DEF-003) and the dice
-grammar that checks roll expressions (P3). Reading a flat PDF into a sheet is DEF-077.
+**Not built yet:** a visual system editor (DEF-078) and the dice grammar that checks roll expressions (P3).
+Reading a flat PDF into a sheet is DEF-077.

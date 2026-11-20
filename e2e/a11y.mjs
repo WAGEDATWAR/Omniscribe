@@ -136,6 +136,56 @@ const states = [
     })()`);
     await page.waitFor('!document.querySelector("#sheet-f-might-error").hidden');
   } },
+  { name: "sheet with a newer system version and the diff dialog", setup: async (page) => {
+    await page.evaluate(`(async () => {
+      const core = await (await fetch("/test/fixtures/systems/d20-core.json")).json();
+      const { openStorage } = await import("/src/storage.js");
+      const storage = await openStorage();
+      await storage.putSystem(core);
+      storage.close();
+      return true;
+    })()`);
+    await page.reload();
+    await page.waitFor('document.querySelector("#library-title")');
+    await openSheetPicker(page);
+    await page.click("#system-test-d20");
+    await page.click("#sheet-picker-confirm");
+    await page.waitFor('document.querySelector("#sheet-f-str")');
+    await page.waitFor('document.querySelector("#save-state").dataset.state === "saved"');
+    await page.evaluate(`(async () => {
+      const file = await (await fetch("/test/fixtures/systems/d20-core.json")).json();
+      file.version = 2;
+      file.fields.push({ key: "luck", label: "Luck", type: "number" });
+      const { openStorage } = await import("/src/storage.js");
+      const storage = await openStorage();
+      await storage.putSystem(file);
+      storage.close();
+      return true;
+    })()`);
+    await page.reload();
+    await page.waitFor('document.querySelector("#sheet-update") && !document.querySelector("#sheet-update").hidden');
+    await page.click("#sheet-update-review");
+    await page.waitFor('document.querySelector("#diff-dialog").open');
+  } },
+  { name: "sheet, D&D 3.5e with the full skill list", setup: async (page) => {
+    await openSheetPicker(page);
+    await page.click("#system-dnd35");
+    await page.click("#sheet-picker-confirm");
+    await page.waitFor('document.querySelectorAll("[data-collection=skills] .sheet-row").length === 42');
+  } },
+  { name: "sheet, D&D 5e", setup: async (page) => {
+    await openSheetPicker(page);
+    await page.click("#system-dnd5e");
+    await page.click("#sheet-picker-confirm");
+    await page.waitFor('document.querySelectorAll("[data-collection=skills] .sheet-row").length === 18');
+  } },
+  { name: "mobile sheet, D&D 3.5e", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openSheetPicker(page);
+    await page.click("#system-dnd35");
+    await page.click("#sheet-picker-confirm");
+    await page.waitFor('document.querySelectorAll("[data-collection=skills] .sheet-row").length === 42');
+  } },
   { name: "sheet, changing system", setup: async (page) => {
     await startSheet(page);
     await page.click("#sheet-change");
@@ -232,9 +282,15 @@ const states = [
     await openPage(page, "#/settings", "#settings-title");
     await page.waitFor('document.querySelector("#about-version")');
   } },
-  { name: "app menu", setup: async (page) => {
-    await page.click("#brand-btn");
-    await page.waitFor('document.querySelector("#app-menu").matches(":popover-open")');
+  { name: "navigation sidebar hidden", setup: async (page) => {
+    await page.click("#sidebar-toggle");
+    await page.waitFor('document.querySelector("#sidebar").hidden');
+  } },
+  { name: "mobile navigation drawer open", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await sleep(200);
+    await page.click("#sidebar-toggle");
+    await page.waitFor('!document.querySelector("#sidebar").hidden');
   } },
   { name: "command palette", setup: async (page) => {
     await page.click("#palette-btn");

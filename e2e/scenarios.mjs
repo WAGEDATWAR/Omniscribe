@@ -353,14 +353,51 @@ export const scenarios = [
     }
   },
   {
-    name: "the app menu opens from the brand and navigates",
+    name: "the navigation sidebar is open by default, hides, remembers and navigates",
     async run(page, context) {
       await boot(page, context);
-      await page.click("#brand-btn");
-      await page.waitFor('document.querySelector("#app-menu").matches(":popover-open")');
-      await page.click('#app-menu a[href="#/data"]');
+
+      assert.equal(await page.evaluate('document.querySelector("#sidebar").hidden'), false);
+      assert.equal(await page.evaluate('document.querySelector("#sidebar-toggle").getAttribute("aria-expanded")'), "true");
+      assert.equal(await page.evaluate('document.querySelector("#sidebar a[aria-current=page]").textContent.startsWith("Library")'), true);
+
+      await page.click("#sidebar-toggle");
+      await page.waitFor('document.querySelector("#sidebar").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#sidebar-toggle").getAttribute("aria-label")'), "Show navigation");
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#library-title")');
+      assert.equal(await page.evaluate('document.querySelector("#sidebar").hidden'), true);
+
+      await page.click("#sidebar-toggle");
+      await page.waitFor('!document.querySelector("#sidebar").hidden');
+      await page.click('#sidebar a[href="#/data"]');
       await page.waitFor('location.hash === "#/data"');
-      await page.waitFor('!document.querySelector("#app-menu").matches(":popover-open")');
+      assert.equal(await page.evaluate('document.querySelector("#sidebar a[aria-current=page]").textContent.startsWith("Data")'), true);
+
+      await page.click("#brand-link");
+      await page.waitFor('location.hash === "#/library"');
+      assertClean(page);
+    }
+  },
+  {
+    name: "on a phone the sidebar is a drawer that closes after navigating",
+    async run(page, context) {
+      await boot(page, context);
+      await page.setViewport(390, 844);
+      await page.reload();
+      await page.waitFor('document.querySelector("#library-title")');
+
+      assert.equal(await page.evaluate('document.querySelector("#sidebar").hidden'), true);
+      await page.click("#sidebar-toggle");
+      await page.waitFor('!document.querySelector("#sidebar").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#sidebar-scrim").hidden'), false);
+
+      await page.click('#sidebar a[href="#/settings"]');
+      await page.waitFor('location.hash === "#/settings"');
+      await page.waitFor('document.querySelector("#sidebar").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#sidebar-scrim").hidden'), true);
+      await page.setViewport(1440, 900);
       assertClean(page);
     }
   },
@@ -872,6 +909,91 @@ export const scenarios = [
     }
   },
   {
+    name: "the built-in 3.5e and 5e systems start prefilled and compute in the browser",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sheetPage(page);
+      assert.deepEqual(await page.evaluate('[...document.querySelectorAll(".system-card strong")].map((node) => node.textContent)'), ["D&D 3.5e", "D&D 5e", "Generic"]);
+
+      await page.click("#system-dnd35");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-f-str")');
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-collection=skills] .sheet-row").length'), 42);
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-collection=classes] .sheet-row").length'), 1);
+
+      await type(page, "#sheet-f-str", "16");
+      await type(page, "[data-collection=classes] .sheet-row input[type=number]", "5");
+      await page.waitFor('document.querySelector("[data-key=bab] .derived-value").textContent === "+3"');
+      assert.equal(await page.evaluate('document.querySelector("[data-key=melee_attack] .derived-value").textContent'), "+6");
+      assert.equal(await page.evaluate('document.querySelector("[data-key=level] .derived-value").textContent'), "5");
+      assert.equal(await page.evaluate('document.querySelector("#sheet-problems").children.length'), 0);
+
+      await page.click("#sheet-change");
+      await page.click("#system-dnd5e");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#sheet-f-save_prof_str")');
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-collection=skills] .sheet-row").length'), 42);
+      await type(page, "#sheet-f-slots_1", "4");
+      await page.waitFor('document.querySelectorAll("[data-key=spell_1] .box").length === 4');
+      assert.equal(await page.evaluate('document.querySelector("[data-key=proficiency] .derived-value").textContent'), "+3");
+      assertClean(page);
+    }
+  },
+  {
+    name: "a newer version of a system is reviewed as a diff before a sheet moves",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await installTestSystem(page, context);
+      await sheetPage(page);
+      await page.click("#system-test-d20");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-f-str")');
+      await type(page, "#sheet-f-armor_bonus", "4");
+      await saved(page);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-update").hidden'), true);
+
+      await page.evaluate(`(async () => {
+        const file = await (await fetch("/test/fixtures/systems/d20-core.json")).json();
+        file.version = 2;
+        file.fields = file.fields.filter((field) => field.key !== "touch_ac" && field.key !== "armor_bonus" && field.key !== "ac");
+        file.sections[1].items = ["initiative", "hp"];
+        file.fields.push({ key: "luck", label: "Luck", type: "number" });
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        await storage.putSystem(file);
+        storage.close();
+        return true;
+      })()`);
+      await page.reload();
+      await page.waitFor('document.querySelector("#sheet-update") && !document.querySelector("#sheet-update").hidden');
+      assert.match(await page.evaluate('document.querySelector("#sheet-update").textContent'), /Version 2 of this system is available/);
+
+      await page.click("#sheet-update-review");
+      await page.waitFor('document.querySelector("#diff-dialog").open');
+      const list = await page.evaluate('document.querySelector("#diff-list").textContent');
+      assert.match(list, /Added field\s*Luck/);
+      assert.match(list, /Removed field\s*Armor class/);
+      assert.match(await page.evaluate('document.querySelector("#diff-moved").textContent'), /1 stored value has no place[\s\S]*values\.armor_bonus/);
+
+      await page.click("#diff-cancel");
+      await page.waitFor('!document.querySelector("#diff-dialog").open');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-update").hidden'), false);
+
+      await page.click("#sheet-update-review");
+      await page.waitFor('document.querySelector("#diff-dialog").open');
+      await page.click("#diff-confirm");
+      await page.waitFor('document.querySelector("#sheet-update").hidden');
+      assert.match(await page.evaluate('document.querySelector(".sheet-system").textContent'), /version 2/);
+      assert.match(await page.evaluate('document.querySelector("#sheet-orphans").textContent'), /values\.armor_bonus/);
+      assert.ok(await page.evaluate('document.querySelector("#sheet-f-luck")'));
+      assertClean(page);
+    }
+  },
+  {
     name: "a sheet whose system is missing explains it and keeps the values",
     timeout: 60000,
     async run(page, context) {
@@ -917,7 +1039,7 @@ export const scenarios = [
       assert.match(await page.evaluate('document.querySelector("#systems-list").textContent'), /Generic[\s\S]*Built in/);
       assert.equal(await page.evaluate('document.querySelector(".system-item [aria-label^=Delete]")'), null);
 
-      await page.click('.system-item a[aria-label^="View"]');
+      await page.click('[data-id=generic] a[aria-label^="View"]');
       await page.waitFor('document.querySelector("#system-json")');
       assert.equal(await page.evaluate('document.querySelector("#system-json").readOnly'), true);
       assert.equal(await page.evaluate('document.querySelector("#system-save").disabled'), true);

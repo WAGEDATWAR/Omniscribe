@@ -20,7 +20,7 @@ export function createSheet(template) {
   return {
     values,
     pools: Object.fromEntries(template.pools.map((pool) => [pool.key, { current: null, temp: 0 }])),
-    collections: Object.fromEntries(template.collections.map((collection) => [collection.key, []])),
+    collections: Object.fromEntries(template.collections.map((collection) => [collection.key, (collection.defaultRows ?? []).map((row) => createRow(template, collection.key, row))])),
     conditions: [],
     orphans: {}
   };

@@ -88,17 +88,21 @@ P2, in order. Nothing past P2.
       delete, and a JSON editor with live validation by path that saves new versions.
 - [x] `M` `P2` Browser scenarios and accessibility states for the Sheet page, the systems page, the editor
       and the new-system dialog.
-- [ ] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006). Structure and
-      formulas only (G-13); do 3.5e first, since derived 3.5e systems are the first real use.
-- [ ] `M` `P2` The newer-version diff: when a base or a system gets a new version, show added, removed and
-      changed fields before a character moves (DEF-003).
+- [x] `H` `P2` Built-in D&D 3.5e and 5e systems as read-only bases (DEF-007, DEF-006).
+- [x] `M` `P2` The newer-version diff (DEF-003).
+- [x] `M` `L` The navigation is a collapsible left sidebar (a drawer on phones) instead of a popup.
 - [ ] `H` `P2` A visual system editor (forms for fields, pools, collections and overlay operations) on top
-      of the JSON editor (DEF-078).
-- [ ] `M` `P2` Review pass over the Sheet page on a phone and with a large 3.5e sheet (200 rows).
+      of the JSON editor (DEF-078). The last open P2 item; P2 is done when it lands or is re-owned.
+- [ ] `M` `P2` A review pass over the Sheet page with a 100-row 3.5e sheet on a phone (it passes the
+      accessibility audit; the layout has not been judged by eye on a real phone).
 
 ## Recently landed
 
-- **P2 pages (uncommitted after ae972e1).** The Sheet page and the Game systems page with editor, import,
+- **P2 built-ins, diff and sidebar (uncommitted after 422cd88).** D&D 3.5e and 5e as built-in systems
+  (generated from a script for the long lists, checked against hand-computed numbers including multiclass
+  attack lines and expertise), `defaultRows` so a new sheet starts with its skill list, the newer-version
+  diff dialog, and the left sidebar. 205 unit tests, 41 browser scenarios, accessibility zero violations.
+- **P2 pages (422cd88, CI green).** The Sheet page and the Game systems page with editor, import,
   export, derive and delete, with 12 new browser scenarios and 14 new accessibility states (42 and 40 in
   all, zero violations). Scenarios found no defects in the pages; one test expectation was wrong.
 - **P2 sheet engine (d62c7b5).** `docs/SHEET.md` written first. The formula language (typed, total,

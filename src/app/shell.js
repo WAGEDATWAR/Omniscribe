@@ -75,9 +75,64 @@ export function initShell(ctx) {
   els.menuPalette.addEventListener("click", () => bus.emit("palette:open"));
   els.menuShortcuts.addEventListener("click", () => bus.emit("shortcuts:open"));
 
-  for (const item of els.menu.querySelectorAll("[data-menu-close]")) {
-    item.addEventListener("click", () => els.menu.hidePopover?.());
+  const compact = () => window.matchMedia("(max-width: 899px)").matches;
+  let open = true;
+
+  function setSidebar(next, { remember = false } = {}) {
+    open = next;
+    els.sidebar.hidden = !next;
+    els.scrim.hidden = !(next && compact());
+    els.sidebarToggle.setAttribute("aria-expanded", String(next));
+    els.sidebarToggle.setAttribute("aria-label", next ? "Hide navigation" : "Show navigation");
+    els.sidebarToggle.title = next ? "Hide navigation" : "Show navigation";
+
+    if (remember && !compact()) {
+      ctx.prefs.update({ sidebar: next ? "open" : "closed" });
+    }
   }
+
+  function settleSidebar() {
+    const preferred = ctx.prefs.get().sidebar;
+    setSidebar(compact() ? false : preferred ? preferred === "open" : true);
+  }
+
+  els.sidebarToggle.append(icon("menu"));
+  settleSidebar();
+  window.matchMedia("(max-width: 899px)").addEventListener("change", settleSidebar);
+  els.sidebarToggle.addEventListener("click", () => {
+    setSidebar(!open, { remember: true });
+
+    if (open && compact()) {
+      els.sidebar.querySelector("a, button")?.focus();
+    }
+  });
+  els.scrim.addEventListener("click", () => setSidebar(false));
+  bus.on("sidebar:toggle", () => setSidebar(!open, { remember: true }));
+
+  els.sidebar.addEventListener("click", (event) => {
+    if (compact() && event.target.closest("a, button")) {
+      setSidebar(false);
+    }
+  });
+
+  els.sidebar.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && compact() && open) {
+      setSidebar(false);
+      els.sidebarToggle.focus();
+    }
+  });
+
+  router.onRoute((route) => {
+    const current = route.view === "character" ? "library" : route.view === "system" ? "systems" : route.view;
+
+    for (const link of els.sidebar.querySelectorAll("[data-view]")) {
+      if (link.dataset.view === current) {
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.defaultPrevented) {
