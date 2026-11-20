@@ -4,6 +4,26 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added (P2, in progress)
+
+- `docs/SHEET.md`: game systems, derivation, the formula language, evaluation and limits, written before
+  the code; `docs/reference/SHEET-REFERENCE.md`: what two real flat-PDF sheets for a derived 3.5e system
+  showed (structure only; the sheets and their content are not in the repository).
+- The sheet engine, pure and with no UI yet: a typed, total formula language with static checks and
+  budgets (`src/sheet/formula.js`); strict system files with validation, cycle detection and errors by
+  path (`template.js`); derivation by base and overlay (`resolve.js`); evaluation of fields, pools and
+  collections in dependency order with errors as values, orphan reconciliation and rests
+  (`evaluate.js`); the built-in Generic system (`src/templates/generic.json`).
+- Decisions S-11 to S-16 (collections, the formula language, pools, errors as values, the file format,
+  markers) and deferral DEF-077 (assisted import from a flat PDF).
+- 68 unit tests (168 in all), including a 4,000-case fuzz test of hostile formulas and a 300-value,
+  500-row performance test (about 17 ms).
+
+### Fixed
+
+- Derivation: a derived system file's own description overrode an overlay `meta` operation; the overlay
+  now wins.
+
 ## [0.2.0] - P1 characters and PDFs
 
 ### Added

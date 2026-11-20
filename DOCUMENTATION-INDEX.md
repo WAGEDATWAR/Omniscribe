@@ -36,7 +36,8 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | Doc | Owns | Status |
 |---|---|---|
 | `docs/ARCHITECTURE.md` | Application shape, data flow, canonical model, storage layout, module map | designed |
-| `docs/SHEET.md` | Game systems, derivation, the formula language, evaluation, pools, conditions, orphans | planned (P2) |
+| `docs/SHEET.md` | Game systems, derivation, the formula language, evaluation, pools, conditions, orphans | designed (P2 in progress) |
+| `docs/reference/SHEET-REFERENCE.md` | What real derived-system sheets need; structure only, no private content | reference |
 | `docs/TABLES.md` | Random tables: loot and encounters as data on the dice engine (DEF-014) | planned (P8) |
 | `docs/DISTRIBUTION.md` | Pages, the Windows build, the APK, the release workflow | planned (P7) |
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record | planned (P3) |

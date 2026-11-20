@@ -1,0 +1,89 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "id": "test-d20",
+  "version": 1,
+  "name": "Test d20",
+  "system": "Test",
+  "description": "A d20-style core used only by the tests.",
+  "base": null,
+  "overlay": [],
+  "fields": [
+    { "key": "level", "label": "Level", "type": "number", "default": 1, "min": 1, "max": 40 },
+    { "key": "str", "label": "Strength", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@str - 10) / 2)" } },
+    { "key": "dex", "label": "Dexterity", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@dex - 10) / 2)" } },
+    { "key": "con", "label": "Constitution", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@con - 10) / 2)" } },
+    { "key": "int", "label": "Intelligence", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@int - 10) / 2)" } },
+    { "key": "armor_bonus", "label": "Armor bonus", "type": "number", "default": 0 },
+    {
+      "key": "rank",
+      "label": "Rank",
+      "type": "choice",
+      "default": "iron",
+      "choices": [
+        { "value": "iron", "label": "Iron" },
+        { "value": "bronze", "label": "Bronze" },
+        { "value": "silver", "label": "Silver" }
+      ]
+    },
+    { "key": "tags", "label": "Tags", "type": "list" },
+    { "key": "bab", "label": "Base attack", "type": "derived", "formula": "step(\"bab_table\", @level)" },
+    {
+      "key": "attack_line",
+      "label": "Attacks per round",
+      "type": "derived",
+      "format": "text",
+      "formula": "concat(signed(@bab), if(@bab > 5, concat(\" / \", signed(@bab - 5)), \"\"))"
+    },
+    { "key": "ac", "label": "Armor class", "type": "derived", "marker": "+", "formula": "10 + @dex.mod + @armor_bonus" },
+    { "key": "touch_ac", "label": "Touch AC", "type": "derived", "formula": "10 + @dex.mod" },
+    { "key": "initiative", "label": "Initiative", "type": "derived", "format": "signed", "formula": "@dex.mod" },
+    { "key": "skill_ranks", "label": "Skill ranks spent", "type": "derived", "formula": "sum(@skills.ranks)" },
+    { "key": "rank_bonus", "label": "Rank bonus", "type": "derived", "formula": "index(@rank) * 2" }
+  ],
+  "pools": [
+    { "key": "hp", "label": "Hit points", "max": "@level * 8 + @con.mod * @level", "temp": true, "rests": { "long": "full" } }
+  ],
+  "collections": [
+    {
+      "key": "skills",
+      "label": "Skills",
+      "sortBy": "name",
+      "fields": [
+        { "key": "name", "label": "Name", "type": "text" },
+        { "key": "ranks", "label": "Ranks", "type": "number", "default": 0, "min": 0 },
+        { "key": "misc", "label": "Misc", "type": "number", "default": 0 },
+        {
+          "key": "ability",
+          "label": "Ability",
+          "type": "choice",
+          "default": "int",
+          "choices": [
+            { "value": "str", "label": "STR" },
+            { "value": "dex", "label": "DEX" },
+            { "value": "int", "label": "INT" }
+          ]
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "type": "derived",
+          "format": "signed",
+          "formula": "$.ranks + $.misc + if($.ability == \"str\", @str.mod, if($.ability == \"dex\", @dex.mod, @int.mod))"
+        }
+      ]
+    }
+  ],
+  "tables": { "bab_table": { "1": 0, "2": 1, "4": 3, "8": 6, "12": 9 } },
+  "conditions": ["Blinded", "Dazed", "Poisoned"],
+  "rests": [
+    { "id": "short", "label": "Short rest" },
+    { "id": "long", "label": "Long rest" }
+  ],
+  "rolls": [{ "key": "str_check", "label": "Strength check", "expression": "1d20 + @str.mod", "group": "Checks" }],
+  "sections": [
+    { "id": "abilities", "title": "Abilities", "layout": "fields", "items": ["str", "dex", "con", "int"] },
+    { "id": "defense", "title": "Defense", "layout": "fields", "items": ["ac", "touch_ac", "initiative", "hp"] },
+    { "id": "skills", "title": "Skills", "layout": "table", "items": ["skills"] }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "id": "test-d20-custom",
+  "version": 1,
+  "name": "Test d20 custom",
+  "system": "Test custom",
+  "description": "A derived system used only by the tests: an extra pool, a collection, a table and overridden formulas.",
+  "base": { "id": "test-d20", "version": 1 },
+  "overlay": [
+    { "op": "add", "target": "field", "key": "tier", "value": { "label": "Tier", "type": "number", "default": 0, "min": 0, "max": 8 } },
+    { "op": "add", "target": "field", "key": "shield", "value": { "label": "Shield", "type": "number", "default": 0 } },
+    { "op": "override", "target": "field", "key": "ac", "value": { "formula": "10 + @dex.mod + @armor_bonus + @shield" } },
+    { "op": "remove", "target": "field", "key": "touch_ac" },
+    { "op": "override", "target": "section", "key": "defense", "value": { "items": ["ac", "initiative", "hp", "mana"] } },
+    { "op": "add", "target": "field", "key": "spell_dc", "value": { "label": "Spell DC", "type": "derived", "formula": "14 + @tier" } },
+    { "op": "add", "target": "field", "key": "awakened", "value": { "label": "Awakened", "type": "derived", "formula": "count(@powers, $.awake)" } },
+    { "op": "add", "target": "field", "key": "power_cost", "value": { "label": "Power cost", "type": "derived", "formula": "sum(@powers.cost)" } },
+    { "op": "add", "target": "field", "key": "tier_cost", "value": { "label": "Tier cost", "type": "derived", "formula": "lookup(\"tier_cost\", @tier)" } },
+    { "op": "add", "target": "table", "key": "tier_cost", "value": { "0": 0, "1": 1, "2": 10, "3": 50 } },
+    {
+      "op": "add",
+      "target": "pool",
+      "key": "mana",
+      "value": {
+        "label": "Mana",
+        "max": "@int * 10",
+        "display": "boxes",
+        "boxSize": 10,
+        "temp": false,
+        "rests": { "short": { "add": "5" }, "long": "full" }
+      }
+    },
+    {
+      "op": "add",
+      "target": "collection",
+      "key": "powers",
+      "value": {
+        "label": "Powers",
+        "groupBy": "group",
+        "sortBy": "name",
+        "fields": [
+          { "key": "name", "label": "Name", "type": "text" },
+          {
+            "key": "group",
+            "label": "Group",
+            "type": "choice",
+            "default": "special",
+            "choices": [
+              { "value": "racial", "label": "Racial" },
+              { "value": "special", "label": "Special" }
+            ]
+          },
+          { "key": "cost", "label": "Cost", "type": "number", "default": 0, "min": 0 },
+          { "key": "awake", "label": "Awakened", "type": "flag" },
+          { "key": "limit", "label": "Limit", "type": "uses", "max": 2, "resetOn": "short" },
+          { "key": "damage", "label": "Damage", "type": "roll", "default": "2d6 + @str.mod" },
+          { "key": "double_cost", "label": "Double cost", "type": "derived", "formula": "$.cost * 2" }
+        ]
+      }
+    },
+    { "op": "add", "target": "item", "parent": "skills", "key": "notes", "value": { "label": "Notes", "type": "text" } },
+    { "op": "override", "target": "item", "parent": "skills", "key": "misc", "value": { "default": 1 } },
+    { "op": "add", "target": "condition", "value": "Exhausted" },
+    { "op": "remove", "target": "condition", "value": "Poisoned" },
+    { "op": "add", "target": "roll", "key": "power_roll", "value": { "label": "Power", "expression": "@tier + 1d6", "group": "Powers" } },
+    { "op": "add", "target": "section", "key": "powers", "value": { "title": "Powers", "layout": "table", "items": ["powers"] } },
+    { "op": "override", "target": "meta", "value": { "description": "A derived test system." } }
+  ]
+}

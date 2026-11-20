@@ -72,6 +72,12 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 
 | # | Decision | Status |
 |---|---|---|
+| S-11 | **Rows are template-defined collections.** Powers, spells, attacks, skills and similar lists are collections with typed columns, grouping and per-row use counters, not hard-coded pages. Inventory, familiars and relations stay first-class (P4) and may reuse the same row editor. | locked |
+| S-12 | **The formula language is typed, total and has no coercion.** Numbers, strings and booleans; `@key`, `@key.sub`, `@collection.column` and `$` item references; the function list in `docs/SHEET.md` 3; budgets of 500 characters, 400 nodes, depth 40 and 20,000 steps; an over-budget formula is an error, never a clamp. | locked |
+| S-13 | **A pool is a named value with a maximum formula, stored `current` and `temp`, a display of number or boxes, and a rule per named rest.** `current` is clamped to the maximum when evaluated. | locked |
+| S-14 | **Evaluation returns errors as values.** A failing formula gives its field a message and a null value, dependents report which input failed, and the rest of the sheet still evaluates. The result also carries a flat scope (`str`, `str.mod`, `hp.max`) that the dice read. | locked |
+| S-15 | **A system file is strict JSON with `format: "omniscribe-system"`**, validated on import. Unknown keys are kept in `extensions` and reported as warnings. The file is at most 1 MB. | locked |
+| S-16 | **`marker` is display-only.** A field may carry a mark such as a dagger so a sheet can flag converted numbers; it never changes a value. | locked |
 | D-1 | **The dice grammar is documented once** (`docs/DICE.md`) and every term has a fixture and a distribution test. | locked |
 | D-2 | **The RNG is injected.** Production uses `crypto.getRandomValues`; tests use a seeded generator. | locked |
 | D-3 | **Limits:** at most 1,000 dice per term, 1,000,000 sides, 500 characters per expression, and an explosion cap. Over a limit is an error, not a clamp. | locked |

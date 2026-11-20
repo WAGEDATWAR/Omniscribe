@@ -1,0 +1,91 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "id": "generic",
+  "version": 1,
+  "name": "Generic",
+  "system": "Generic",
+  "description": "A small, neutral starting point: six attributes, a level, health and an optional resource, with lists for abilities and attacks. Derive your own system from it.",
+  "base": null,
+  "overlay": [],
+  "fields": [
+    { "key": "concept", "label": "Concept", "type": "text", "hint": "A line that sums the character up." },
+    { "key": "level", "label": "Level", "type": "number", "default": 1, "min": 1, "max": 99 },
+    { "key": "xp", "label": "Experience", "type": "number", "default": 0, "min": 0 },
+    { "key": "might", "label": "Might", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@might - 10) / 2)" } },
+    { "key": "agility", "label": "Agility", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@agility - 10) / 2)" } },
+    { "key": "endurance", "label": "Endurance", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@endurance - 10) / 2)" } },
+    { "key": "intellect", "label": "Intellect", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@intellect - 10) / 2)" } },
+    { "key": "insight", "label": "Insight", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@insight - 10) / 2)" } },
+    { "key": "presence", "label": "Presence", "type": "number", "default": 10, "min": 1, "max": 40, "subs": { "mod": "floor((@presence - 10) / 2)" } },
+    { "key": "defense", "label": "Defense", "type": "derived", "formula": "10 + @agility.mod", "hint": "Ten plus the Agility modifier." },
+    { "key": "speed", "label": "Speed", "type": "number", "default": 30, "min": 0 },
+    { "key": "background", "label": "Background", "type": "longtext" }
+  ],
+  "pools": [
+    {
+      "key": "health",
+      "label": "Health",
+      "max": "@endurance + @level * 4",
+      "temp": true,
+      "display": "number",
+      "rests": { "long": "full" }
+    },
+    {
+      "key": "energy",
+      "label": "Energy",
+      "max": "@intellect + @level",
+      "display": "boxes",
+      "boxSize": 1,
+      "rests": { "short": { "add": "floor(@energy.max / 4)" }, "long": "full" }
+    }
+  ],
+  "collections": [
+    {
+      "key": "abilities",
+      "label": "Abilities",
+      "sortBy": "name",
+      "columns": ["name", "cost", "use"],
+      "fields": [
+        { "key": "name", "label": "Name", "type": "text" },
+        { "key": "cost", "label": "Cost", "type": "number", "default": 0, "min": 0 },
+        { "key": "use", "label": "Uses", "type": "uses", "max": 1, "resetOn": "long" },
+        { "key": "effect", "label": "Effect", "type": "longtext" }
+      ]
+    },
+    {
+      "key": "attacks",
+      "label": "Attacks",
+      "sortBy": "name",
+      "columns": ["name", "bonus", "damage"],
+      "fields": [
+        { "key": "name", "label": "Name", "type": "text" },
+        { "key": "bonus", "label": "Bonus", "type": "number", "default": 0 },
+        { "key": "damage", "label": "Damage", "type": "roll", "default": "1d6" },
+        { "key": "notes", "label": "Notes", "type": "text" }
+      ]
+    }
+  ],
+  "tables": {},
+  "conditions": ["Blinded", "Deafened", "Frightened", "Grappled", "Poisoned", "Prone", "Stunned"],
+  "rests": [
+    { "id": "short", "label": "Short rest" },
+    { "id": "long", "label": "Long rest" }
+  ],
+  "rolls": [
+    { "key": "might_check", "label": "Might check", "expression": "1d20 + @might.mod", "group": "Checks" },
+    { "key": "agility_check", "label": "Agility check", "expression": "1d20 + @agility.mod", "group": "Checks" },
+    { "key": "endurance_check", "label": "Endurance check", "expression": "1d20 + @endurance.mod", "group": "Checks" },
+    { "key": "intellect_check", "label": "Intellect check", "expression": "1d20 + @intellect.mod", "group": "Checks" },
+    { "key": "insight_check", "label": "Insight check", "expression": "1d20 + @insight.mod", "group": "Checks" },
+    { "key": "presence_check", "label": "Presence check", "expression": "1d20 + @presence.mod", "group": "Checks" }
+  ],
+  "sections": [
+    { "id": "identity", "title": "Identity", "layout": "fields", "items": ["concept", "level", "xp"] },
+    { "id": "attributes", "title": "Attributes", "layout": "fields", "items": ["might", "agility", "endurance", "intellect", "insight", "presence"] },
+    { "id": "vitals", "title": "Vitals", "layout": "fields", "items": ["health", "energy", "defense", "speed"] },
+    { "id": "abilities", "title": "Abilities", "layout": "table", "items": ["abilities"] },
+    { "id": "attacks", "title": "Attacks", "layout": "table", "items": ["attacks"] },
+    { "id": "background", "title": "Background", "layout": "text", "items": ["background"] }
+  ]
+}

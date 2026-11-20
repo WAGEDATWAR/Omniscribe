@@ -25,7 +25,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-002 | Item effects that modify sheet values (an equipped item adds to AC) | needs effect records evaluated by the sheet engine, behind the same budget | P4 | scheduled |
 | DEF-003 | Move a character to a newer template version with a diff | S-3; shows added, removed and orphaned fields before applying | P2 | scheduled |
 | DEF-004 | Level-up assistant driven by template data | automation of progression steps per template | post-v1 | scheduled |
-| DEF-005 | Rest actions: short and long rest reset pools | S-7; template-defined, undoable | P2 | scheduled |
+| DEF-005 | Rest actions: short and long rest reset pools | S-7; `applyRest` is built and tested, the buttons and undo come with the Sheet page | P2 | doing |
 
 ## D. Dice
 
@@ -45,6 +45,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-021 | A PDF fallback where inline viewing is unsupported | the in-app viewer (U-8) renders on every shell, so no fallback is needed | P7 | dropped |
 | DEF-022 | Image handouts and portrait cropping | portraits are scaled to 512 px and kept whole in P1 | P6 | scheduled |
 | DEF-075 | Text selection and search inside the PDF viewer | needs PDF.js's text layer; the viewer draws canvases only | P7 | scheduled |
+| DEF-077 | Assisted import from a flat (non-form) PDF | such sheets, e.g. a printed web sheet, have no fields to map (DEF-020); extract text and let the person confirm values | post-v1 | scheduled |
 | DEF-076 | CJK character maps for PDFs with non-embedded Asian fonts | about 1.5 MB of `cmaps/` to vendor; excluded in P1 | P7 | scheduled |
 
 ## P. Persistence
@@ -90,6 +91,6 @@ Owners are `P0`-`P7` or `post-v1`.
 
 | # | Item | Notes | Owner | Status |
 |---|---|---|---|---|
-| DEF-070 | Formula and dice step budgets under adversarial input | A-8 and D-3; a property test feeds hostile expressions | P2 | scheduled |
+| DEF-070 | Formula and dice step budgets under adversarial input | A-8 and D-3; the formula half is done (budgets, fuzz test); the dice half lands with P3 | P2 | doing |
 | DEF-071 | Zip reader caps inflated size and entry count | avoids a zip bomb on import | P6 | scheduled |
 | DEF-072 | Import limits centralised in one `limits.js` | Loreweaver scattered them | P0 | scheduled |
