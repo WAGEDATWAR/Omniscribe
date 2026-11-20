@@ -81,16 +81,16 @@ P3 is done (0.4.0). P4 has its spec (`docs/CHARACTER.md`); the code is next, in 
       progression and familiars, the build order and the gate (C-1 to C-10).
 - [x] `H` `P4` Schema migration 5 and `normalize*` for every list; store methods with undo; the shared list
       editor UI (descriptor-driven, with fields of your own on every record); duplicate and delete cover every list.
-- [~] `H` `P4` Inventory: `src/inventory.js`, page, wallets, containers, weight: done. Open: the carry limit,
-      attunement cap and currencies from the system (`limits.carry`, `limits.attunement`, `currencies`).
-- [~] `M` `P4` Abilities: page, use counters, restore all, roll button: done. Open: uses following the system's rests.
+- [x] `H` `P4` Inventory: `src/inventory.js`, page, wallets, containers, weight, and the system's carry limit,
+      attunement cap and currencies (`extensions.records`, C-12).
+- [x] `M` `P4` Abilities: page, use counters, restore all, roll button, uses that follow the system's rests.
 - [x] `M` `P4` Journal: page with kinds, goals, filter and search.
 - [x] `M` `P4` Relations: `src/relations.js`, page, reciprocal view.
-- [~] `M` `P4` Progression: log, xp total and last level: done. Open: "apply to the sheet".
-- [~] `M` `P4` Familiars: record, present toggle, make a character: done. Open: a sheet on the familiar (reuse the
-      Sheet builder) and promotion as one undo step.
-- [~] `M` `P4` Browser scenarios and accessibility states for every page: done. Open: palette entries and the
-      Overview summary.
+- [x] `M` `P4` Progression: log, xp total, last level and "apply to the sheet" (once per entry).
+- [x] `M` `P4` Familiars: record, present toggle and promotion to a character in one undo step. Editing a familiar's
+      own sheet in place is DEF-087.
+- [x] `M` `P4` Palette entries, Overview summary, browser scenarios and accessibility states for every page.
+- [ ] `H` `P4` Phase gate twice, release 0.5.0.
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
 ## Recently landed

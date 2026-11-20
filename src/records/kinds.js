@@ -115,6 +115,7 @@ export const KINDS = Object.freeze({
       { key: "kind", type: "choice", values: ["xp", "level", "milestone", "other"], def: "milestone", label: "Kind" },
       { key: "delta", type: "num", min: -1e9, max: 1e9, nullable: true, def: null, label: "Amount" },
       { key: "date", type: "date", label: "Date", today: false },
+      { key: "applied", type: "bool", def: false, label: "Applied to the sheet", hidden: true },
       { key: "at", type: "num", min: 0, max: 8.64e15, def: 0, label: "Recorded", hidden: true },
       { key: "notes", type: "long", max: 5000, label: "Notes" }
     ]

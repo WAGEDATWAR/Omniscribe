@@ -103,3 +103,4 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-084 | Shared item and ability libraries with give-to actions | across characters; the charter backlog | post-v1 | scheduled |
 | DEF-085 | Journal attachments and images | text only in P4 | post-v1 | scheduled |
 | DEF-086 | Roll presets on inventory items | abilities carry rolls in P4 | post-v1 | scheduled |
+| DEF-087 | An editor for a familiar's own sheet on its page | a familiar keeps a sheet when promoted; editing one in place needs the Sheet builder to take a target other than the character | P6 | scheduled |

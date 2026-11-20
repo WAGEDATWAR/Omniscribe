@@ -89,5 +89,5 @@ export function createRolling(ctx) {
     return results;
   }
 
-  return { log, scopeFor, systemRolls, characterRolls, findPreset, roll, fire };
+  return { log, scopeFor, templateFor: (characterId) => templateOf(characterId ? store.getCharacter(characterId) : null), systemRolls, characterRolls, findPreset, roll, fire };
 }

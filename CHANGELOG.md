@@ -18,7 +18,12 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - **Extensible by design (C-11).** One descriptor per kind drives normalization, the store and a generic list page,
   and every record takes up to 30 fields of your own (text, number or yes/no) that are saved, duplicated and
   shown with it. Unknown keys are kept in `extensions`, so newer data survives older code.
-- 12 more unit tests, 5 more browser scenarios (54 in all) and 8 more accessibility states.
+- A system can set a carry limit, an attunement cap and currencies under `extensions.records` (C-12); the
+  Inventory shows weight against the limit and says in words when it is over. Resting on the Sheet page also
+  restores abilities that follow that rest, in the same undo step. A progression entry can be applied to the
+  sheet's `xp` or `level` once. A familiar becomes a character in one undo step. The command palette opens any
+  of a character's pages and the Overview shows counts and who is present.
+- 15 more unit tests (262), 6 more browser scenarios (55 in all) and 8 more accessibility states.
 
 ## [0.4.0] - P3 the dice table
 

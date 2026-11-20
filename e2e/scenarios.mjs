@@ -1706,4 +1706,30 @@ export const scenarios = [
       assertClean(page);
     }
   }
+  ,
+  {
+    name: "a progression entry can be applied to the sheet once, and the overview counts the records",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Climber");
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#sheet-picker")');
+      await page.click("#system-generic");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-f-might")');
+
+      await openRecords(page, "progression");
+      await addRecord(page, "progression", { label: "Goblin cave", kind: "xp", delta: "300" });
+      await page.waitFor('document.querySelector("button[aria-label=\\"Apply to the sheet: Goblin cave\\"]")');
+      await page.evaluate('document.querySelector("button[aria-label=\\"Apply to the sheet: Goblin cave\\"]").click(); true');
+      await page.waitFor('document.querySelector("#rec-progression-list").textContent.includes("Applied to the sheet")');
+
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#sheet-f-xp") && document.querySelector("#sheet-f-xp").value === "300"');
+
+      await page.click('.subnav-link[data-page="overview"]');
+      await page.waitFor('document.querySelector("#character-glance").textContent.includes("Items0")');
+      assertClean(page);
+    }
+  }
 ];

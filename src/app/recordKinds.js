@@ -2,6 +2,7 @@ import { applyDelta, attunedCount, canContain, carriedWeight, totalValue } from 
 import { filterEntries, sortEntries } from "../journal.js";
 import { lastLevel, newestFirst, xpTotal } from "../progression.js";
 import { attitudeWord, reciprocalRelations, targetExists } from "../relations.js";
+import { evaluateLimit, systemRecords } from "../records/systemRecords.js";
 import { explain } from "../dice/explain.js";
 import { routeHref } from "../views.js";
 import { button, h } from "../ui/dom.js";
@@ -51,7 +52,9 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
 
   function walletPanel(character) {
     const wallets = character.inventory.wallets;
-    const keys = [...new Set([...DEFAULT_CURRENCIES, ...Object.keys(wallets)])];
+    const configured = systemRecords(rolling.templateFor(character.id)).currencies;
+    const labels = new Map(configured.map((currency) => [currency.key, currency.label]));
+    const keys = [...new Set([...(configured.length ? configured.map((currency) => currency.key) : DEFAULT_CURRENCIES), ...Object.keys(wallets)])];
 
     const rows = keys.map((key) => {
       const delta = h("input", { class: "input wallet-delta", type: "text", inputMode: "numeric", autocomplete: "off", "aria-label": `${key} change`, placeholder: "+25", id: `wallet-delta-${key}` });
@@ -80,6 +83,7 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
         "div",
         { class: "wallet-row", "data-currency": key },
         h("strong", { class: "wallet-key", text: key }),
+        labels.has(key) && labels.get(key) !== key ? h("span", { class: "field-hint", text: labels.get(key) }) : null,
         h("span", { class: "wallet-amount", id: `wallet-amount-${key}`, text: String(wallets[key] ?? 0) }),
         delta,
         button({ label: "Apply", ariaLabel: `Apply ${key} change`, variant: "btn-small", onclick: apply }),
@@ -164,14 +168,25 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
         }
       ],
       top(character, records) {
-        const limit = null;
+        const rules = systemRecords(rolling.templateFor(character.id));
+        const scope = rolling.scopeFor(character.id);
+        const limit = evaluateLimit(rules.carry, scope);
+        const cap = evaluateLimit(rules.attunement, scope);
+        const weight = carriedWeight(records);
+        const attuned = attunedCount(records);
+
         return h(
           "div",
-          { class: "stat-row", id: "inventory-stats" },
-          stat("Carried weight", number(carriedWeight(records))),
-          limit === null ? null : stat("Limit", limit),
-          stat("Total value", number(totalValue(records))),
-          stat("Attuned", attunedCount(records))
+          { class: "stack" },
+          h(
+            "div",
+            { class: "stat-row", id: "inventory-stats" },
+            stat("Carried weight", limit === null ? number(weight) : `${number(weight)} of ${number(limit)}`),
+            stat("Total value", number(totalValue(records))),
+            stat("Attuned", cap === null ? attuned : `${attuned} of ${number(cap)}`)
+          ),
+          limit !== null && weight > limit ? h("p", { class: "field-error", id: "inventory-over", text: `Over the carry limit by ${number(weight - limit)}.` }) : null,
+          cap !== null && attuned > cap ? h("p", { class: "field-error", id: "inventory-over-attune", text: `Attuned to ${attuned - cap} more than the limit of ${number(cap)}.` }) : null
         );
       },
       extra: (character) => walletPanel(character)
@@ -296,6 +311,33 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
       manualOrder: false,
       summary: (record) => [record.date, record.kind, record.delta === null ? "" : `${record.delta > 0 ? "+" : ""}${record.delta}`].filter(Boolean).join(" · "),
       sort: newestFirst,
+      rowControls(record, { character }) {
+        const key = record.kind === "xp" ? "xp" : record.kind === "level" ? "level" : null;
+        const template = rolling.templateFor(character.id);
+        const known = key && template?.fields.some((entry) => entry.key === key && entry.type !== "derived" && entry.type === "number");
+
+        if (!known || !character.sheet || record.delta === null) {
+          return null;
+        }
+
+        if (record.applied) {
+          return h("span", { class: "field-hint", text: "Applied to the sheet" });
+        }
+
+        return button({
+          label: "Apply to the sheet",
+          ariaLabel: `Apply to the sheet: ${record.label}`,
+          variant: "btn-small",
+          onclick: () => {
+            const value = key === "xp" ? (Number(character.sheet.values[key]) || 0) + record.delta : record.delta;
+            store.updateCharacter(character.id, {
+              sheet: { ...character.sheet, values: { ...character.sheet.values, [key]: value } },
+              progression: character.progression.map((entry) => (entry.id === record.id ? { ...entry, applied: true } : entry))
+            });
+            toast(`Set ${key} to ${value} on the sheet.`);
+          }
+        });
+      },
       top(character, records) {
         const level = lastLevel(records);
         return h("div", { class: "stat-row", id: "progression-stats" }, stat("Experience logged", number(xpTotal(records))), stat("Last level", level === null ? "none" : number(level)));
@@ -312,14 +354,13 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
             ariaLabel: `Make a character: ${record.name}`,
             variant: "btn-small",
             onclick: () => {
-              const made = store.addCharacter({ name: record.name, summary: record.kind, notes: record.notes, portraitBlobId: record.portraitBlobId, sheet: record.sheet, status: "active" });
+              const made = store.promoteFamiliar(currentId(), record.id);
 
               if (!made) {
                 toast("The library is full.", { tone: "error" });
                 return;
               }
 
-              update(record.id, "familiars", { linkedCharacterId: made.id });
               toast(`${record.name} is now a character.`, { action: { label: "Open", run: () => router.navigate(routeHref("character", made.id)) } });
             }
           })

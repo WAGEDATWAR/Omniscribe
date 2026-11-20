@@ -1,5 +1,5 @@
 import { displayName } from "../schema.js";
-import { VIEWS, routeHref } from "../views.js";
+import { CHARACTER_PAGES, VIEWS, routeHref } from "../views.js";
 import { createPalette } from "../ui/commandPalette.js";
 import { applyTheme } from "./theme.js";
 
@@ -41,6 +41,14 @@ export function initPalette(ctx) {
     commands.push({ id: "sidebar", title: "Show or hide navigation", keywords: "menu sidebar", run: () => bus.emit("sidebar:toggle") });
 
     commands.push({ id: "shortcuts", title: "Show keyboard shortcuts", hint: "?", run: () => bus.emit("shortcuts:open") });
+
+    const route = router.current();
+
+    if (route.view === "character" && store.getCharacter(route.id)) {
+      for (const page of CHARACTER_PAGES) {
+        commands.push({ id: `page-${page.id}`, title: `Open this character's ${page.label}`, keywords: "page tab", run: () => router.navigate(routeHref("character", route.id, page.id)) });
+      }
+    }
 
     for (const character of store.getState().characters) {
       commands.push({

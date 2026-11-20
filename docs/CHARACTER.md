@@ -4,7 +4,7 @@
 > them. The sheet, the formula language and systems are `docs/SHEET.md`; rolls are `docs/DICE.md`; storage is
 > `docs/PERSISTENCE.md`. Choices are `DECISIONS.md` G-14, S-11, A-1 and C-1 to C-10.
 
-**Status:** in build (P4). The six pages, their lists and the shared editor exist; `TODO.md` says what is still open (system limits and currencies, rest-driven uses, apply-to-sheet, a familiar's own sheet, palette and Overview).
+**Status:** built (P4), gate pending. A familiar's own sheet is edited after promotion; editing it in place is DEF-087.
 
 ---
 
@@ -64,7 +64,7 @@ Inventory { items: Item[], wallets: Wallet }
   moves its contents out to carried and says so; nothing is deleted with it (G-8, destructive is guarded).
 - **Carried weight** = sum of `quantity * weight` over carried items and everything inside their containers.
   A container may carry a `weightMultiplier` (a bag of holding, default 1) that scales its contents.
-- **Limits.** A system may define `limits.carry` (a formula over the sheet, such as `@str * 15`); the page
+- **Limits.** A system may define `limits.carry` (a formula over the sheet, such as `@str * 15`; stored under the system's `extensions.records`, C-12); the page
   shows `carried / limit`, flags over-limit with text (not colour alone), and never blocks adding. A system
   without a limit shows the total only. Adding `limits` to the system format is a validated, optional key
   (`docs/SHEET.md` 2, an additive change; no system version is rewritten).

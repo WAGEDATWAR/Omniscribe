@@ -285,7 +285,14 @@ export function createStore({ characters = [], now = Date.now, history = createH
       }));
     },
     applyRest(characterId, restId, template) {
-      return updateSheet(characterId, (sheet) => applySheetRest(template, sheet, restId));
+      const current = find(characterId);
+
+      if (!current?.sheet) {
+        return null;
+      }
+
+      const abilities = current.abilities.map((ability) => (ability.uses.resetOn === restId && ability.uses.used ? { ...ability, uses: { ...ability.uses, used: 0 } } : ability));
+      return update(characterId, { sheet: applySheetRest(template, current.sheet, restId), abilities });
     },
     addRecord(characterId, kindId, fields = {}) {
       const current = find(characterId);
@@ -332,6 +339,23 @@ export function createStore({ characters = [], now = Date.now, history = createH
 
       update(characterId, listPatch(current, kindId, after));
       return { record, index, before, moved };
+    },
+    promoteFamiliar(characterId, familiarId) {
+      const current = find(characterId);
+      const familiar = current?.familiars.find((entry) => entry.id === familiarId);
+
+      if (!familiar || state.characters.length >= LIMITS.characters) {
+        return null;
+      }
+
+      const made = createCharacter({ name: familiar.name, summary: familiar.kind, notes: familiar.notes, portraitBlobId: familiar.portraitBlobId, sheet: familiar.sheet }, { now: now() });
+      const linked = normalizeCharacter(
+        { ...current, familiars: current.familiars.map((entry) => (entry.id === familiarId ? { ...entry, linkedCharacterId: made.id } : entry)), updatedAt: now() },
+        { now: now() }
+      );
+
+      commit([...state.characters.map((character) => (character.id === characterId ? linked : character)), made]);
+      return made;
     },
     restoreList(characterId, kindId, list) {
       const current = find(characterId);

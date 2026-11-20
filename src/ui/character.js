@@ -132,6 +132,8 @@ export function mountCharacterPage(root, handlers) {
       field({ id: "character-notes", label: "Notes", wide: true }, notes)
     )
   );
+  const glance = h("div", { class: "stat-row", id: "character-glance" });
+  overview.append(section({ id: "character-glance-section", title: "At a glance", description: "What this character has recorded on the other pages." }, glance));
   const sheetRoot = h("div", { id: "character-sheet", hidden: true });
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
   const rollsRoot = h("div", { id: "character-rolls", hidden: true });
@@ -162,6 +164,23 @@ export function mountCharacterPage(root, handlers) {
         link.removeAttribute("aria-current");
       }
     }
+  }
+
+  function drawGlance(character) {
+    const present = character.familiars.filter((familiar) => familiar.summoned).map((familiar) => familiar.name || "Unnamed");
+    const stats = [
+      ["Items", character.inventory.items.length],
+      ["Abilities", character.abilities.length],
+      ["Journal entries", character.journal.length],
+      ["Relations", character.relations.length],
+      ["Familiars", character.familiars.length]
+    ];
+
+    replace(
+      glance,
+      stats.map(([label, value]) => h("div", { class: "stat" }, h("span", { class: "stat-label", text: label }), h("strong", { class: "stat-value", text: String(value) }))),
+      present.length ? h("div", { class: "stat" }, h("span", { class: "stat-label", text: "Present now" }), h("strong", { class: "stat-value", text: present.join(", ") })) : null
+    );
   }
 
   let portraitKey = null;
@@ -218,6 +237,7 @@ export function mountCharacterPage(root, handlers) {
         [character.player, character.systemId].filter((part) => part.trim()).join(" · ") || "Character";
 
       drawNav(character.id, sub);
+      drawGlance(character);
       overview.hidden = sub !== "overview";
       sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";

@@ -128,3 +128,45 @@ test("a new record starts from each field's default", () => {
   assert.equal(createRecord("progression", {}, { now: 5000 }).at, 5000);
   assert.ok(KINDS.inventory.fields.some((field) => field.key === "containerId"));
 });
+
+test("a system can set carry, attunement and currencies under its own extensions", async () => {
+  const { evaluateLimit, systemRecords } = await import("../src/records/systemRecords.js");
+  const rules = systemRecords({ extensions: { records: { limits: { carry: "@might * 15", attunement: 3 }, currencies: [{ key: "gp", label: "Gold" }, { key: "gp" }, { key: "bad key" }] } } });
+  assert.equal(rules.carry, "@might * 15");
+  assert.equal(rules.attunement, "3");
+  assert.deepEqual(rules.currencies, [{ key: "gp", label: "Gold" }]);
+  assert.equal(evaluateLimit(rules.carry, { might: 12 }), 180);
+  assert.equal(evaluateLimit(rules.attunement, {}), 3);
+  assert.equal(evaluateLimit("1d6", {}) === null || typeof evaluateLimit("1d6", {}) === "number", true);
+  assert.equal(systemRecords(null).carry, null);
+  assert.equal(systemRecords({ extensions: { records: { limits: { carry: "((" } } } }).carry, null);
+  assert.equal(evaluateLimit("@missing + 1", {}), null);
+});
+
+test("a rest restores abilities that follow it, in the same undo step", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { resolveTemplate } = await import("../src/sheet/resolve.js");
+  const generic = resolveTemplate(JSON.parse(readFileSync(new URL("../src/templates/generic.json", import.meta.url), "utf8"))).template;
+  const store = createStore({ characters: [normalizeCharacter({ id: "char_a", name: "A" })] });
+  store.startSheet("char_a", { id: "generic", version: 1 }, generic);
+  const long = store.addRecord("char_a", "abilities", { name: "Rage", uses: { max: 2, used: 2, resetOn: "long" } });
+  const short = store.addRecord("char_a", "abilities", { name: "Surge", uses: { max: 1, used: 1, resetOn: "short" } });
+  store.applyRest("char_a", "long", generic);
+  const abilities = store.getCharacter("char_a").abilities;
+  assert.equal(abilities.find((a) => a.id === long.id).uses.used, 0);
+  assert.equal(abilities.find((a) => a.id === short.id).uses.used, 1);
+  store.undo();
+  assert.equal(store.getCharacter("char_a").abilities.find((a) => a.id === long.id).uses.used, 2);
+});
+
+test("promoting a familiar creates a linked character in one undo step and keeps the familiar", () => {
+  const store = createStore({ characters: [normalizeCharacter({ id: "char_a", name: "A" })] });
+  const familiar = store.addRecord("char_a", "familiars", { name: "Pip", kind: "Owl" });
+  const made = store.promoteFamiliar("char_a", familiar.id);
+  assert.equal(made.name, "Pip");
+  assert.equal(store.getCharacter("char_a").familiars[0].linkedCharacterId, made.id);
+  assert.equal(store.getState().characters.length, 2);
+  store.undo();
+  assert.equal(store.getState().characters.length, 1);
+  assert.equal(store.getCharacter("char_a").familiars[0].linkedCharacterId, null);
+});

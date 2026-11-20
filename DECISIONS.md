@@ -149,6 +149,7 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | C-9 | **A familiar's sheet is the character sheet shape,** evaluated by the same engine against any system, so a companion needs no new engine. Promotion creates a linked character and keeps the familiar. | locked |
 | C-10 | **Schema migration 5 adds every new list empty,** with a `normalize*` per record that drops a bad record and keeps the rest. | locked |
 | C-11 | **Records are described by data, and every record takes fields of your own.** One descriptor per kind (`src/records/kinds.js`) drives normalization, the store and the generic list page; a record also carries up to 30 user-defined fields (name, type, value) and keeps unknown keys in `extensions`. A new kind or field is a descriptor change. | locked |
+| C-12 | **A system tunes the record pages under its own `extensions.records`** (carry and attunement limits as numbers or formulas over the sheet, and currencies), validated by the records module. No change to the system format, derived systems inherit it, and a system that says nothing still gives a working page. | locked |
 
 ## Open
 
