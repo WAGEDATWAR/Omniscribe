@@ -240,6 +240,7 @@ export function mountCharacterPage(root, handlers) {
             titleId: "character-title",
             back: { href: "#/library", label: "Library" },
             actions: [
+              button({ id: "character-export", icon: "download", label: "Export", onclick: handlers.onExport }),
               button({ id: "character-duplicate", icon: "copy", label: "Duplicate", onclick: handlers.onDuplicate }),
               button({
                 id: "character-delete",

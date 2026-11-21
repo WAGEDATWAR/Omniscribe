@@ -34,6 +34,7 @@ export function mountCampaignPage(root, handlers) {
   const custom = customEditor("campaign");
   const rolls = h("ol", { class: "roll-log", id: "campaign-rolls-list" });
   const counts = h("div", { class: "stat-row", id: "campaign-glance" });
+  const secretsBox = h("input", { id: "campaign-export-secrets", type: "checkbox" });
 
   const header = h("div", { id: "campaign-header" });
   const nav = h("nav", { class: "subnav", "aria-label": "Campaign pages" });
@@ -54,6 +55,11 @@ export function mountCampaignPage(root, handlers) {
       )
     ),
     section({ id: "campaign-glance-section", title: "At a glance" }, counts),
+    section(
+      { id: "campaign-share-section", title: "Share this campaign", description: "Export the campaign with its roster characters and files as one bundle. Anyone can import it from the Data page." },
+      h("label", { class: "radio-row" }, secretsBox, h("span", { text: "Include secret notes and secret journal entries" })),
+      button({ id: "campaign-export", icon: "download", label: "Export bundle", variant: "btn-small", onclick: () => handlers.onExport(secretsBox.checked) })
+    ),
     section({ id: "campaign-rolls-section", title: "Recent rolls", description: "Rolls made for this campaign, such as initiative. Secret rolls are left out." }, rolls),
     section(
       { id: "campaign-custom-section", title: "Your own fields", description: "Anything this page has no field for." },

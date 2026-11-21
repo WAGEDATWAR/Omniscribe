@@ -2109,4 +2109,77 @@ export const scenarios = [
       assertClean(page);
     }
   }
+  ,
+  {
+    name: "a character bundle and a campaign bundle export, then import back without overwriting",
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await saved(page);
+
+      await page.evaluate(`(() => {
+        window.__blobs = [];
+        const original = URL.createObjectURL.bind(URL);
+        URL.createObjectURL = (blob) => { window.__blobs.push(blob); return original(blob); };
+        const click = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function () { if (!this.download) click.call(this); };
+        return true;
+      })()`);
+      const grab = async () => {
+        const encoded = await page.evaluate(`(async () => {
+          const blob = window.__blobs.at(-1);
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          let text = "";
+          for (let index = 0; index < bytes.length; index += 8192) text += String.fromCharCode(...bytes.subarray(index, index + 8192));
+          return btoa(text);
+        })()`);
+        const file = join(mkdtempSync(join(tmpdir(), "omniscribe-")), "bundle.zip");
+        writeFileSync(file, Buffer.from(encoded, "base64"));
+        return file;
+      };
+
+      await page.click("#character-export");
+      await page.waitFor("window.__blobs.length === 1");
+      const characterFile = await grab();
+
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await type(page, "#campaign-name", "Fight");
+      await page.click('.subnav-link[data-page="roster"]');
+      await page.waitFor('document.querySelector("#rec-roster-form")');
+      await pick(page, "#rec-roster-character", await page.evaluate('document.querySelector("#rec-roster-character").options[document.querySelector("#rec-roster-character").options.length - 1].value'));
+      await page.click("#rec-roster-save");
+      await page.waitFor('document.querySelectorAll("#rec-roster-list [data-record]").length === 1');
+      await page.click('#page-campaign .subnav-link[data-page="overview"]');
+      await page.waitFor('!document.querySelector("#campaign-overview").hidden && document.querySelector("#campaign-export")');
+      await page.click("#campaign-export");
+      await page.waitFor("window.__blobs.length === 2");
+      const campaignFile = await grab();
+      await saved(page);
+
+      await go(page, "#/data", "#data-title");
+      await page.setFileInput("#restore-file", [characterFile]);
+      await page.waitFor('document.querySelector("#restore-bundle-note")');
+      assert.equal(await page.evaluate('document.querySelector("input[name=restore-mode]")'), null);
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+
+      await page.setFileInput("#restore-file", [campaignFile]);
+      await page.waitFor('document.querySelector("#restore-bundle-note")');
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+      await saved(page);
+
+      await go(page, "#/library", "#library-title");
+      await page.waitFor('document.querySelectorAll(".tile:not(.campaign-tile)").length === 3');
+      assert.equal(await page.evaluate('document.querySelectorAll(".campaign-tile").length'), 2);
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#storage-files")');
+      assert.match(await page.evaluate('document.querySelector("#storage-files").textContent'), /^1 file,/);
+      assertClean(page);
+    }
+  }
 ];

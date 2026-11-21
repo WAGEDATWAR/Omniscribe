@@ -55,6 +55,7 @@ export function initCharacter(ctx) {
         store.updateCharacter(id, patch, { key: key ? `${id}:${key}` : null });
       }
     },
+    onExport: () => ctx.bundles.exportCharacter(currentId()),
     onDuplicate: () => actions.duplicate(currentId(), { open: true }),
     async onDelete() {
       const id = currentId();

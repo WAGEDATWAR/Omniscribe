@@ -1,6 +1,7 @@
 import { createActions } from "./app/actions.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
+import { createBundles } from "./app/bundles.js";
 import { initCampaign } from "./app/campaign.js";
 import { initCharacter } from "./app/character.js";
 import { createRolling } from "./app/rolling.js";
@@ -157,6 +158,7 @@ async function boot() {
   };
 
   ctx.actions = createActions(ctx);
+  ctx.bundles = createBundles(ctx);
   ctx.rolling = createRolling(ctx);
   await ctx.rolling.log.load();
   sync = initSync(ctx);

@@ -46,7 +46,7 @@ export function mountDataPage(root, handlers) {
 
     replace(
       review,
-      h("h3", { class: "subsection-title", text: "What is in this backup" }),
+      h("h3", { class: "subsection-title", text: info.replaceAllowed ? "What is in this backup" : "What is in this bundle" }),
       h(
         "dl",
         { class: "facts", id: "restore-facts" },
@@ -55,7 +55,7 @@ export function mountDataPage(root, handlers) {
         row("Data version", String(info.schemaVersion), "restore-schema")
       ),
       info.problems.length ? h("ul", { id: "restore-problems", class: "field-error" }, info.problems.map((text) => h("li", { text }))) : null,
-      h("fieldset", { class: "fieldset" }, h("legend", { text: "How to restore" }), name("add"), name("replace")),
+      info.replaceAllowed ? h("fieldset", { class: "fieldset" }, h("legend", { text: "How to restore" }), name("add"), name("replace")) : h("p", { class: "muted", id: "restore-bundle-note", text: "This is a bundle. It is added to what is here; nothing is overwritten, and a character that already exists is kept and the new copy is marked (imported)." }),
       h(
         "div",
         { class: "section-actions" },

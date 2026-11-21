@@ -25,6 +25,7 @@ export function initCampaign(ctx) {
       store.updateCampaign(currentId(), { custom });
       toast("Saved your fields.");
     },
+    onExport: (secrets) => ctx.bundles.exportCampaign(currentId(), secrets),
     onDuplicate: () => actions.duplicateCampaign(currentId()),
     async onDelete() {
       const id = currentId();

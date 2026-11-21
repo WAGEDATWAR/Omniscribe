@@ -77,7 +77,7 @@ Owners are `P0`-`P7` or `post-v1`.
 |---|---|---|---|---|
 | DEF-050 | Export a character as a Loreweaver card and lorebook | through the shared interchange model Loreweaver already uses | post-v1 | scheduled |
 | DEF-051 | Importers for other tools' exports | each is an adapter at the rim | post-v1 | scheduled |
-| DEF-052 | Character bundle export and import | one character with its blobs | P6 | scheduled |
+| DEF-052 | Character bundle export and import | one character or campaign with its blobs; built as bundles that import through the Data page (`docs/EXCHANGE.md` 7) | P6 | done |
 
 ## U. Surface
 

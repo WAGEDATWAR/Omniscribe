@@ -1,3 +1,5 @@
+import { isShared } from "./campaigns.js";
+import { referencedBlobIds } from "./integrity.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION, isNewerVersion, migrateProject } from "./migrations.js";
 import { normalizeProject } from "./schema.js";
@@ -238,5 +240,54 @@ export function planAdd(archive, { characterIds = new Set(), campaignIds = new S
     reused,
     renamed,
     documentsDropped
+  };
+}
+
+/**
+ * The user-made systems a set of characters needs: each character's pinned system and its base chain, taken from the
+ * custom files (built-ins ship with the app, so a bundle never carries them).
+ */
+export function neededSystems(characters, customFiles) {
+  const byKey = new Map(customFiles.map((file) => [`${file.id}@${file.version}`, file]));
+  const out = new Map();
+
+  function take(ref, depth = 0) {
+    const key = ref ? `${ref.id}@${ref.version}` : null;
+    const file = key ? byKey.get(key) : null;
+
+    if (!file || out.has(key) || depth > 10) {
+      return;
+    }
+
+    out.set(key, file);
+    take(file.base, depth + 1);
+  }
+
+  for (const character of characters) {
+    take(character.sheet?.template);
+  }
+
+  return [...out.values()];
+}
+
+function withoutSecrets(character) {
+  return { ...character, journal: (character.journal ?? []).filter(isShared) };
+}
+
+/**
+ * What a bundle holds (X-6, X-8): one character, or a campaign with the characters on its roster. A shared bundle
+ * (`secrets: false`) drops secret session notes and secret journal entries; handouts are for players and stay.
+ */
+export function bundleContents({ kind, character = null, campaign = null, characters = [], customSystems = [], secrets = false }) {
+  const chosen = kind === "campaign" ? campaign.roster.map((row) => characters.find((entry) => entry.id === row.characterId)).filter(Boolean) : [character];
+  const unique = [...new Map(chosen.map((entry) => [entry.id, entry])).values()];
+  const outCharacters = secrets ? unique : unique.map(withoutSecrets);
+  const outCampaigns = kind === "campaign" ? [secrets ? campaign : { ...campaign, sessions: campaign.sessions.map((session) => ({ ...session, secretNotes: "" })) }] : [];
+
+  return {
+    characters: outCharacters,
+    campaigns: outCampaigns,
+    systems: neededSystems(outCharacters, customSystems),
+    blobIds: [...referencedBlobIds(outCharacters, outCampaigns)]
   };
 }

@@ -5,7 +5,7 @@
 > search, and the generated PDF sheet. Storage layout is `docs/PERSISTENCE.md`; record shapes are
 > `docs/ARCHITECTURE.md` 5; the PDF viewer is `docs/PDF.md`. Choices are `DECISIONS.md` X-1 to X-12 and P-6, P-7, P-9, G-19.
 
-**Status:** P6 slice A built (zip, backup, restore, quota); slices B to F designed. Deviations in slice A: a Replace restore is not one Undo step, because the store's history is cleared when the library is swapped; instead a safety copy of the old library is kept and the Data page offers *Restore the previous library*. A restore that adds game systems reloads the page. Backups hold characters, campaigns, systems and files; settings and the roll log are DEF-091.
+**Status:** P6 slices A and B built (zip, backup, restore, quota); slices B to F designed. Slice B imports a bundle through the same review as a backup on the Data page, in Add mode only (a bundle is never a Replace); the dedicated per-collision list in section 7 is the review's counts plus the `(imported)` marking. Deviations in slice A: a Replace restore is not one Undo step, because the store's history is cleared when the library is swapped; instead a safety copy of the old library is kept and the Data page offers *Restore the previous library*. A restore that adds game systems reloads the page. Backups hold characters, campaigns, systems and files; settings and the roll log are DEF-091.
 
 ---
 

@@ -120,3 +120,36 @@ test("replaceLibrary swaps records, systems and files in one go", async () => {
   assert.deepEqual((await storage.listSystems()).map((file) => file.id), ["newsys"]);
   assert.deepEqual((await storage.listBlobs()).map((entry) => entry.id), ["blob_new"]);
 });
+
+test("a character bundle holds only that character, its systems and its files", async () => {
+  const { bundleContents } = await import("../src/backup.js");
+  const { mira, bram } = await sample();
+  const withSystem = { ...mira, sheet: { template: { id: "mine", version: 2 }, values: {}, pools: {}, collections: {}, conditions: [], orphans: {} } };
+  const custom = [
+    { id: "mine", version: 2, base: { id: "mybase", version: 1 } },
+    { id: "mybase", version: 1, base: null },
+    { id: "other", version: 1, base: null }
+  ];
+  const bundle = bundleContents({ kind: "character", character: withSystem, customSystems: custom });
+
+  assert.deepEqual(bundle.characters.map((entry) => entry.id), [mira.id]);
+  assert.deepEqual(bundle.systems.map((file) => file.id).sort(), ["mine", "mybase"]);
+  assert.deepEqual(bundle.blobIds, ["blob_one"]);
+  assert.equal(bundleContents({ kind: "character", character: bram, customSystems: custom }).systems.length, 0);
+});
+
+test("a campaign bundle takes the roster and leaves secrets out unless asked", async () => {
+  const { bundleContents } = await import("../src/backup.js");
+  const { mira, bram, camp } = await sample();
+  const secretMira = { ...mira, journal: [{ id: "j1", title: "Plan", kind: "secret" }, { id: "j2", title: "Open", kind: "note" }] };
+  const campaign = { ...camp, sessions: [{ id: "s1", title: "One", secretNotes: "the twist", notes: "fun" }] };
+  const shared = bundleContents({ kind: "campaign", campaign, characters: [secretMira, bram] });
+  const full = bundleContents({ kind: "campaign", campaign, characters: [secretMira, bram], secrets: true });
+
+  assert.deepEqual(shared.characters.map((entry) => entry.id), [mira.id]);
+  assert.equal(shared.campaigns[0].sessions[0].secretNotes, "");
+  assert.equal(shared.campaigns[0].sessions[0].notes, "fun");
+  assert.deepEqual(shared.characters[0].journal.map((entry) => entry.id), ["j2"]);
+  assert.equal(full.campaigns[0].sessions[0].secretNotes, "the twist");
+  assert.equal(full.characters[0].journal.length, 2);
+});

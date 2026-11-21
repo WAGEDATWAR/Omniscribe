@@ -2,19 +2,9 @@ import { buildArchive, planAdd, readArchive, sha256Hex, verifyFiles } from "../b
 import { referencedBlobIds } from "../integrity.js";
 import { LIMITS } from "../limits.js";
 import { createId, formatBytes, plural } from "../utils.js";
+import { saveFile } from "./download.js";
 
 const stamp = (value) => new Date(value).toLocaleString();
-
-function saveFile(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-}
 
 /** Backup and restore on the Data page (X-3, X-4). Returns the handlers the page needs. */
 export function createBackupHandlers(ctx, getView, refresh) {
@@ -48,6 +38,8 @@ export function createBackupHandlers(ctx, getView, refresh) {
       archive,
       bad: new Set(bad),
       info: {
+        kind: archive.manifest.kind ?? "backup",
+        replaceAllowed: (archive.manifest.kind ?? "backup") === "backup",
         created: Number.isFinite(archive.manifest.createdAt) ? stamp(archive.manifest.createdAt) : "Unknown",
         contents: [plural(archive.characters.length, "character"), plural(archive.campaigns.length, "campaign"), plural(archive.systems.length, "game system"), plural(counts?.blobs ?? archive.files.size, "file")].join(", "),
         schemaVersion: archive.manifest.schemaVersion,
@@ -160,6 +152,11 @@ export function createBackupHandlers(ctx, getView, refresh) {
 
     const { archive, bad } = pending;
     const view = getView();
+
+    if (mode === "replace" && !pending.info.replaceAllowed) {
+      mode = "add";
+    }
+
     view.showMessage("");
 
     try {
