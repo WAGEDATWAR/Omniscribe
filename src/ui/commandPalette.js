@@ -5,7 +5,7 @@ import { h, replace } from "./dom.js";
  * The palette is a native dialog with a combobox and a listbox. `getCommands` is called each time it
  * opens so it always reflects the current library.
  */
-export function createPalette({ dialog, input, list, empty, getCommands }) {
+export function createPalette({ dialog, input, list, empty, getCommands, getSearch = null }) {
   let commands = [];
   let filtered = [];
   let active = 0;
@@ -45,7 +45,11 @@ export function createPalette({ dialog, input, list, empty, getCommands }) {
   }
 
   function refresh() {
-    filtered = filterCommands(commands, input.value);
+    const typed = input.value;
+    const contentOnly = typed.startsWith("?");
+    const query = contentOnly ? typed.slice(1) : typed;
+    const base = contentOnly ? [] : filterCommands(commands, query);
+    filtered = query.trim().length >= 2 && getSearch ? [...base, ...getSearch(query, base)] : base;
     active = 0;
     draw();
   }
@@ -81,9 +85,9 @@ export function createPalette({ dialog, input, list, empty, getCommands }) {
   });
 
   return {
-    open() {
+    open(initial = "") {
       commands = getCommands();
-      input.value = "";
+      input.value = initial;
       refresh();
       dialog.showModal();
       input.focus();

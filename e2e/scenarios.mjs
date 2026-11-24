@@ -2304,4 +2304,28 @@ export const scenarios = [
       assertClean(page);
     }
   }
+  ,
+  {
+    name: "search everything finds journal text and opens the page that holds it",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      const id = (await route(page)).split("/")[2];
+      await openRecords(page, "journal");
+      await addRecord(page, "journal", { title: "The bridge", text: "We crossed the river at dawn" });
+      await page.waitFor('document.querySelectorAll("#rec-journal-list [data-record]").length === 1');
+      await saved(page);
+      await go(page, "#/library", "#library-title");
+
+      await key(page, { key: "k", ctrlKey: true });
+      await page.waitFor('document.querySelector("#palette-dialog").open');
+      await type(page, "#palette-input", "?dawn");
+      await page.waitFor('document.querySelectorAll("#palette-list .palette-option").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#palette-list").textContent'), /The bridge/);
+      assert.match(await page.evaluate('document.querySelector("#palette-list").textContent'), /Journal/);
+      await page.evaluate(`document.querySelector("#palette-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })); true`);
+      await page.waitFor(`location.hash === "#/character/${id}/journal"`);
+      assertClean(page);
+    }
+  }
 ];

@@ -1,4 +1,5 @@
 import { campaignName } from "../campaigns.js";
+import { buildIndex, search } from "../search.js";
 import { displayName } from "../schema.js";
 import { CAMPAIGN_PAGES, CHARACTER_PAGES, VIEWS, routeHref } from "../views.js";
 import { createPalette } from "../ui/commandPalette.js";
@@ -17,6 +18,7 @@ export function initPalette(ctx) {
     }));
 
     commands.push({ id: "new-campaign", title: "New campaign", keywords: "create add game", run: () => actions.newCampaign() });
+    commands.push({ id: "search", title: "Search everything", hint: "?", keywords: "find look up journal items notes", run: () => palette.open("?") });
     commands.push({ id: "import", title: "Import a backup or bundle", keywords: "restore open zip file", run: () => ctx.bus.emit("import:choose") });
     commands.push({ id: "new-character", title: "New character", keywords: "create add", run: () => actions.newCharacter() });
 
@@ -75,7 +77,35 @@ export function initPalette(ctx) {
     return commands;
   }
 
+  let indexed = { characters: null, campaigns: null, index: [] };
+
+  function getSearch(query, base) {
+    const state = store.getState();
+
+    if (indexed.characters !== state.characters || indexed.campaigns !== state.campaigns) {
+      indexed = { characters: state.characters, campaigns: state.campaigns, index: buildIndex(state.characters, state.campaigns) };
+    }
+
+    const shown = new Set(base.map((command) => command.id));
+    const result = search(indexed.index, query);
+    const rows = result.hits
+      .filter((hit) => !((hit.kind === "Character" || hit.kind === "Campaign") && shown.has(`open-${hit.route.id}`)))
+      .map((hit, position) => ({
+        id: `hit-${position}`,
+        title: hit.title,
+        hint: [hit.kind, hit.detail].filter(Boolean).join(" · "),
+        run: () => router.navigate(routeHref(hit.route.view, hit.route.id, hit.route.sub))
+      }));
+
+    if (result.truncated) {
+      rows.push({ id: "hit-more", title: `Showing the first ${result.hits.length} of ${result.total} results`, hint: "Type more to narrow", run: () => {} });
+    }
+
+    return rows;
+  }
+
   const palette = createPalette({
+    getSearch,
     dialog: els.paletteDialog,
     input: document.querySelector("#palette-input"),
     list: document.querySelector("#palette-list"),
