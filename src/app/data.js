@@ -125,6 +125,19 @@ export function initData(ctx) {
     view.showPrevious(safety ? { at: new Date(safety.at).toLocaleString(), size: formatBytes(safety.size ?? 0) } : null);
   }
 
+  const importInput = document.querySelector("#import-input");
+
+  ctx.bus.on("import:choose", () => importInput.click());
+  importInput.addEventListener("change", () => {
+    const file = importInput.files?.[0];
+    importInput.value = "";
+
+    if (file) {
+      router.navigate("#/data");
+      backup.onRestoreFile(file);
+    }
+  });
+
   router.onRoute((route) => {
     if (route.view === "data") {
       refresh();

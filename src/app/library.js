@@ -11,6 +11,7 @@ export function initLibrary(ctx) {
     },
     onNew: () => actions.newCharacter(),
     onNewCampaign: () => actions.newCampaign(),
+    onImport: () => ctx.bus.emit("import:choose"),
     onDuplicateCampaign: (id) => actions.duplicateCampaign(id),
     onDeleteCampaign: (id) => actions.removeCampaign(id),
     onSample: () => actions.addSample(),

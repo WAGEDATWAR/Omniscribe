@@ -116,7 +116,8 @@ export function mountLibrary(root, handlers) {
           variant: "btn-primary",
           onclick: handlers.onNew
         }),
-        button({ id: "new-campaign-btn", icon: "plus", label: "New campaign", onclick: handlers.onNewCampaign })
+        button({ id: "new-campaign-btn", icon: "plus", label: "New campaign", onclick: handlers.onNewCampaign }),
+        button({ id: "import-btn", icon: "download", label: "Import", title: "Import a backup or a bundle", onclick: handlers.onImport })
       ]
     }),
     toolbar,

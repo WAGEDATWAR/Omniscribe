@@ -17,6 +17,7 @@ export function initPalette(ctx) {
     }));
 
     commands.push({ id: "new-campaign", title: "New campaign", keywords: "create add game", run: () => actions.newCampaign() });
+    commands.push({ id: "import", title: "Import a backup or bundle", keywords: "restore open zip file", run: () => ctx.bus.emit("import:choose") });
     commands.push({ id: "new-character", title: "New character", keywords: "create add", run: () => actions.newCharacter() });
 
     if (store.canUndo()) {

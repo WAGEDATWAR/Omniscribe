@@ -2279,4 +2279,29 @@ export const scenarios = [
       assertClean(page);
     }
   }
+  ,
+  {
+    name: "Import from the Library and the command palette opens the review on the Data page",
+    async run(page, context) {
+      await boot(page, context);
+      const { bytes } = await buildArchive({ kind: "character", characters: [createCharacter({ name: "Mira" })], now: 1700000000000 });
+      const file = join(mkdtempSync(join(tmpdir(), "omniscribe-")), "mira.omniscribe-bundle.zip");
+      writeFileSync(file, bytes);
+
+      assert.equal(await page.evaluate('!!document.querySelector("#import-btn")'), true);
+      await page.setFileInput("#import-input", [file]);
+      await page.waitFor('location.hash === "#/data" && document.querySelector("#restore-bundle-note")');
+      assert.match(await page.evaluate('document.querySelector("#restore-contents").textContent'), /1 character/);
+      await page.click("#restore-go");
+      await page.waitFor('document.querySelector("#restore-review").hidden');
+      await saved(page);
+      await go(page, "#/library", "#library-title");
+      assert.equal(await tileCount(page), 1);
+
+      await key(page, { key: "k", ctrlKey: true });
+      await page.waitFor('document.querySelector("#palette-dialog").open');
+      assert.equal(await page.evaluate('[...document.querySelectorAll("#palette-dialog [role=option], #palette-dialog li")].some((node) => node.textContent.includes("Import a backup or bundle"))'), true);
+      assertClean(page);
+    }
+  }
 ];
