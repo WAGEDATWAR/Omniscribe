@@ -479,6 +479,17 @@ const states = [
     await page.evaluate('document.querySelector(".tile-link").click(); true');
     await page.waitFor('document.querySelectorAll("#page-character .chip").length > 0');
   } },
+  { name: "character revisions", setup: async (page) => {
+    await page.click("#new-character-btn");
+    await page.waitFor('document.querySelector("#character-revision-save")');
+    await page.click("#character-revision-save");
+    await page.waitFor('document.querySelectorAll("#character-revision-list [data-revision]").length === 1');
+  } },
+  { name: "library check clean", setup: async (page) => {
+    await openPage(page, "#/data", "#data-title");
+    await page.click("#check-btn");
+    await page.waitFor('document.querySelector("#check-clean")');
+  } },
   { name: "data page", setup: async (page) => {
     await openPage(page, "#/data", "#data-title");
     await page.waitFor('document.querySelector("#storage-backend")');

@@ -554,6 +554,22 @@ export function createStore({ characters = [], campaigns = [], now = Date.now, h
     },
     canUndo: () => history.canUndo(),
     canRedo: () => history.canRedo(),
+    /** Puts one character back to a stored state as one undo step; the id and creation time stay. */
+    restoreCharacterState(id, data) {
+      const current = find(id);
+
+      if (!current || !data) {
+        return null;
+      }
+
+      const next = normalizeCharacter({ ...data, id: current.id, createdAt: current.createdAt, updatedAt: now() }, { now: now() });
+      commit(state.characters.map((character) => (character.id === id ? next : character)));
+      return next;
+    },
+    /** Replaces records with repaired copies in one undo step. */
+    applyRepair(characters, campaigns) {
+      return commitAll(characters, campaigns);
+    },
     addMany(characters = [], campaigns = []) {
       return commitAll([...state.characters, ...characters], [...state.campaigns, ...campaigns]);
     },

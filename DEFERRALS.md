@@ -60,7 +60,7 @@ Owners are `P0`-`P7` or `post-v1`.
 |---|---|---|---|---|
 | DEF-030 | Zip backup including every blob | the native container; built as `src/zip.js`, `src/backup.js` and the Data page (`docs/EXCHANGE.md` 5) | P6 | done |
 | DEF-031 | Encrypted local data | passphrase-derived key; a G-12-compatible option | post-v1 | scheduled |
-| DEF-032 | Per-character revisions and restore | P-6 and P-7 | P6 | scheduled |
+| DEF-032 | Per-character revisions and restore | P-6 and P-7; built as `src/revisions.js`, the Revisions panel and the Data page's recently deleted list | P6 | done |
 | DEF-033 | Storage quota warnings with a per-file size list | extends the P0 storage panel; warns at 80%, refuses uploads at 95%, lists the largest files | P6 | done |
 
 ## C. Campaigns

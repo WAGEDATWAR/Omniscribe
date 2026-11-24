@@ -2182,4 +2182,101 @@ export const scenarios = [
       assertClean(page);
     }
   }
+  ,
+  {
+    name: "revisions: save one, change the character, restore it, and Undo",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await saved(page);
+      await type(page, "#character-revision-label", "Before the boss");
+      await page.click("#character-revision-save");
+      await page.waitFor('document.querySelectorAll("#character-revision-list [data-revision]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#character-revision-list").textContent'), /Before the boss/);
+
+      await type(page, "#character-name", "Alder the Bold");
+      await saved(page);
+      await page.waitFor('document.querySelector("#character-revision-list").textContent.includes("name")');
+      await page.click('#character-revision-list [data-revision] button');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#character-name").value === "Alder"');
+      await page.waitFor('document.querySelectorAll("#character-revision-list [data-revision]").length === 2');
+
+      await page.evaluate("document.activeElement.blur(); true");
+      await page.click("#undo-btn");
+      await page.waitFor('document.querySelector("#character-name").value === "Alder the Bold"');
+      assertClean(page);
+    }
+  },
+  {
+    name: "revisions: the state before an editing session is kept after a reload",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await saved(page);
+      await page.reload();
+      await page.waitFor('document.querySelector("#character-name")?.value === "Alder"');
+      await type(page, "#character-name", "Alder Two");
+      await saved(page);
+      await page.waitFor('document.querySelectorAll("#character-revision-list [data-revision]").length === 1');
+      assert.match(await page.evaluate('document.querySelector("#character-revision-list").textContent'), /name/);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a deleted character can be brought back from the Data page",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Alder");
+      await saved(page);
+      await page.reload();
+      await page.waitFor('document.querySelector("#character-name")?.value === "Alder"');
+      await page.click("#character-delete");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('location.hash === "#/library"');
+      await saved(page);
+      await go(page, "#/data", "#data-title");
+      await page.waitFor('document.querySelector("#deleted-list")');
+      assert.match(await page.evaluate('document.querySelector("#deleted-list").textContent'), /Alder/);
+      await page.click("#deleted-list button");
+      await page.waitFor('!document.querySelector("#deleted-list")');
+      await go(page, "#/library", "#library-title");
+      assert.equal(await tileCount(page), 1);
+      assertClean(page);
+    }
+  },
+  {
+    name: "the library check finds a missing file and repairs it",
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await saved(page);
+      await page.evaluate(`new Promise((resolve, reject) => {
+        const open = indexedDB.open("omniscribe");
+        open.onsuccess = () => {
+          const transaction = open.result.transaction("blobs", "readwrite");
+          transaction.objectStore("blobs").clear();
+          transaction.oncomplete = () => resolve(true);
+          transaction.onerror = () => reject(transaction.error);
+        };
+      })`);
+      await go(page, "#/data", "#data-title");
+      await page.click("#check-btn");
+      await page.waitFor('document.querySelector("#check-results")');
+      assert.match(await page.evaluate('document.querySelector("#check-results").textContent'), /missing file/);
+      await page.click("#repair-btn");
+      await page.waitFor('document.querySelector("#check-clean")');
+      await saved(page);
+      await page.reload();
+      await page.evaluate('document.querySelector(".tile-link") || true');
+      await go(page, "#/data", "#data-title");
+      await page.click("#check-btn");
+      await page.waitFor('document.querySelector("#check-clean")');
+      assertClean(page);
+    }
+  }
 ];

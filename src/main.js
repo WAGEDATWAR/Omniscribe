@@ -2,6 +2,7 @@ import { createActions } from "./app/actions.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
 import { createBundles } from "./app/bundles.js";
+import { createRevisions } from "./app/revisions.js";
 import { initCampaign } from "./app/campaign.js";
 import { initCharacter } from "./app/character.js";
 import { createRolling } from "./app/rolling.js";
@@ -107,9 +108,13 @@ async function boot() {
     onPeerSaved: () => sync?.handlePeerSaved()
   });
 
+  const revisions = createRevisions({ store, storage, bus });
+  await revisions.init();
+
   const autosave = createAutosave({
     store,
     save: async (batch) => {
+      await revisions.beforeSave(batch);
       guard.notifySaved(await storage.save(batch));
     },
     onStatus: (status) => bus.emit("save:status", status)
@@ -120,6 +125,7 @@ async function boot() {
     storage,
     blobUrls: createBlobUrls(storage),
     systems,
+    revisions,
     room: async (size) => {
       const { usage, quota } = await estimateUsage();
       return fitsInQuota(usage, quota, size)

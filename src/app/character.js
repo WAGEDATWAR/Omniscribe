@@ -64,6 +64,22 @@ export function initCharacter(ctx) {
         router.navigate(routeHref("library"));
       }
     },
+    onRevisionSave: async (label) => {
+      const id = currentId();
+
+      if (id && (await ctx.revisions.snapshot(id, label.trim() || "Saved by you"))) {
+        toast("Revision saved.");
+      }
+    },
+    async onRevisionRestore(revisionId) {
+      const id = currentId();
+      const when = ctx.revisions.describeWhen(revisionId);
+
+      if (id && (await ctx.confirm({ heading: "Restore this revision?", body: `This character goes back to how it was on ${when}. The current state is saved as a revision first, and Undo also works.`, confirmLabel: "Restore" })) && (await ctx.revisions.restore(id, revisionId))) {
+        show({ force: true });
+        toast("Restored. Undo goes back.");
+      }
+    },
     onPortraitFile: setPortraitFrom,
     onJoinCampaign(campaignId) {
       const id = currentId();
@@ -103,6 +119,7 @@ export function initCharacter(ctx) {
       force,
       sub: router.current().sub,
       portraitUrl: blobId ? blobUrls.peek(blobId) : null,
+      revisions: ctx.revisions.rowsFor(id),
       campaigns: {
         joined: campaignsOf(store.getState().campaigns, id),
         available: store.getState().campaigns.filter((campaign) => !onRoster(campaign, id))
@@ -130,4 +147,5 @@ export function initCharacter(ctx) {
   router.onRoute(() => show());
   store.subscribe(() => show());
   bus.on("data:reloaded", () => show({ force: true }));
+  bus.on("revisions:changed", () => show());
 }

@@ -104,7 +104,7 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
       the generated sheet (X-1 to X-12).
 - [x] `H` `P6-A` `src/zip.js` (writer, capped reader), backup and restore with review, quota warnings (DEF-030, DEF-071, DEF-033).
 - [x] `H` `P6-B` Character and campaign bundles with an import review (DEF-052).
-- [ ] `H` `P6-C` Revisions and the integrity check with repair (DEF-032).
+- [x] `H` `P6-C` Revisions and the integrity check with repair (DEF-032).
 - [ ] `M` `P6-D` Search everywhere.
 - [ ] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
 - [ ] `M` `P6-F` Portrait cropping, handout PDFs in the viewer, familiar sheet editor, translation (DEF-022, DEF-090, DEF-087, DEF-080).

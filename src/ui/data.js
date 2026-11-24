@@ -21,6 +21,8 @@ export function mountDataPage(root, handlers) {
   const review = h("div", { id: "restore-review", hidden: true });
   const lastBackup = h("p", { id: "backup-last", class: "muted" });
   const previous = h("div", { id: "restore-previous" });
+  const checkBox = h("div", { id: "check-box" });
+  const deletedBox = h("div", { id: "deleted-box" });
   let mode = "add";
 
   replace(
@@ -31,6 +33,12 @@ export function mountDataPage(root, handlers) {
       titleId: "data-title"
     }),
     body,
+    section(
+      { id: "data-check", title: "Check your library", description: "Finds links that point at something that is gone, such as a missing file or a deleted character, and fixes them. Nothing is deleted without being listed first." },
+      h("div", { class: "section-actions" }, button({ id: "check-btn", label: "Check now", onclick: handlers.onCheck })),
+      checkBox
+    ),
+    section({ id: "data-deleted", title: "Recently deleted characters", description: "A deleted character's last saved state is kept for 30 days." }, deletedBox),
     restore
   );
 
@@ -80,6 +88,29 @@ export function mountDataPage(root, handlers) {
     showReview(info, mode_ = "add") {
       mode = mode_;
       drawReview(info);
+    },
+    showCheck(result) {
+      if (!result) {
+        replace(checkBox);
+        return;
+      }
+
+      const items = [...result.findings.map((finding) => `${finding.owner}: ${finding.text}`), ...(result.orphans ? [`${result.orphans} unused file${result.orphans === 1 ? "" : "s"} will be removed`] : [])];
+
+      replace(
+        checkBox,
+        items.length
+          ? [h("ul", { id: "check-results", class: "plain-list" }, items.map((text) => h("li", { text }))), h("div", { class: "section-actions" }, button({ id: "repair-btn", label: "Repair all", variant: "btn-primary", onclick: handlers.onRepair }))]
+          : h("p", { id: "check-clean", class: "muted", text: "Everything checks out." })
+      );
+    },
+    showDeleted(rows) {
+      replace(
+        deletedBox,
+        rows.length
+          ? h("ul", { id: "deleted-list", class: "plain-list" }, rows.map((row) => h("li", { class: "record-summary" }, h("span", { text: `${row.name} · ${row.when}` }), button({ label: "Bring back", variant: "btn-small", ariaLabel: `Bring back ${row.name}`, onclick: () => handlers.onBringBack(row.id) }))))
+          : h("p", { class: "muted", id: "deleted-none", text: "Nothing deleted recently." })
+      );
     },
     showMessage(text) {
       message.hidden = !text;

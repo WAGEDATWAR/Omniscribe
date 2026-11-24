@@ -9,6 +9,8 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - P6 spec: `docs/EXCHANGE.md` and decisions X-1 to X-12 (zip container, backup and restore, bundles, revisions, integrity, search, generated sheet).
 - Backup and restore on the Data page: a zip with every record, game system and file; a review before anything changes; Add (keeps both, remaps ids and links) or Replace (keeps a safety copy you can go back to). Files are checked by SHA-256.
 - Character and campaign bundles: Export on a character, and Share on a campaign (secret notes and secret journal entries left out unless ticked). A bundle carries the roster characters, their files and the user-made game systems they need, and imports from the Data page in Add mode only, keeping both copies of anything that already exists.
+- Revisions: each character keeps up to 20 earlier states (50 MB in all), saved before an editing session, before a game system change, before a repair or restore, when it is deleted, and when you press Save a revision. The Revisions panel on the Overview restores one after saving the current state first; Undo also works. A deleted character's last state is kept for 30 days and can be brought back from the Data page.
+- Check your library on the Data page finds and repairs links to missing files and characters, items in broken containers, and unused files.
 - The zip reader refuses archives with too many entries, too much inflated data, suspicious compression, unsafe paths, zip64 or encryption before it inflates anything.
 - The Data page warns when storage is 80% full, lists the largest files with their owners, and refuses new uploads at 95%.
 

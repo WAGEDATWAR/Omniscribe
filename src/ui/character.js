@@ -142,7 +142,14 @@ export function mountCharacterPage(root, handlers) {
     campaignList,
     h("div", { class: "toolbar" }, campaignPick, campaignAdd)
   );
-  overview.append(campaignPanel);
+  const revisionLabel = h("input", { id: "character-revision-label", class: "input", type: "text", maxLength: 80, autocomplete: "off", "aria-label": "Name for the revision", placeholder: "Name this revision (optional)" });
+  const revisionList = h("ul", { class: "plain-list", id: "character-revision-list" });
+  const revisionPanel = section(
+    { id: "character-revisions", title: "Revisions", description: "Earlier states of this character. One is kept before each editing session and before risky changes; restoring one saves the current state first." },
+    h("div", { class: "toolbar" }, revisionLabel, button({ id: "character-revision-save", label: "Save a revision", variant: "btn-small", onclick: () => { handlers.onRevisionSave(revisionLabel.value); revisionLabel.value = ""; } })),
+    revisionList
+  );
+  overview.append(campaignPanel, revisionPanel);
   const sheetRoot = h("div", { id: "character-sheet", hidden: true });
   const pdfRoot = h("div", { id: "character-pdf", hidden: true });
   const rollsRoot = h("div", { id: "character-rolls", hidden: true });
@@ -192,6 +199,22 @@ export function mountCharacterPage(root, handlers) {
     );
   }
 
+  function drawRevisions(revisions) {
+    replace(
+      revisionList,
+      revisions.length
+        ? revisions.map((revision) =>
+            h(
+              "li",
+              { class: "record-summary", "data-revision": revision.id },
+              h("span", { text: `${revision.when}${revision.label ? ` · ${revision.label}` : ""} · ${revision.change}` }),
+              button({ label: "Restore", variant: "btn-small", ariaLabel: `Restore the revision from ${revision.when}`, onclick: () => handlers.onRevisionRestore(revision.id) })
+            )
+          )
+        : h("li", { class: "muted", text: "No revisions yet. One is saved before your next editing session." })
+    );
+  }
+
   function drawCampaigns(joined, available) {
     replace(
       campaignList,
@@ -227,7 +250,7 @@ export function mountCharacterPage(root, handlers) {
   return {
     sheetRoot,
     pdfRoot,
-    render(character, { force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] } } = {}) {
+    render(character, { force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] }, revisions = [] } = {}) {
       const force = forced || character.id !== shownId;
       shownId = character.id;
 
@@ -261,6 +284,7 @@ export function mountCharacterPage(root, handlers) {
       drawNav(character.id, sub);
       drawGlance(character);
       drawCampaigns(campaigns.joined, campaigns.available);
+      drawRevisions(revisions);
       overview.hidden = sub !== "overview";
       sheetRoot.hidden = sub !== "sheet";
       pdfRoot.hidden = sub !== "pdf";

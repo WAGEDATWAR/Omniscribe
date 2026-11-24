@@ -128,6 +128,7 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
           { store: "campaigns", delete: await backend.keys("campaigns"), put: campaigns.map((campaign) => [campaign.id, campaign]) },
           { store: "templates", delete: await backend.keys("templates"), put: systems.map((file) => [systemKey(file), { key: systemKey(file), file, addedAt: savedAt }]) },
           { store: "blobs", delete: oldBlobs, put: blobs.map((blob) => [blob.id, { id: blob.id, type: blob.type, size: blob.data.size, addedAt: blob.addedAt ?? savedAt, data: blob.data }]) },
+          { store: "revisions", delete: (await backend.keys("revisions")).filter((key) => String(key).startsWith("rev_")), put: [] },
           { store: "meta", put: [["schemaVersion", SCHEMA_VERSION], ["savedAt", savedAt]] }
         ]);
 
@@ -143,6 +144,14 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
 
     async putSafetyBackup(data) {
       await enqueue(() => backend.apply([{ store: "revisions", put: [["safety-backup", { id: "safety-backup", at: now(), size: data.size, data }]] }]));
+    },
+
+    async listRevisions() {
+      return (await backend.getAll("revisions")).filter((entry) => typeof entry?.id === "string" && entry.id.startsWith("rev_"));
+    },
+
+    saveRevisions({ put = [], remove = [] }) {
+      return enqueue(() => backend.apply([{ store: "revisions", delete: remove, put: put.map((revision) => [revision.id, revision]) }]));
     },
 
     getSafetyBackup: () => backend.get("revisions", "safety-backup"),

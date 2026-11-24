@@ -170,3 +170,41 @@ test("promoting a familiar creates a linked character in one undo step and keeps
   assert.equal(store.getState().characters.length, 1);
   assert.equal(store.getCharacter("char_a").familiars[0].linkedCharacterId, null);
 });
+
+test("repairLibrary fixes every dangling reference and leaves the rest alone", async () => {
+  const { repairLibrary } = await import("../src/integrity.js");
+  const { createCharacter, createDocument } = await import("../src/schema.js");
+  const { createCampaign } = await import("../src/campaigns.js");
+  const mira = createCharacter({ name: "Mira" });
+  const bram = createCharacter({ name: "Bram" });
+  const doc = createDocument({ name: "Sheet", blobId: "blob_gone", type: "application/pdf", size: 1 });
+  const broken = {
+    ...mira,
+    portraitBlobId: "blob_gone",
+    documents: [doc],
+    pdf: { ...mira.pdf, uploadedId: doc.id },
+    relations: [{ id: "rel_1", name: "Friend", targetId: "char_ghost" }],
+    inventory: { ...mira.inventory, items: [{ id: "item_1", name: "Sword", containerId: "item_missing", isContainer: false }] }
+  };
+  const camp = {
+    ...createCampaign({ name: "Fight" }),
+    roster: [{ id: "r1", characterId: bram.id, note: "" }, { id: "r2", characterId: "char_ghost", note: "" }]
+  };
+  const result = repairLibrary([broken, bram], [camp], new Set(["blob_ok"]));
+
+  assert.equal(result.characters[0].portraitBlobId, null);
+  assert.equal(result.characters[0].documents.length, 0);
+  assert.equal(result.characters[0].pdf.uploadedId, null);
+  assert.equal(result.characters[0].relations[0].targetId, null);
+  assert.equal(result.characters[0].relations[0].name, "Friend");
+  assert.equal(result.characters[0].inventory.items[0].containerId, null);
+  assert.equal(result.characters[1], bram);
+  assert.deepEqual(result.campaigns[0].roster.map((row) => row.characterId), [bram.id]);
+  assert.deepEqual(result.touchedCharacters, [mira.id]);
+  assert.deepEqual(result.touchedCampaigns, [camp.id]);
+  assert.ok(result.findings.length >= 5);
+
+  const clean = repairLibrary([bram], [], new Set());
+  assert.equal(clean.findings.length, 0);
+  assert.equal(clean.characters[0], bram);
+});

@@ -104,6 +104,7 @@ export function initSheet(ctx) {
       }
 
       const before = character.sheet;
+      ctx.revisions.snapshot(id, "Before changing the game system");
       const result = store.changeSystem(id, ref, resolved.template);
       view.closeChange();
 
@@ -267,6 +268,7 @@ export function initSheet(ctx) {
 
     const { character, after, ref } = pending;
     const before = character.sheet;
+    ctx.revisions.snapshot(character.id, "Before changing the game system");
     const result = store.changeSystem(character.id, ref, after);
 
     diffDialog.close("confirm");

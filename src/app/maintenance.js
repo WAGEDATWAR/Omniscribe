@@ -6,7 +6,8 @@ import { findOrphanBlobs } from "../integrity.js";
  * saved yet; an explicit cleanup passes 0. Returns what was removed.
  */
 export async function collectUnusedFiles({ storage, characters, campaigns = [], graceMs = LIMITS.orphanGraceMs, now = Date.now() }) {
-  const orphans = findOrphanBlobs(characters, await storage.listBlobs(), { now, graceMs, campaigns });
+  const revisions = (await storage.listRevisions?.().catch(() => [])) ?? [];
+  const orphans = findOrphanBlobs(characters, await storage.listBlobs(), { now, graceMs, campaigns, revisions });
 
   if (orphans.length) {
     await storage.deleteBlobs(orphans.map((blob) => blob.id));
