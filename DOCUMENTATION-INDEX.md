@@ -39,7 +39,7 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/SHEET.md` | Game systems, derivation, the formula language, evaluation, pools, conditions, orphans | designed (P2 in progress) |
 | `docs/reference/SHEET-REFERENCE.md` | What real derived-system sheets need; structure only, no private content | reference |
 | `docs/TABLES.md` | Random tables: loot and encounters as data on the dice engine (DEF-014) | planned (P8) |
-| `docs/DISTRIBUTION.md` | Pages, the Windows build, the APK, the release workflow | planned (P7) |
+| `docs/DISTRIBUTION.md` | The PWA, Pages, the Windows build, the APK, the release workflow, the UI evaluation | designed (P7) |
 | `docs/DICE.md` | The dice grammar, `@ref` resolution, limits, the roll record, presets, the log, the dice table | designed (P3) |
 | `docs/PDF.md` | PDF attachments, portraits, the vendored reader, the viewer, the upload override; the generated sheet arrives in P6 | built |
 | `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | built (P4) |

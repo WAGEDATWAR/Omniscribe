@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P6 is done (0.7.0). P7 is next: UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds.
+P6 is done (0.7.0). P7 has its spec (`docs/DISTRIBUTION.md`, R-1 to R-8); the work follows in slices R-A to R-F.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -112,6 +112,13 @@ P6 is done (0.7.0). P7 is next: UI evaluation and redesign, PWA, GitHub Pages, W
 - [x] `M` `P6-F2` Familiar sheet editor and translation maps moved to P8 (DEF-087, DEF-080).
 - [x] `H` `P6-G` Page layouts replace the trailing "Your own fields" (`docs/LAYOUTS.md`, L-1 to L-6): [x] L-A pure core (`src/layouts/`), [x] L-B pages, [x] L-C in-place editor, [x] L-D wiring.
 - [x] `H` `P6` Phase gate twice, release 0.7.0.
+- [x] `H` `P7` `docs/DISTRIBUTION.md`: the bundle, the PWA, Pages, Windows, Android, the release workflow, the UI evaluation (R-1 to R-8).
+- [x] `H` `P7-A` Manifest, icons, `sw.js`, `npm run bundle`, registration, offline scenario (DEF-065).
+- [ ] `H` `P7-B` `release.yml`, Pages from Actions, `ci.yml` builds the bundle (DEF-067).
+- [ ] `H` `P7-C` `desktop/` Electron wrapper and the Windows job (DEF-066).
+- [ ] `H` `P7-D` Capacitor project, APK build, Android job, a device check of downloads (DEF-061 debug).
+- [ ] `H` `P7-E` UI review scripts, `docs/UI-REVIEW.md`, the fixes, the screen-reader checklist (DEF-060, DEF-062).
+- [ ] `H` `P7-F` Benchmark gate, PDF text layer or its move to P8 (DEF-075, DEF-076), phase gate twice, v1.0.0.
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 

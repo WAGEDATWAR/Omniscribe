@@ -210,4 +210,8 @@ async function boot() {
   requestPersistence();
 }
 
+if ("serviceWorker" in navigator && globalThis.location?.protocol?.startsWith("http")) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+
 boot();

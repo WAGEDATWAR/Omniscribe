@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { buildBundle } from "../scripts/bundle.mjs";
+import { startStaticServer } from "../scripts/serve.mjs";
 import { buildArchive } from "../src/backup.js";
 import { createCampaign } from "../src/campaigns.js";
 import { createCharacter, createDocument } from "../src/schema.js";
@@ -2645,6 +2647,38 @@ export const scenarios = [
       await page.evaluate(`document.querySelector("#palette-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })); true`);
       await page.waitFor(`location.hash === "#/character/${id}/journal"`);
       assertClean(page);
+    }
+  },
+  {
+    name: "the installed bundle opens offline from its cache",
+    timeout: 90000,
+    async run(page) {
+      const out = mkdtempSync(join(tmpdir(), "omniscribe-www-"));
+      const { version } = await buildBundle({ out });
+      const { server, port } = await startStaticServer({ root: out });
+      const address = `http://127.0.0.1:${port}/`;
+
+      await page.navigate(address);
+      await page.waitFor('document.querySelector("#library-title")');
+      const keys = await page.evaluate("(async () => { await navigator.serviceWorker.ready; return caches.keys(); })()");
+      assert.ok(keys.includes(`omniscribe-${version}`));
+      assert.equal(await page.evaluate('(async () => Boolean(await caches.match("src/main.js")))()'), true);
+      assert.equal(await page.evaluate('(async () => Boolean(await caches.match("src/vendor/pdfjs/build/pdf.worker.min.mjs")))()'), true);
+      await page.waitFor("Boolean(navigator.serviceWorker.controller)", { timeout: 10000 }).catch(async () => {
+        await page.navigate(address);
+        await page.waitFor("Boolean(navigator.serviceWorker.controller)");
+      });
+
+      await new Promise((resolve) => {
+        server.closeAllConnections?.();
+        server.close(resolve);
+      });
+
+      await page.navigate(address);
+      await page.waitFor('document.querySelector("#library-title") && !document.querySelector("#page-library").hidden');
+      assert.match(await page.evaluate("document.title"), /Omniscribe/);
+      assert.equal(await page.evaluate('document.querySelector("link[rel=manifest]").getAttribute("href")'), "manifest.webmanifest");
+      await page.evaluate("(async () => { for (const worker of await navigator.serviceWorker.getRegistrations()) await worker.unregister(); return true; })()");
     }
   }
 ];

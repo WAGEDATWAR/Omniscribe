@@ -18,6 +18,7 @@
     "lint": "node scripts/lint.mjs",
     "format": "node scripts/format.mjs",
     "format:write": "node scripts/format.mjs --write",
+    "bundle": "node scripts/bundle.mjs",
     "release:check": "node scripts/release-check.mjs"
   },
   "devDependencies": {

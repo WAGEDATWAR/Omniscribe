@@ -196,6 +196,19 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | L-5 | **Layouts are edited in place** on the page, every move works from the keyboard, each change is one Undo step. The Sheet page keeps the game system's own layout (S-series). | locked |
 | L-6 | **Today's `custom` entries migrate without loss** into own fields in an automatic section, in live data, backups and revisions. | locked |
 
+## Release (R-series)
+
+| # | Decision | Status |
+|---|---|---|
+| R-1 | **One bundle, four shells.** `npm run bundle` copies the shipped files to `www/`; Pages, the PWA, Electron and Capacitor all load that directory unchanged. There is still no build step for the app. | locked |
+| R-2 | **The service worker is network-first with a hashed cache,** stamped by the bundle with a version and the full file list; it never touches non-GET or cross-origin requests. | locked |
+| R-3 | **A tag publishes everything:** one workflow verifies, then deploys Pages, builds the Windows zip and the APK and attaches them to the GitHub release. Pages deploys from Actions, not from `main`. | locked |
+| R-4 | **The Windows build is an unpacked Electron folder, zipped,** serving `www/` through a privileged `app://` scheme with the sandbox on, no preload and no IPC. No installer, no auto-update, no code signing in v1. | locked |
+| R-5 | **The APK is debug-signed in v1** and says so; a release keystore is DEF-061. The app id is `sh.omniscribe.app`. | locked |
+| R-6 | **The UI evaluation is scripted and ranked** (capture at four widths and both themes, a keyboard pass, a ranked review document), and everything that blocks or slows a task is fixed before v1 (U-10). | locked |
+| R-7 | **A release is gated by the benchmark** (200 characters, 5,000 items) as well as the other gates. | locked |
+| R-8 | **v1.0.0 is the first release with a Windows build and an APK attached.** | locked |
+
 ## Open
 
 | # | Question | Needed by |

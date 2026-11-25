@@ -53,3 +53,6 @@ jobs:
 
       - name: Release check
         run: npm run release:check
+
+      - name: Build the web bundle
+        run: npm run bundle

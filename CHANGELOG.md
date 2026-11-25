@@ -4,6 +4,10 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Added
+
+- Installable offline app: a web manifest with icons (SVG and PNG), a network-first service worker that precaches every shipped file under a content-hash version, and `npm run bundle`, which writes the shipped files to `www/` for every shell. The PDF viewer works offline too. (P7-A)
+
 ## [0.7.0] - 2026-11-25
 
 ### Added
