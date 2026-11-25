@@ -96,12 +96,15 @@ export function mountDataPage(root, handlers) {
       }
 
       const items = [...result.findings.map((finding) => `${finding.owner}: ${finding.text}`), ...(result.orphans ? [`${result.orphans} unused file${result.orphans === 1 ? "" : "s"} will be removed`] : [])];
+      const stale = result.staleValues
+        ? [h("p", { id: "check-stale", class: "muted", text: `${result.staleValues} value${result.staleValues === 1 ? "" : "s"} of fields that are no longer on any page ${result.staleValues === 1 ? "is" : "are"} kept aside. They return if you add the field again.` }), h("div", { class: "section-actions" }, button({ id: "purge-values-btn", label: "Remove these values", variant: "btn-small btn-danger-text", onclick: handlers.onPurgeValues }))]
+        : [];
 
       replace(
         checkBox,
         items.length
-          ? [h("ul", { id: "check-results", class: "plain-list" }, items.map((text) => h("li", { text }))), h("div", { class: "section-actions" }, button({ id: "repair-btn", label: "Repair all", variant: "btn-primary", onclick: handlers.onRepair }))]
-          : h("p", { id: "check-clean", class: "muted", text: "Everything checks out." })
+          ? [h("ul", { id: "check-results", class: "plain-list" }, items.map((text) => h("li", { text }))), h("div", { class: "section-actions" }, button({ id: "repair-btn", label: "Repair all", variant: "btn-primary", onclick: handlers.onRepair })), ...stale]
+          : [h("p", { id: "check-clean", class: "muted", text: "Everything checks out." }), ...stale]
       );
     },
     showDeleted(rows) {

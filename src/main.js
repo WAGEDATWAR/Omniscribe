@@ -110,7 +110,7 @@ async function boot() {
     onPeerSaved: () => sync?.handlePeerSaved()
   });
 
-  const revisions = createRevisions({ store, storage, bus });
+  const revisions = createRevisions({ store, storage, bus, getLayouts: () => ctx.layouts });
   await revisions.init();
 
   const autosave = createAutosave({
@@ -165,7 +165,7 @@ async function boot() {
     }
   };
 
-  ctx.layouts = createLayouts(ctx, loaded.layouts);
+  ctx.layouts = createLayouts(ctx, loaded.layouts, (await storage.meta("layoutActive")) ?? {});
   ctx.layoutEditor = createLayoutEditorController(ctx);
   ctx.actions = createActions(ctx);
   ctx.bundles = createBundles(ctx);

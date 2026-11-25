@@ -187,3 +187,40 @@ test("compacting rewrites operations without changing the page", async () => {
   assert.deepEqual(compactOps("inventory", []), []);
   assert.deepEqual(compactOps("journal", [{ op: "hide", target: "field", key: "done" }, { op: "show", target: "field", key: "done" }]), []);
 });
+
+test("stale values are counted and removed only for ids no layout declares", async () => {
+  const { purgeStaleValues } = await import("../src/layouts/orphans.js");
+  const characters = [
+    { id: "char_a", fields: { cf_keep: "k", cf_gone: "g" }, inventory: { items: [{ id: "item_a", fields: { cf_gone: "x" } }, { id: "item_b", fields: {} }], wallets: {} }, abilities: [], journal: [], relations: [], progression: [], familiars: [] },
+    { id: "char_b", fields: {}, inventory: { items: [], wallets: {} }, abilities: [], journal: [], relations: [], progression: [], familiars: [] }
+  ];
+  const campaigns = [{ id: "camp_a", fields: { cf_gone: "c" }, roster: [], sessions: [{ id: "sess_a", fields: { cf_keep: "k" } }], handouts: [] }];
+  const result = purgeStaleValues(characters, campaigns, new Set(["cf_keep"]));
+
+  assert.equal(result.removed, 3);
+  assert.deepEqual(result.touchedCharacters, ["char_a"]);
+  assert.deepEqual(result.characters[0].fields, { cf_keep: "k" });
+  assert.deepEqual(result.characters[0].inventory.items[0].fields, {});
+  assert.equal(result.characters[1], characters[1]);
+  assert.equal(result.campaigns[0].sessions, campaigns[0].sessions);
+  assert.equal(purgeStaleValues(characters, campaigns, new Set(["cf_keep", "cf_gone"])).removed, 0);
+});
+
+test("a bundle carries only the layouts whose pages have values in it", async () => {
+  const { neededLayouts } = await import("../src/backup.js");
+  const layouts = [{ surface: "inventory", id: "lay_a" }, { surface: "journal", id: "lay_b" }, { surface: "campaign", id: "lay_c" }];
+  const characters = [{ fields: {}, inventory: { items: [{ fields: { cf_x: 1 } }] }, journal: [{ fields: {} }] }];
+
+  assert.deepEqual(neededLayouts(layouts, characters, []).map((layout) => layout.id), ["lay_a"]);
+  assert.deepEqual(neededLayouts(layouts, characters, [{ fields: { cf_y: 1 } }]).map((layout) => layout.id), ["lay_a", "lay_c"]);
+});
+
+test("a revision written before layouts migrates its custom entries when used", async () => {
+  const { addLayoutFields } = await import("../src/migrations.js");
+  const revision = { id: "char_a", inventory: { items: [{ id: "item_a", custom: [{ label: "Rarity", type: "text", value: "Rare" }] }], wallets: {} } };
+  const migrated = addLayoutFields({ characters: [revision], campaigns: [] });
+
+  assert.equal(migrated.layouts[0].surface, "inventory");
+  assert.equal(Object.values(migrated.characters[0].inventory.items[0].fields)[0], "Rare");
+  assert.equal("custom" in migrated.characters[0].inventory.items[0], false);
+});

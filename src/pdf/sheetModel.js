@@ -1,5 +1,6 @@
 import { carriedWeight, totalValue } from "../inventory.js";
 import { STATUS_LABELS, displayName } from "../schema.js";
+import { isEmptyValue } from "../layouts/values.js";
 import { layoutOf } from "../sheet/layout.js";
 import { formatValue } from "../sheet/template.js";
 
@@ -114,7 +115,31 @@ function systemBlocks(template, computed) {
   return blocks;
 }
 
-function inventoryBlocks(character) {
+function ownText(item, value) {
+  if (item.type === "checkbox") {
+    return value ? "Yes" : "No";
+  }
+
+  return Array.isArray(value) ? value.join(", ") : String(value);
+}
+
+/** The fields of your own that a page shows and that hold a value in at least one of the records, as columns. */
+function ownColumns(layouts, surface, records, include) {
+  const items = (layouts?.[surface]?.sections ?? [])
+    .flatMap((section) => section.items)
+    .filter((item) => item.own && !item.hidden && (include || !item.secret) && records.some((record) => !isEmptyValue(item.def, record.fields?.[item.key])));
+
+  return {
+    columns: items.map((item) => ({ label: item.label, align: item.type === "number" ? "right" : "left" })),
+    cells: (record) => items.map((item) => (isEmptyValue(item.def, record.fields?.[item.key]) ? "" : ownText(item, record.fields[item.key])))
+  };
+}
+
+function withOwn(columns, rows, records, extra) {
+  return extra.columns.length ? { columns: [...columns, ...extra.columns], rows: rows.map((row, index) => [...row, ...extra.cells(records[index])]) } : { columns, rows };
+}
+
+function inventoryBlocks(character, layouts, include) {
   const { items, wallets } = character.inventory;
   const money = Object.entries(wallets ?? {}).filter(([, amount]) => amount);
 
@@ -128,33 +153,31 @@ function inventoryBlocks(character) {
 
   if (items.length) {
     const nameOf = new Map(items.map((item) => [item.id, item.name || "Unnamed"]));
-    blocks.push({
-      type: "table",
-      columns: [
-        { label: "Item" },
-        { label: "Qty", align: "right" },
-        { label: "Weight", align: "right" },
-        { label: "Value", align: "right" },
-        { label: "Notes" }
-      ],
-      rows: items.map((item) => [
+    const base = [
+      { label: "Item" },
+      { label: "Qty", align: "right" },
+      { label: "Weight", align: "right" },
+      { label: "Value", align: "right" },
+      { label: "Notes" }
+    ];
+    const rows = items.map((item) => [
         item.name || "Unnamed",
         number(item.quantity),
         number(item.weight),
         number(item.value),
         [item.equipped ? "Equipped" : "", item.attuned ? "Attuned" : "", item.containerId && nameOf.has(item.containerId) ? `In ${nameOf.get(item.containerId)}` : "", item.notes].filter(Boolean).join("; ")
-      ])
-    });
+    ]);
+    blocks.push({ type: "table", ...withOwn(base, rows, items, ownColumns(layouts, "inventory", items, include)) });
   }
 
   return blocks;
 }
 
-function tableBlock(heading, columns, rows) {
-  return rows.length ? [{ type: "heading", text: heading }, { type: "table", columns, rows }] : [];
+function tableBlock(heading, columns, rows, records = [], layouts = null, surface = "", include = false) {
+  return rows.length ? [{ type: "heading", text: heading }, { type: "table", ...withOwn(columns, rows, records, ownColumns(layouts, surface, records, include)) }] : [];
 }
 
-function journalBlocks(character, includeJournal) {
+function journalBlocks(character, includeJournal, layouts) {
   const entries = character.journal.filter((entry) => includeJournal || entry.kind !== "secret");
 
   if (!entries.length) {
@@ -162,7 +185,7 @@ function journalBlocks(character, includeJournal) {
   }
 
   if (!includeJournal) {
-    return tableBlock("Journal", [{ label: "Date" }, { label: "Kind" }, { label: "Title" }], entries.map((entry) => [entry.date, entry.kind, entry.title || "Untitled"]));
+    return tableBlock("Journal", [{ label: "Date" }, { label: "Kind" }, { label: "Title" }], entries.map((entry) => [entry.date, entry.kind, entry.title || "Untitled"]), entries, layouts, "journal", false);
   }
 
   return [
@@ -171,7 +194,7 @@ function journalBlocks(character, includeJournal) {
   ];
 }
 
-export function sheetDocument(character, { template = null, computed = null, systemName = "", includeJournal = false } = {}) {
+export function sheetDocument(character, { template = null, computed = null, systemName = "", includeJournal = false, layouts = null } = {}) {
   const name = displayName(character);
   const sub = [character.player, systemName || character.systemId, STATUS_LABELS[character.status], character.tags.join(", ")].filter((part) => part && String(part).trim()).join("  |  ");
   const blocks = [{ type: "title", text: name, sub }];
@@ -180,16 +203,22 @@ export function sheetDocument(character, { template = null, computed = null, sys
     blocks.push({ type: "text", text: character.summary });
   }
 
+  const own = ownColumns(layouts, "character", [character], includeJournal);
+
+  if (own.columns.length) {
+    blocks.push({ type: "heading", text: "Details" }, { type: "pairs", rows: own.columns.map((column, index) => [column.label, own.cells(character)[index]]) });
+  }
+
   if (template && computed) {
     blocks.push(...systemBlocks(template, computed));
   }
 
   blocks.push(
-    ...inventoryBlocks(character),
-    ...tableBlock("Abilities", [{ label: "Name" }, { label: "Kind" }, { label: "Summary" }], character.abilities.map((entry) => [entry.name || "Unnamed", entry.kind, entry.summary])),
-    ...tableBlock("Familiars", [{ label: "Name" }, { label: "Kind" }, { label: "Present" }, { label: "Notes" }], character.familiars.map((entry) => [entry.name || "Unnamed", entry.kind, entry.summoned ? "Yes" : "No", entry.notes])),
-    ...tableBlock("Relations", [{ label: "Who" }, { label: "Kind" }, { label: "Attitude", align: "right" }], character.relations.map((entry) => [entry.targetName || "Unnamed", entry.kind, entry.attitude > 0 ? `+${entry.attitude}` : String(entry.attitude)])),
-    ...journalBlocks(character, includeJournal)
+    ...inventoryBlocks(character, layouts, includeJournal),
+    ...tableBlock("Abilities", [{ label: "Name" }, { label: "Kind" }, { label: "Summary" }], character.abilities.map((entry) => [entry.name || "Unnamed", entry.kind, entry.summary]), character.abilities, layouts, "abilities", includeJournal),
+    ...tableBlock("Familiars", [{ label: "Name" }, { label: "Kind" }, { label: "Present" }, { label: "Notes" }], character.familiars.map((entry) => [entry.name || "Unnamed", entry.kind, entry.summoned ? "Yes" : "No", entry.notes]), character.familiars, layouts, "familiars", includeJournal),
+    ...tableBlock("Relations", [{ label: "Who" }, { label: "Kind" }, { label: "Attitude", align: "right" }], character.relations.map((entry) => [entry.targetName || "Unnamed", entry.kind, entry.attitude > 0 ? `+${entry.attitude}` : String(entry.attitude)]), character.relations, layouts, "relations", includeJournal),
+    ...journalBlocks(character, includeJournal, layouts)
   );
 
   return { title: name, footer: name, blocks };

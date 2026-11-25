@@ -19,7 +19,7 @@ export function initDocuments(ctx) {
   let cache = null;
 
   function generate(character) {
-    const key = `${signatureOf(character)}|${includeJournal}`;
+    const key = `${signatureOf(character)}|${includeJournal}|${JSON.stringify(ctx.layouts.all())}`;
 
     if (cache?.key === key) {
       return cache;
@@ -28,7 +28,7 @@ export function initDocuments(ctx) {
     const resolved = character.sheet ? ctx.systems.resolve(character.sheet.template) : null;
     const template = resolved?.ok ? resolved.template : null;
     const computed = template ? evaluateSheet(template, character.sheet) : null;
-    const built = buildPdf(sheetDocument(character, { template, computed, systemName: template?.name ?? "", includeJournal }));
+    const built = buildPdf(sheetDocument(character, { template, computed, systemName: template?.name ?? "", includeJournal, layouts: Object.fromEntries(["character", "inventory", "abilities", "familiars", "relations", "journal"].map((surface) => [surface, ctx.layouts.resolved(surface)])) }));
 
     cache = { key, blob: new Blob([built.bytes], { type: "application/pdf" }), pages: built.pages, replaced: built.replaced };
     return cache;

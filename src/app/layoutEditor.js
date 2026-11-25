@@ -60,12 +60,40 @@ export function createLayoutEditorController(ctx) {
         await change([{ op: "remove", target: "section", id: section.id }]);
       }
     },
-    onDone: () => end()
+    onDone: () => end(),
+    async onChoose(id) {
+      undo = [];
+      redo = [];
+      problem = "";
+      await layouts.choose(surface, id);
+    },
+    async onNewLayout(name) {
+      undo = [];
+      redo = [];
+      problem = "";
+      await layouts.create(surface, name);
+    },
+    async onRenameLayout(name) {
+      const file = layouts.active(surface);
+
+      if (file) {
+        await layouts.rename(file.id, name);
+      }
+    },
+    async onDeleteLayout() {
+      const file = layouts.active(surface);
+
+      if (file && (await confirm({ heading: `Delete the layout ${file.name}?`, body: "This page goes back to the default layout. Values in your own fields are kept aside. This cannot be undone.", confirmLabel: "Delete", danger: true }))) {
+        await layouts.remove(file.id);
+        undo = [];
+        redo = [];
+      }
+    }
   });
 
   function draw() {
     if (surface) {
-      view.render(layouts.resolved(surface), { canUndo: undo.length > 0, canRedo: redo.length > 0, problem, surfaceLabel: SURFACE_NAMES[surface] ?? "this page" });
+      view.render(layouts.resolved(surface), { canUndo: undo.length > 0, canRedo: redo.length > 0, problem, surfaceLabel: SURFACE_NAMES[surface] ?? "this page", choices: layouts.forSurface(surface), chosen: layouts.choice(surface) });
     }
   }
 

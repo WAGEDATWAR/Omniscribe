@@ -911,6 +911,73 @@ export const scenarios = [
     }
   },
   {
+    name: "layouts can be copied, switched between and deleted",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Switcher");
+      await openRecords(page, "inventory");
+      await page.click("#rec-inventory-edit-layout");
+      await page.waitFor('document.querySelector("#layout-editor")');
+      await type(page, 'input[aria-label="Name of the new section"]', "Extras");
+      await page.click("#layout-add-section");
+      await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 2');
+
+      await type(page, "#layout-new-name", "Plain");
+      await page.click("#layout-new");
+      await page.waitFor('document.querySelector("#layout-choose").selectedOptions[0].text === "Plain"');
+      assert.equal(await page.evaluate('document.querySelectorAll("#layout-editor .layout-section-edit").length'), 2);
+
+      await pick(page, "#layout-choose", "default");
+      await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 1');
+      assert.equal(await page.evaluate('document.querySelectorAll("#layout-choose option").length'), 3);
+
+      const mine = await page.evaluate('[...document.querySelectorAll("#layout-choose option")].find((option) => option.text === "My layout").value');
+      await pick(page, "#layout-choose", mine);
+      await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 2');
+
+      await pick(page, "#layout-choose", await page.evaluate('[...document.querySelectorAll("#layout-choose option")].find((option) => option.text === "Plain").value'));
+      await page.waitFor('document.querySelector("#layout-delete")');
+      await page.click("#layout-delete");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelector("#layout-choose").value === "default"');
+      assert.equal(await page.evaluate('document.querySelectorAll("#layout-choose option").length'), 2);
+      assertClean(page);
+    }
+  },
+  {
+    name: "values of a removed field are kept aside and can be removed from the Data page",
+    async run(page, context) {
+      await boot(page, context);
+      await seedLayouts(page, [{ id: "lay_inventory", name: "My layout", surface: "inventory", base: "default", ops: [{ op: "add", target: "field", field: { id: "cf_rarity", label: "Rarity", type: "text" }, section: "main" }] }]);
+      await newCharacter(page, "Keeper");
+      await openRecords(page, "inventory");
+      await type(page, "#rec-inventory-name", "Ring");
+      await type(page, "#rec-inventory-cf_rarity", "Rare");
+      await page.click("#rec-inventory-save");
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
+
+      await page.click("#rec-inventory-edit-layout");
+      await page.waitFor('document.querySelector("#layout-editor [data-key=cf_rarity]")');
+      await page.click('button[aria-label="Remove Rarity"]');
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('!document.querySelector("#layout-editor [data-key=cf_rarity]")');
+      await page.click("#layout-done");
+      await saved(page);
+
+      await go(page, "#/data", "#data-title");
+      await page.click("#check-btn");
+      await page.waitFor('document.querySelector("#check-stale")');
+      assert.match(await page.evaluate('document.querySelector("#check-stale").textContent'), /1 value of fields/);
+      await page.click("#purge-values-btn");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('!document.querySelector("#check-stale")');
+      assertClean(page);
+    }
+  },
+  {
     name: "anonymous custom fields from before layouts become declared fields, with every value kept",
     async run(page, context) {
       await boot(page, context);

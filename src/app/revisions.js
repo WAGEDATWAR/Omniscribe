@@ -1,5 +1,7 @@
 import { describeChange, expiredRevisions, deletedCharacters, makeRevision, planRevisions, sessionDue, signatureOf } from "../revisions.js";
 import { normalizeCharacter } from "../schema.js";
+import { mergeLayouts } from "../layouts/migrate.js";
+import { addLayoutFields } from "../migrations.js";
 import { createId } from "../utils.js";
 
 const stamp = (value) => new Date(value).toLocaleString();
@@ -16,6 +18,22 @@ export function createRevisions(ctx) {
 
   function changed() {
     bus.emit("revisions:changed");
+  }
+
+  /** A revision written before layouts holds anonymous custom entries; they become declared fields as it is used (L-6). */
+  async function upgrade(data) {
+    if (!JSON.stringify(data).includes('"custom":[')) {
+      return data;
+    }
+
+    const migrated = addLayoutFields({ characters: [data], campaigns: [] });
+    const layouts = ctx.getLayouts?.();
+
+    if (layouts && migrated.layouts.length) {
+      await layouts.replaceAll(mergeLayouts(layouts.all(), migrated.layouts));
+    }
+
+    return migrated.characters[0];
   }
 
   async function keep(character, label = "") {
@@ -99,7 +117,7 @@ export function createRevisions(ctx) {
       }
 
       await keep(current, `Before restoring ${stamp(revision.at)}`);
-      return Boolean(store.restoreCharacterState(id, revision.data));
+      return Boolean(store.restoreCharacterState(id, await upgrade(revision.data)));
     },
     describeWhen: (revisionId) => stamp(list.find((entry) => entry.id === revisionId)?.at ?? Date.now()),
     rowsFor(id) {
@@ -114,14 +132,14 @@ export function createRevisions(ctx) {
     deleted() {
       return deletedCharacters(list, store.getState().characters.map((entry) => entry.id)).map((entry) => ({ id: entry.id, name: entry.data?.name?.trim() || "Unnamed character", when: stamp(entry.at) }));
     },
-    bringBack(revisionId) {
+    async bringBack(revisionId) {
       const revision = list.find((entry) => entry.id === revisionId);
 
       if (!revision) {
         return null;
       }
 
-      return store.restoreCharacter(normalizeCharacter({ ...revision.data, updatedAt: Date.now() }, { now: Date.now() }));
+      return store.restoreCharacter(normalizeCharacter({ ...(await upgrade(revision.data)), updatedAt: Date.now() }, { now: Date.now() }));
     }
   };
 }

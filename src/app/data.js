@@ -1,4 +1,5 @@
 import { findOrphanBlobs, repairLibrary } from "../integrity.js";
+import { purgeStaleValues } from "../layouts/orphans.js";
 import { SCHEMA_VERSION } from "../migrations.js";
 import { largestFiles, quotaLevel } from "../quota.js";
 import { checkPersistence, estimateUsage, requestPersistence } from "../storage.js";
@@ -21,7 +22,8 @@ export function initData(ctx) {
     const result = repairLibrary(state.characters, state.campaigns, new Set(blobs.map((blob) => blob.id)));
     const orphans = findOrphanBlobs(state.characters, blobs, { graceMs: 0, campaigns: state.campaigns, revisions });
     lastCheck = { result, orphans };
-    return { findings: result.findings, orphans: orphans.length };
+    const stale = purgeStaleValues(state.characters, state.campaigns, ctx.layouts.knownIds());
+    return { findings: result.findings, orphans: orphans.length, staleValues: stale.removed };
   }
 
   view = mountDataPage(document.querySelector("#page-data"), {
@@ -59,8 +61,25 @@ export function initData(ctx) {
 
       refresh();
     },
-    onBringBack(revisionId) {
-      const character = ctx.revisions.bringBack(revisionId);
+    async onPurgeValues() {
+      const state = store.getState();
+      const stale = purgeStaleValues(state.characters, state.campaigns, ctx.layouts.knownIds());
+
+      if (!stale.removed || !(await ctx.confirm({ heading: "Remove these values?", body: `${plural(stale.removed, "value")} of fields that are no longer on any page will be deleted for good. A revision of each affected character is saved first.`, confirmLabel: "Remove", danger: true }))) {
+        return;
+      }
+
+      for (const id of stale.touchedCharacters) {
+        await ctx.revisions.snapshot(id, "Before removing old field values");
+      }
+
+      store.applyRepair(stale.characters, stale.campaigns);
+      await ctx.autosave.flush();
+      toast(`Removed ${plural(stale.removed, "value")}.`);
+      view.showCheck(await runCheck());
+    },
+    async onBringBack(revisionId) {
+      const character = await ctx.revisions.bringBack(revisionId);
       toast(character ? "Brought back. Undo removes it again." : "Could not bring it back.", { tone: character ? "info" : "error" });
       refresh();
     },

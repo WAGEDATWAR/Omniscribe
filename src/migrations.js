@@ -48,7 +48,7 @@ function addCampaigns(project) {
  * Moves anonymous `custom` entries to declared fields (L-6): values go to `record.fields`, and the declarations
  * come back as `project.layouts`, one layout of operations per page that had any.
  */
-function addLayoutFields(project) {
+export function addLayoutFields(project) {
   const ops = {};
   const note = (surface, result) => {
     if (result.ops.length) {

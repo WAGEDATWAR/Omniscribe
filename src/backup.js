@@ -4,6 +4,7 @@ import { isShared } from "./campaigns.js";
 import { referencedBlobIds } from "./integrity.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION, isNewerVersion, migrateProject } from "./migrations.js";
+import { KIND_IDS } from "./records/kinds.js";
 import { normalizeProject } from "./schema.js";
 import { ZipError, openZip, writeZip } from "./zip.js";
 
@@ -247,6 +248,34 @@ export function planAdd(archive, { characterIds = new Set(), campaignIds = new S
   };
 }
 
+/** The layouts whose pages have a value of a field of your own in the exported records. */
+export function neededLayouts(layouts, characters, campaigns) {
+  const used = new Set();
+  const note = (surface, records) => {
+    if (records.some((record) => Object.keys(record?.fields ?? {}).length)) {
+      used.add(surface);
+    }
+  };
+
+  for (const character of characters) {
+    note("character", [character]);
+
+    for (const kind of KIND_IDS) {
+      note(kind, (kind === "inventory" ? character.inventory?.items : character[kind]) ?? []);
+    }
+  }
+
+  for (const campaign of campaigns) {
+    note("campaign", [campaign]);
+
+    for (const kind of ["roster", "sessions", "handouts"]) {
+      note(kind, campaign[kind] ?? []);
+    }
+  }
+
+  return layouts.filter((layout) => used.has(layout.surface));
+}
+
 /**
  * The user-made systems a set of characters needs: each character's pinned system and its base chain, taken from the
  * custom files (built-ins ship with the app, so a bundle never carries them).
@@ -292,7 +321,7 @@ export function bundleContents({ kind, character = null, campaign = null, charac
     characters: outCharacters,
     campaigns: outCampaigns,
     systems: neededSystems(outCharacters, customSystems),
-    layouts,
+    layouts: neededLayouts(layouts, outCharacters, outCampaigns),
     blobIds: [...referencedBlobIds(outCharacters, outCampaigns)]
   };
 }

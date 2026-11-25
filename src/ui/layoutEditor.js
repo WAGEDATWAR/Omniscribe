@@ -13,11 +13,13 @@ export function createLayoutEditor(handlers) {
   const bar = h("div", { class: "toolbar layout-editor-bar" });
   const message = h("p", { class: "field-error", id: "layout-editor-message", role: "alert", hidden: true });
   const outline = h("div", { class: "stack" });
+  const switcher = h("div", { class: "toolbar layout-switcher" });
   const element = h(
     "section",
     { class: "panel layout-editor", id: "layout-editor", "aria-labelledby": "layout-editor-title" },
     h("h2", { class: "panel-title", id: "layout-editor-title", text: "Edit layout" }),
     h("p", { class: "field-hint", text: "Rename, move, hide and add fields. Changes save as you make them; Undo steps back one change." }),
+    switcher,
     bar,
     message,
     outline
@@ -165,7 +167,24 @@ export function createLayoutEditor(handlers) {
 
   return {
     element,
-    render(resolved, { canUndo, canRedo, problem = "", surfaceLabel = "this page" }) {
+    render(resolved, { canUndo, canRedo, problem = "", surfaceLabel = "this page", choices = [], chosen = "default" }) {
+      const pick = h("select", { class: "input", id: "layout-choose", "aria-label": "Layout used for this page" }, [h("option", { value: "default", text: "Default layout", selected: chosen === "default" }), ...choices.map((file) => h("option", { value: file.id, text: file.name, selected: file.id === chosen }))]);
+      pick.addEventListener("change", () => {
+        lastAct = "choose";
+        handlers.onChoose(pick.value);
+      });
+      const name = h("input", { class: "input", id: "layout-new-name", type: "text", maxLength: 60, autocomplete: "off", "aria-label": "Name for a new layout", placeholder: "New layout name" });
+      const rename = h("input", { class: "input", id: "layout-rename", type: "text", maxLength: 60, autocomplete: "off", "aria-label": "Name of this layout", value: choices.find((file) => file.id === chosen)?.name ?? "", hidden: chosen === "default" });
+      rename.addEventListener("change", () => handlers.onRenameLayout(rename.value));
+      replace(
+        switcher,
+        pick,
+        rename,
+        chosen === "default" ? null : button({ id: "layout-delete", label: "Delete layout", variant: "btn-small btn-danger-text", onclick: act("delete", handlers.onDeleteLayout) }),
+        name,
+        button({ id: "layout-new", label: "New layout", variant: "btn-small", onclick: act("new", () => handlers.onNewLayout(name.value)) })
+      );
+
       replace(
         bar,
         button({ id: "layout-undo", label: "Undo", variant: "btn-small", disabled: !canUndo, onclick: act("undo", handlers.onUndo) }),

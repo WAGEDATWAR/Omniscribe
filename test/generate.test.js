@@ -70,3 +70,25 @@ test("a sheet follows the system's sections in order", () => {
   assert.deepEqual(headings.slice(0, template.sections.length).filter(Boolean), template.sections.map((section) => section.title).filter((title) => headings.includes(title)));
   assert.ok(buildPdf(model).pages >= 1);
 });
+
+test("fields of your own print where the layout puts them, and secret ones only on request", async () => {
+  const { resolveLayout } = await import("../src/layouts/resolve.js");
+  const character = createCharacter({ name: "Mira" });
+  character.fields = { cf_pronoun: "she/her", cf_secret1: "TOP-SECRET" };
+  character.inventory = { ...character.inventory, items: [{ ...createRecord("inventory", { name: "Lantern" }), fields: { cf_rarity: "Rare" } }] };
+
+  const layouts = {
+    character: resolveLayout("character", { surface: "character", ops: [
+      { op: "add", target: "field", field: { id: "cf_pronoun", label: "Pronouns", type: "text" }, section: "identity" },
+      { op: "add", target: "field", field: { id: "cf_secret1", label: "Dark past", type: "text", secret: true }, section: "identity" }
+    ] }),
+    inventory: resolveLayout("inventory", { surface: "inventory", ops: [{ op: "add", target: "field", field: { id: "cf_rarity", label: "Rarity", type: "text" }, section: "main" }] })
+  };
+
+  const plain = text(buildPdf(sheetDocument(character, { layouts })).bytes);
+  assert.ok(plain.includes("Pronouns") && plain.includes("she/her") && plain.includes("Rarity") && plain.includes("Rare"));
+  assert.ok(!plain.includes("TOP-SECRET") && !plain.includes("Dark past"));
+
+  const full = text(buildPdf(sheetDocument(character, { layouts, includeJournal: true })).bytes);
+  assert.ok(full.includes("TOP-SECRET"));
+});

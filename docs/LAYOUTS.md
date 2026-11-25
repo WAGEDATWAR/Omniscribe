@@ -5,7 +5,7 @@
 > your own" (the trailing editor). The Sheet page keeps its own layout, which belongs to the game system
 > (`docs/SHEET.md`). Storage is `docs/PERSISTENCE.md`; exchange is `docs/EXCHANGE.md`.
 >
-> **Status:** decided (`DECISIONS.md` L-1 to L-6); slice L-A built (`src/layouts/`: limits, surfaces, values, resolve, migrate; `test/layouts.test.js`).
+> **Status:** decided (`DECISIONS.md` L-1 to L-6); slices L-A to L-D built (`src/layouts/`, `src/ui/layoutForm.js`, `src/ui/layoutEditor.js`, `src/app/layouts.js`, `src/app/layoutEditor.js`).
 
 ## 1. What is wrong today
 
@@ -121,6 +121,8 @@ Release 0.7.0 waits for L-A to L-C at least (the old editors must not ship besid
 **As built (slice L-B).** Schema 7 (`addLayoutFields`) moves `custom` to `fields` and returns `project.layouts`; `storage.load` merges them into `meta.layouts` before records are rewritten, and a backup or bundle carries `layouts` in `project.json` (an older archive migrates as it is read). `src/app/layouts.js` resolves the active layout of a page on demand; `src/ui/layoutForm.js` draws a resolved layout for the record forms, the character Overview and the campaign Overview. A page with no layout file shows the default. Search indexes values under their field's label. Record forms keep the uses and roll controls of abilities and the container of inventory in the first section, as they are not fields a layout describes. There is no editor yet (L-C), so a field of your own can only come from migration or a restored layout.
 
 **As built (slice L-C).** `src/layouts/compact.js` rewrites a layout's operations as the shortest list that resolves to the same page, so editing appends operations and compacts them. `src/ui/layoutEditor.js` is the outline view and `src/app/layoutEditor.js` the controller: it checks each change against the resolver (a rejected change shows its reason and saves nothing), keeps an undo and redo stack while the editor is open, and confirms Reset and Remove. The editor opens from the Edit layout button at the top of the form, or the palette command, and replaces the form until Done. Deviations: Undo is the editor's own button, not Ctrl+Z, because layouts are not in the record history; hidden fields stay in place with a dashed border and a Show button instead of a folded list; there is no drag (DEF-094).
+
+**As built (slice L-D).** The generated sheet prints own fields of the character as a Details block and of inventory, abilities, familiars, relations and journal as extra columns when a record holds a value; a field marked secret prints only with *Include journal text and secret entries*. A page can hold several layouts: the active one is chosen per page and kept in `meta.layoutActive` (it is not part of a backup; a restored page uses its first layout until chosen again), and the editor can create (as a copy of the one in use), rename, switch and delete. A bundle carries only the layouts of pages that have a value in the exported records. A revision with anonymous entries is migrated when it is restored or brought back. The Data check counts values whose field no layout declares and offers *Remove these values* behind a confirmation, saving a revision of each affected character first.
 
 ## 8. Not in scope
 
