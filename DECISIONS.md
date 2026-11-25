@@ -185,6 +185,17 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | X-11 | **The generated sheet uses our own minimal PDF writer** (built-in Helvetica and Courier, WinAnsi), no vendored library; an uploaded PDF overrides it only when marked as the main sheet (G-19). | locked |
 | X-12 | **A backup may carry settings and the roll log as options; a bundle never does.** | locked |
 
+## Layouts (L-series)
+
+| # | Decision | Status |
+|---|---|---|
+| L-1 | **A page's fields come from a layout: a generated default plus a user overlay of operations** (add, move, hide, show, override, remove), resolved by pure code that never throws and drops operations that no longer apply. A layout is never a frozen copy. Supersedes C-11's trailing "fields of your own". | locked |
+| L-2 | **Fields of your own are declared in the layout and hold a stable id;** a record stores only values, at `record.fields[id]`. There are no anonymous per-record fields. | locked |
+| L-3 | **One active layout per surface for the whole library;** pinning a layout to a character or campaign is a later extension. | locked |
+| L-4 | **Hiding never deletes; removing a field keeps its values aside** until the user purges them. A record's title field cannot be hidden. | locked |
+| L-5 | **Layouts are edited in place** on the page, every move works from the keyboard, each change is one Undo step. The Sheet page keeps the game system's own layout (S-series). | locked |
+| L-6 | **Today's `custom` entries migrate without loss** into own fields in an automatic section, in live data, backups and revisions. | locked |
+
 ## Open
 
 | # | Question | Needed by |

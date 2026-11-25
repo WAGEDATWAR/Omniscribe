@@ -110,7 +110,8 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
 - [x] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
 - [x] `M` `P6-F1` Portrait cropping and handout PDFs in the app viewer (DEF-022, DEF-090).
 - [x] `M` `P6-F2` Familiar sheet editor and translation maps moved to P8 (DEF-087, DEF-080).
-- [ ] `H` `P6` Phase gate twice, release 0.7.0.
+- [~] `H` `P6-G` Page layouts replace the trailing "Your own fields" (`docs/LAYOUTS.md`, L-1 to L-6): [x] L-A pure core (`src/layouts/`), [ ] L-B pages, [ ] L-C in-place editor, [ ] L-D wiring.
+- [ ] `H` `P6` Phase gate twice, release 0.7.0 (after P6-G through L-C).
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
