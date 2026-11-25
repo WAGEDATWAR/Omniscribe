@@ -1721,3 +1721,43 @@ textarea.input {
 .dialog-viewer .pdf-pages {
   max-height: calc(100vh - 220px);
 }
+
+.layout-tools {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.layout-section-edit {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.layout-items {
+  display: grid;
+  gap: 8px;
+}
+
+.layout-item {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.layout-item.is-hidden {
+  border-style: dashed;
+}
+
+.layout-item .input {
+  max-width: 100%;
+}
+
+.layout-add > summary {
+  cursor: pointer;
+  padding: 4px 0;
+}

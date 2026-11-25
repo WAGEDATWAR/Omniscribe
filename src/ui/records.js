@@ -133,7 +133,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
     trailing.push(field({ id: node.id, label: extra.label, hint: extra.hint }, node));
   }
 
-  const layoutForm = createLayoutForm({ prefix: `rec-${kind.id}`, builtins, trailing });
+  const layoutForm = createLayoutForm({ prefix: `rec-${kind.id}`, surface: kind.id, editor: ui.layoutEditor ?? null, builtins, trailing });
   const layoutOf = () => handlers.layout?.();
 
   function applyLayout() {

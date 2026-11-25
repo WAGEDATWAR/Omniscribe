@@ -1,3 +1,4 @@
+import { surfaceOfRoute } from "./layoutEditor.js";
 import { campaignName } from "../campaigns.js";
 import { buildIndex, search } from "../search.js";
 import { displayName } from "../schema.js";
@@ -19,6 +20,12 @@ export function initPalette(ctx) {
 
     commands.push({ id: "new-campaign", title: "New campaign", keywords: "create add game", run: () => actions.newCampaign() });
     commands.push({ id: "search", title: "Search everything", hint: "?", keywords: "find look up journal items notes", run: () => palette.open("?") });
+    const editable = surfaceOfRoute(ctx.router.current());
+
+    if (editable) {
+      commands.push({ id: "edit-layout", title: "Edit this page's layout", keywords: "fields sections arrange customize hide add", run: () => ctx.layoutEditor.begin(editable) });
+    }
+
     commands.push({ id: "import", title: "Import a backup or bundle", keywords: "restore open zip file", run: () => ctx.bus.emit("import:choose") });
     commands.push({ id: "new-character", title: "New character", keywords: "create add", run: () => actions.newCharacter() });
 

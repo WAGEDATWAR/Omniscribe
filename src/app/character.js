@@ -67,6 +67,7 @@ export function initCharacter(ctx) {
         store.updateCharacter(id, patch, { key: key ? `${id}:${key}` : null });
       }
     },
+    layoutEditor: ctx.layoutEditor,
     onOwnFields(fields) {
       const id = currentId();
 
@@ -169,4 +170,5 @@ export function initCharacter(ctx) {
   bus.on("data:reloaded", () => show({ force: true }));
   bus.on("revisions:changed", () => show());
   bus.on("layouts:changed", () => show({ force: true }));
+  bus.on("layout:editing", () => show({ force: true }));
 }

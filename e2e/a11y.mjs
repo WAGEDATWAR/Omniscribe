@@ -479,6 +479,33 @@ const states = [
     await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
     await page.waitFor('document.querySelector("#crop-ok")');
   } },
+  { name: "layout editor on the inventory page", setup: async (page) => {
+    await seedLayouts(page, [{ id: "lay_inventory", name: "My layout", surface: "inventory", base: "default", ops: [
+      { op: "add", target: "section", id: "magic", title: "Magic", after: "main" },
+      { op: "add", target: "field", field: { id: "cf_rarity", label: "Rarity", type: "choice", choices: ["Common", "Rare"], showInList: true }, section: "magic" },
+      { op: "hide", target: "field", key: "weightMultiplier" }
+    ] }]);
+    await openRecordsPage(page, "inventory");
+    await page.click("#rec-inventory-edit-layout");
+    await page.waitFor('document.querySelector("#layout-editor [data-key=cf_rarity]")');
+  } },
+  { name: "mobile layout editor on the character overview", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#character-edit-layout")');
+    await page.click("#character-edit-layout");
+    await page.waitFor('document.querySelector("#layout-editor")');
+  } },
+  { name: "character overview with a layout of its own", setup: async (page) => {
+    await seedLayouts(page, [{ id: "lay_character", name: "My layout", surface: "character", base: "default", ops: [
+      { op: "add", target: "field", field: { id: "cf_pronouns", label: "Pronouns", type: "text" }, section: "identity" },
+      { op: "hide", target: "field", key: "player" }
+    ] }]);
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#character-cf_pronouns")');
+  } },
   { name: "handout pdf viewer dialog", setup: async (page) => {
     await page.click("#sample-btn");
     await page.waitFor('document.querySelectorAll(".tile").length === 1');

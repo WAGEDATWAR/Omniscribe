@@ -34,6 +34,8 @@ export function mountCampaignPage(root, handlers) {
   let shownFields = {};
   const details = createLayoutForm({
     prefix: "campaign",
+    surface: "campaign",
+    editor: handlers.layoutEditor,
     panels: true,
     builtins: new Map([
       ["name", { control: name }],

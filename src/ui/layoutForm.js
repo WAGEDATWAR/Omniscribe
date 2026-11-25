@@ -1,6 +1,7 @@
 import { LAYOUT_LIMITS } from "../layouts/limits.js";
+import { isSurface } from "../layouts/surfaces.js";
 import { isEmptyValue, ownDefault, validateOwnValue } from "../layouts/values.js";
-import { field, h, replace, section as panel } from "./dom.js";
+import { button, field, h, replace, section as panel } from "./dom.js";
 
 /**
  * Draws a resolved layout (L-1) as sections of fields. Built-in fields bring their own controls; the fields of your
@@ -67,10 +68,11 @@ export function showOwn(item, value) {
   return Array.isArray(value) ? value.join(", ") : String(value);
 }
 
-export function createLayoutForm({ prefix, builtins, trailing = [], onOwnChange = null, panels = false, descriptions = {}, blocks = [] }) {
+export function createLayoutForm({ prefix, surface, editor = null, builtins, trailing = [], onOwnChange = null, panels = false, descriptions = {}, blocks = [] }) {
   const element = h("div", { class: "stack layout-form" });
   const owns = new Map();
   let drawn = null;
+  let drawnEditing = false;
 
   function node(item) {
     const entry = item.own ? owns.get(item.key) : builtins.get(item.key);
@@ -96,9 +98,14 @@ export function createLayoutForm({ prefix, builtins, trailing = [], onOwnChange 
     element,
     /** Redraws for a resolved layout; typed own values survive the redraw. */
     setLayout(resolved) {
-      if (drawn === resolved) {
+      const editing = Boolean(editor?.active(surface));
+      const canEdit = Boolean(editor) && isSurface(surface);
+
+      if (drawn === resolved && drawnEditing === editing) {
         return false;
       }
+
+      drawnEditing = editing;
 
       const before = snapshot();
       const next = new Map();
@@ -148,7 +155,9 @@ export function createLayoutForm({ prefix, builtins, trailing = [], onOwnChange 
         rendered.splice(Math.min(afterIndex, rendered.length), 0, extra);
       }
 
-      replace(element, rendered);
+      const tools = canEdit ? h("div", { class: "layout-tools" }, button({ id: `${prefix}-edit-layout`, label: "Edit layout", variant: "btn-small", onclick: () => editor.begin(surface) })) : null;
+
+      replace(element, editing ? editor.element : [tools, rendered]);
       return true;
     },
     /** Writes a record's stored values into the own controls. */

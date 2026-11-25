@@ -110,3 +110,4 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-091 | Backup options for settings and the roll log (X-12) | the first backup holds characters, campaigns, systems and files | P6 | scheduled |
 | DEF-092 | Old revisions that still hold anonymous `custom` entries are migrated when read | a revision written before layouts keeps its entries in the stored snapshot but restoring one drops them | P6 | scheduled |
 | DEF-093 | Fields of your own print in the generated sheet, and a bundle carries only the layouts its records need | L-B ships layouts in every backup and bundle and leaves the PDF without them | P6 | scheduled |
+| DEF-094 | Drag to reorder in the layout editor | L-C moves fields and sections with Up and Down buttons and a section menu, which work from the keyboard; drag was always an extra | P8 | scheduled |

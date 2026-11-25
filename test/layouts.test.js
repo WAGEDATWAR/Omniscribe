@@ -156,3 +156,34 @@ test("today's custom entries migrate into declared fields without loss", () => {
   assert.equal(mergeOps(ops, again.ops).length, ops.length);
   assert.equal(migrateCustom("inventory", next).changed, false);
 });
+
+test("compacting rewrites operations without changing the page", async () => {
+  const { compactOps } = await import("../src/layouts/compact.js");
+  const ops = [
+    { op: "add", target: "section", id: "magic", title: "Magic", after: "main" },
+    { op: "add", target: "field", field: rarity, section: "magic" },
+    { op: "move", target: "field", key: "notes", section: "magic", index: 0 },
+    { op: "move", target: "field", key: "notes", section: "main", index: 1 },
+    { op: "move", target: "field", key: "weight", section: "magic" },
+    { op: "hide", target: "field", key: "weightMultiplier" },
+    { op: "show", target: "field", key: "weightMultiplier" },
+    { op: "hide", target: "field", key: "value" },
+    { op: "override", target: "field", key: "notes", value: { label: "Lore" } },
+    { op: "override", target: "field", key: "notes", value: { label: "Lore", wide: false } },
+    { op: "override", target: "section", id: "main", value: { title: "Basics" } },
+    { op: "hide", target: "field", key: "ghost" },
+    { op: "add", target: "section", id: "tmp", title: "Temp" },
+    { op: "remove", target: "section", id: "tmp" },
+    { op: "move", target: "section", id: "magic", index: 0 }
+  ];
+  const compact = compactOps("inventory", ops);
+  const before = resolveLayout("inventory", layout("inventory", ops));
+  const after = resolveLayout("inventory", layout("inventory", compact));
+
+  assert.deepEqual(after.sections, before.sections);
+  assert.deepEqual(after.problems, []);
+  assert.ok(compact.length < ops.length + 4);
+  assert.deepEqual(compactOps("inventory", compact), compact);
+  assert.deepEqual(compactOps("inventory", []), []);
+  assert.deepEqual(compactOps("journal", [{ op: "hide", target: "field", key: "done" }, { op: "show", target: "field", key: "done" }]), []);
+});

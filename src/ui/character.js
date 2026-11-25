@@ -104,6 +104,8 @@ export function mountCharacterPage(root, handlers) {
   let shownFields = {};
   const details = createLayoutForm({
     prefix: "character",
+    surface: "character",
+    editor: handlers.layoutEditor,
     panels: true,
     builtins: new Map([
       ["name", { control: name }],

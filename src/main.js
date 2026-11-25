@@ -1,4 +1,5 @@
 import { createActions } from "./app/actions.js";
+import { createLayoutEditorController } from "./app/layoutEditor.js";
 import { createLayouts } from "./app/layouts.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
@@ -165,6 +166,7 @@ async function boot() {
   };
 
   ctx.layouts = createLayouts(ctx, loaded.layouts);
+  ctx.layoutEditor = createLayoutEditorController(ctx);
   ctx.actions = createActions(ctx);
   ctx.bundles = createBundles(ctx);
   ctx.rolling = createRolling(ctx);

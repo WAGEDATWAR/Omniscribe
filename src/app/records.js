@@ -123,7 +123,7 @@ function mountKinds(ctx, adapter, kindIds, kindUi) {
       layout: () => ctx.layouts.resolved(kindId)
     };
 
-    views.set(kindId, mountRecordPage(root, kind, kindUi[kindId] ?? {}, handlers));
+    views.set(kindId, mountRecordPage(root, kind, { ...(kindUi[kindId] ?? {}), layoutEditor: ctx.layoutEditor }, handlers));
   }
 
   function render(kindId) {
@@ -148,6 +148,7 @@ function mountKinds(ctx, adapter, kindIds, kindUi) {
   ctx.router.onRoute(() => renderCurrent());
   ctx.bus.on("records:refresh", () => renderCurrent());
   ctx.bus.on("layouts:changed", () => renderCurrent());
+  ctx.bus.on("layout:editing", () => renderCurrent());
   ctx.store.subscribe(() => renderCurrent());
   return views;
 }

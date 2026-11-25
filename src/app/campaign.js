@@ -21,6 +21,7 @@ export function initCampaign(ctx) {
         store.updateCampaign(id, patch, { key: key ? `${id}:${key}` : null });
       }
     },
+    layoutEditor: ctx.layoutEditor,
     onOwnFields(fields) {
       const id = currentId();
 
@@ -76,4 +77,5 @@ export function initCampaign(ctx) {
   store.subscribe(() => show());
   bus.on("data:reloaded", () => show({ force: true }));
   bus.on("layouts:changed", () => show({ force: true }));
+  bus.on("layout:editing", () => show({ force: true }));
 }

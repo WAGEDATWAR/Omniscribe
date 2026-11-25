@@ -840,6 +840,77 @@ export const scenarios = [
     }
   },
   {
+    name: "the layout editor adds a section and a field, moves and hides, undoes, and the page and a saved item follow",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Packrat");
+      await openRecords(page, "inventory");
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-inventory-form .layout-section").length'), 1);
+
+      await page.click("#rec-inventory-edit-layout");
+      await page.waitFor('document.querySelector("#layout-editor")');
+      await type(page, 'input[aria-label="Name of the new section"]', "Magic");
+      await page.click("#layout-add-section");
+      await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 2');
+      const magic = await page.evaluate('[...document.querySelectorAll("#layout-editor .layout-section-edit")].at(-1).dataset.section');
+
+      await page.evaluate(`(() => {
+        const group = document.querySelector("#layout-editor [data-section=" + ${JSON.stringify(magic)} + "]");
+        group.querySelector("details summary").click();
+        const form = group.querySelector("details form");
+        const name = form.querySelector("input");
+        name.value = "Rarity";
+        const type = form.querySelector("select");
+        type.value = "choice";
+        type.dispatchEvent(new Event("change", { bubbles: true }));
+        form.querySelectorAll("input")[1].value = "Common, Rare";
+        form.requestSubmit();
+        return true;
+      })()`);
+      await page.waitFor('document.querySelector("#layout-editor [data-key^=cf_]")');
+
+      await pick(page, 'select[aria-label="Move Notes to a section"]', magic);
+      await page.waitFor(`document.querySelector('#layout-editor [data-section="${magic}"] [data-key=notes]')`);
+      await page.click('button[aria-label="Hide Weight each"]');
+      await page.waitFor('document.querySelector("#layout-editor [data-key=weight].is-hidden")');
+
+      await page.click("#layout-undo");
+      await page.waitFor('!document.querySelector("#layout-editor [data-key=weight].is-hidden")');
+      await page.click("#layout-redo");
+      await page.waitFor('document.querySelector("#layout-editor [data-key=weight].is-hidden")');
+      assert.equal(await page.evaluate('document.querySelector("#layout-editor button[aria-label=\\"Hide Name\\"]")'), null);
+
+      await page.click("#layout-done");
+      await page.waitFor('!document.querySelector("#layout-editor") || !document.querySelector("#layout-editor").isConnected');
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-inventory-form .layout-section").length'), 2);
+      assert.equal(await page.evaluate('document.querySelector("#rec-inventory-weight")'), null);
+      assert.equal(await page.evaluate('[...document.querySelectorAll("#rec-inventory-form .subsection-title")].map((node) => node.textContent).join()'), "Magic");
+      assert.equal(await page.evaluate('[...document.querySelectorAll("#rec-inventory-form select[id^=rec-inventory-cf_] option")].map((node) => node.text).join()'), ",Common,Rare");
+
+      await type(page, "#rec-inventory-name", "Wand");
+      await pick(page, "#rec-inventory-form select[id^=rec-inventory-cf_]", "Rare");
+      await page.click("#rec-inventory-save");
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 1');
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#rec-inventory-form [data-section]")');
+      await page.evaluate('document.querySelector("button[aria-label=\\"Edit Wand\\"]").click(); true');
+      assert.equal(await page.evaluate('document.querySelector("#rec-inventory-form select[id^=rec-inventory-cf_]").value'), "Rare");
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-inventory-form .layout-section").length'), 2);
+
+      await page.click("#rec-inventory-edit-layout");
+      await page.waitFor('document.querySelector("#layout-reset")');
+      await page.click("#layout-reset");
+      await page.waitFor('document.querySelector("#confirm-dialog").open');
+      await page.click("#confirm-ok");
+      await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 1');
+      await page.click("#layout-done");
+      await page.waitFor('document.querySelector("#rec-inventory-weight")');
+      assertClean(page);
+    }
+  },
+  {
     name: "anonymous custom fields from before layouts become declared fields, with every value kept",
     async run(page, context) {
       await boot(page, context);
