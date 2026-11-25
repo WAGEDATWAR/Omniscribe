@@ -45,6 +45,7 @@ each answer single-sourced: the dice rules cannot be edited away by a convenienc
 | `docs/CHARACTER.md` | Character pages: inventory, abilities, familiars, relations, journal, progression | built (P4) |
 | `docs/CAMPAIGN.md` | Campaigns: roster, party view, sessions, initiative, handouts, secrets | built (P5) |
 | `docs/EXCHANGE.md` | Zip container, backup and restore, bundles, revisions, integrity, search, the generated sheet | designed (P6) |
+| `docs/SYSTEMS-REVIEW.md` | What eight community game systems and their report taught the format, and what was built or moved | active (P7) |
 | `docs/LAYOUTS.md` | Page layouts as a template plus modifications, and fields of your own declared in them (replaces the trailing editor) | proposed (P6-G) |
 | `docs/PERSISTENCE.md` | Storage backends, autosave, the tab guard, migration; backups and revisions arrive in P6 | built |
 | `docs/UI.md` | Layout, tokens, page anatomy, interaction, accessibility, responsive | built |

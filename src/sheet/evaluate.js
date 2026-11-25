@@ -8,7 +8,7 @@ import { TEMPLATE_LIMITS, analyzeTemplate, fieldDefault, nodeLabel, validateValu
  */
 const MAX_CONDITIONS = 50;
 
-export function createSheet(template) {
+export function createSheet(template, { seed = true } = {}) {
   const values = {};
 
   for (const field of template.fields) {
@@ -20,7 +20,7 @@ export function createSheet(template) {
   return {
     values,
     pools: Object.fromEntries(template.pools.map((pool) => [pool.key, { current: null, temp: 0 }])),
-    collections: Object.fromEntries(template.collections.map((collection) => [collection.key, (collection.defaultRows ?? []).map((row) => createRow(template, collection.key, row))])),
+    collections: Object.fromEntries(template.collections.map((collection) => [collection.key, seed ? (collection.defaultRows ?? []).map((row) => createRow(template, collection.key, row)) : []])),
     conditions: [],
     orphans: {}
   };

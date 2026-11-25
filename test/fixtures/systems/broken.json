@@ -1,0 +1,47 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "version": 1,
+  "base": null,
+  "overlay": [],
+  "tables": {},
+  "conditions": [],
+  "rests": [
+    {
+      "id": "night",
+      "label": "Night"
+    }
+  ],
+  "rolls": [],
+  "id": "broken",
+  "name": "Broken",
+  "fields": [
+    {
+      "key": "level",
+      "label": "Level",
+      "type": "number",
+      "default": 3
+    },
+    {
+      "key": "half",
+      "label": "Half",
+      "type": "derived",
+      "formula": "flor(@level / 2)"
+    },
+    {
+      "key": "both",
+      "label": "Both",
+      "type": "derived",
+      "formula": "@level > 1 and @level < 5"
+    },
+    {
+      "key": "eq",
+      "label": "Eq",
+      "type": "derived",
+      "formula": "@level = 3"
+    }
+  ],
+  "pools": [],
+  "collections": [],
+  "sections": []
+}

@@ -160,6 +160,39 @@ const states = [
     await page.waitFor('document.querySelector("#dice-expression-message").classList.contains("field-error")');
   } },
   { name: "game systems page", setup: async (page) => openPage(page, "#/systems", "#systems-title") },
+  { name: "reference page", setup: async (page) => openPage(page, "#/reference", "#reference-title") },
+  { name: "mobile reference page", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openPage(page, "#/reference", "#reference-title");
+  } },
+  { name: "system import review with problems", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.setFileInput("#system-import-input", [fixture("systems/broken.json")]);
+    await page.waitFor('document.querySelector("#system-import-errors")');
+  } },
+  { name: "system import review that can proceed", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.setFileInput("#system-import-input", [fixture("systems/tolerant.json")]);
+    await page.waitFor('document.querySelector("#system-import-confirm")');
+  } },
+  { name: "character sheet on a tab", setup: async (page) => {
+    await openPage(page, "#/systems", "#systems-title");
+    await page.setFileInput("#system-import-input", [fixture("systems/tolerant.json")]);
+    await page.waitFor('document.querySelector("#system-import-confirm")');
+    await page.click("#system-import-confirm");
+    await page.waitFor('location.hash === "#/systems/tolerant"');
+    await openPage(page, "#/library", "#library-title");
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector(".subnav-link[data-page=sheet]")');
+    await page.click('.subnav-link[data-page="sheet"]');
+    await page.waitFor('document.querySelector("#system-tolerant")');
+    await page.click("#system-tolerant");
+    await page.click("#sheet-picker-confirm");
+    await page.waitFor('document.querySelector(".subnav-link[data-page=p-gear]")');
+    await page.click('.subnav-link[data-page="p-gear"]');
+    await page.waitFor('!document.querySelector("#sheet-s-gear").hidden');
+  } },
   { name: "new game system dialog", setup: async (page) => {
     await openPage(page, "#/systems", "#systems-title");
     await page.click("#new-system-btn");

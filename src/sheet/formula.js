@@ -12,6 +12,30 @@ export class FormulaError extends Error {
   }
 }
 
+const WORD_HINTS = Object.freeze({ and: "use && for and", or: "use || for or", not: "use ! for not", AND: "use && for and", OR: "use || for or" });
+
+/** The closest known function name to a mistyped one, for "did you mean". */
+export function suggestFunction(name) {
+  const distance = (a, b) => {
+    const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+
+    for (let i = 1; i <= a.length; i += 1) {
+      let previous = row[0];
+      row[0] = i;
+
+      for (let j = 1; j <= b.length; j += 1) {
+        const keep = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1].toLowerCase() === b[j - 1].toLowerCase() ? 0 : 1));
+        previous = keep;
+      }
+    }
+
+    return row[b.length];
+  };
+  const best = Object.keys(FUNCTIONS).map((candidate) => [candidate, distance(name, candidate)]).sort((left, right) => left[1] - right[1])[0];
+  return best && best[1] <= 2 ? best[0] : null;
+}
+
 export const FUNCTIONS = Object.freeze({
   abs: { min: 1, max: 1 },
   ceil: { min: 1, max: 1 },
@@ -31,7 +55,16 @@ export const FUNCTIONS = Object.freeze({
   signed: { min: 1, max: 1 },
   text: { min: 1, max: 1 },
   concat: { min: 1, max: Infinity },
-  number: { min: 1, max: 1 }
+  number: { min: 1, max: 1 },
+  switch: { min: 4, max: Infinity },
+  join: { min: 1, max: 3 },
+  contains: { min: 2, max: 2 },
+  startsWith: { min: 2, max: 2 },
+  endsWith: { min: 2, max: 2 },
+  length: { min: 1, max: 1 },
+  trim: { min: 1, max: 1 },
+  lower: { min: 1, max: 1 },
+  upper: { min: 1, max: 1 }
 });
 
 const COMPARISONS = new Set(["==", "!=", "<", "<=", ">", ">="]);
@@ -148,6 +181,10 @@ function tokenize(source, dice = false) {
       const stop = readName(source, index + 2);
       tokens.push({ type: "item", value: source.slice(index + 2, stop), index });
       index = stop;
+    } else if (char === "." && isNameStart(source[index + 1] ?? "")) {
+      const stop = readName(source, index + 1);
+      tokens.push({ type: "item", value: source.slice(index + 1, stop), index });
+      index = stop;
     } else if (isNameStart(char)) {
       const stop = readName(source, index);
       tokens.push({ type: "name", value: source.slice(index, stop), index });
@@ -159,7 +196,7 @@ function tokenize(source, dice = false) {
       tokens.push({ type: "op", value: char, index });
       index += 1;
     } else {
-      throw new FormulaError(`Unexpected character "${char}"`, index);
+      throw new FormulaError(char === "=" ? 'Unexpected "=": compare with ==' : `Unexpected character "${char}"`, index);
     }
   }
 
@@ -442,7 +479,7 @@ class Parser {
     const extra = this.peek();
 
     if (extra) {
-      throw new FormulaError(`Unexpected "${extra.value}"`, extra.index);
+      throw new FormulaError(`Unexpected "${extra.value}"${WORD_HINTS[extra.value] ? `: ${WORD_HINTS[extra.value]}` : ""}`, extra.index);
     }
 
     return root;
@@ -595,7 +632,7 @@ class Parser {
         return this.node("boolean", { value: token.value === "true" }, token.index);
       }
 
-      throw new FormulaError(`Unknown word "${token.value}"; references start with @`, token.index);
+      throw new FormulaError(`Unknown word "${token.value}"; ${WORD_HINTS[token.value] ?? "references start with @, and a field of the current row is written $.name or .name"}`, token.index);
     }
 
     if (token.type === "op" && token.value === "(") {
@@ -710,7 +747,8 @@ export function checkFormula(parsed, env) {
     const spec = FUNCTIONS[node.name];
 
     if (!spec) {
-      report(`Unknown function ${node.name}()`, node);
+      const near = suggestFunction(node.name);
+      report(`Unknown function ${node.name}()${near ? `; did you mean ${near}()?` : ""}`, node);
       return;
     }
 
@@ -728,11 +766,6 @@ export function checkFormula(parsed, env) {
     if (aggregates || reducing) {
       if (firstKind !== "column" && !(node.name === "count" && firstKind === "collection")) {
         report(`${node.name}() needs a collection column such as @powers.cost${node.name === "count" ? " or a collection" : ""}`, first);
-        return;
-      }
-
-      if (reducing && node.args.length > 1) {
-        report(`${node.name}() over a column takes only the column`, node);
         return;
       }
 
@@ -754,6 +787,27 @@ export function checkFormula(parsed, env) {
 
       node.args.slice(1).forEach((argument) => visit(argument, item));
       return;
+    }
+
+    if (node.name === "join") {
+      if (firstKind !== "column" && firstKind !== "list") {
+        report("join() needs a list field or a collection column as its first argument", first);
+        return;
+      }
+
+      if (node.args[1]) {
+        visit(node.args[1], item);
+      }
+
+      if (node.args[2]) {
+        visit(node.args[2], firstKind === "column" ? env.collectionFields(first.path[0]) ?? new Set() : item);
+      }
+
+      return;
+    }
+
+    if (node.name === "switch" && node.args.length % 2 !== 0) {
+      report("switch() needs a value, one or more case and result pairs, and a default at the end", node);
     }
 
     if (node.name === "index") {
@@ -989,7 +1043,7 @@ function callFunction(node, context, budget) {
   const spec = FUNCTIONS[name];
 
   if (!spec) {
-    throw new FormulaError(`Unknown function ${name}()`, node.index);
+    throw new FormulaError(`Unknown function ${name}()${suggestFunction(name) ? `; did you mean ${suggestFunction(name)}()?` : ""}`, node.index);
   }
 
   if (args.length < spec.min || args.length > spec.max) {
@@ -1003,6 +1057,52 @@ function callFunction(node, context, budget) {
 
   if (name === "count") {
     return selectRows(node, context, budget).rows.length;
+  }
+
+  if (name === "switch") {
+    if (args.length % 2 !== 0) {
+      throw new FormulaError("switch() needs a value, one or more case and result pairs, and a default at the end", node.index);
+    }
+
+    const value = evaluateNode(args[0], context, budget);
+
+    for (let at = 1; at < args.length - 1; at += 2) {
+      if (evaluateNode(args[at], context, budget) === value) {
+        return evaluateNode(args[at + 1], context, budget);
+      }
+    }
+
+    return evaluateNode(args[args.length - 1], context, budget);
+  }
+
+  if (name === "join") {
+    const separator = args[1] ? evaluateNode(args[1], context, budget) : ", ";
+
+    if (typeof separator !== "string") {
+      throw new FormulaError("join() needs text as its separator", args[1].index);
+    }
+
+    const shown = (entry) => (typeof entry === "number" ? formatNumber(entry) : String(entry));
+    const isColumn = args[0].kind === "ref" && context.collection(args[0].path);
+    let parts;
+
+    if (isColumn) {
+      const { source, rows } = selectRows({ name, args: [args[0], args[2]].filter(Boolean) }, context, budget);
+
+      if (!source.field) {
+        throw new FormulaError(`join() needs a column such as @${args[0].path[0]}.name`, node.index);
+      }
+
+      parts = rows.map((row) => row.get(source.field));
+    } else {
+      parts = args[0].kind === "ref" ? context.list(args[0].path) : null;
+
+      if (!parts) {
+        throw new FormulaError("join() needs a list field or a collection column", node.index);
+      }
+    }
+
+    return parts.filter((entry) => entry !== "" && entry !== null && entry !== undefined).map(shown).join(separator);
   }
 
   const reduces = (name === "min" || name === "max") && args[0].kind === "ref" && context.collection(args[0].path);
@@ -1094,6 +1194,25 @@ function callFunction(node, context, budget) {
       return typeof values[0] === "number" ? formatNumber(values[0]) : String(values[0]);
     case "concat":
       return values.map((value) => (typeof value === "number" ? formatNumber(value) : String(value))).join("");
+    case "contains":
+    case "startsWith":
+    case "endsWith": {
+      if (typeof values[0] !== "string" || typeof values[1] !== "string") {
+        throw new FormulaError(`${name}() compares two pieces of text`, node.index);
+      }
+
+      return name === "contains" ? values[0].includes(values[1]) : name === "startsWith" ? values[0].startsWith(values[1]) : values[0].endsWith(values[1]);
+    }
+    case "length":
+    case "trim":
+    case "lower":
+    case "upper": {
+      if (typeof values[0] !== "string") {
+        throw new FormulaError(`${name}() needs text`, node.index);
+      }
+
+      return name === "length" ? values[0].length : name === "trim" ? values[0].trim() : name === "lower" ? values[0].toLowerCase() : values[0].toUpperCase();
+    }
     case "number": {
       const source = values[0];
 
@@ -1104,7 +1223,7 @@ function callFunction(node, context, budget) {
       return Number(source);
     }
     default:
-      throw new FormulaError(`Unknown function ${name}()`, node.index);
+      throw new FormulaError(`Unknown function ${name}()${suggestFunction(name) ? `; did you mean ${suggestFunction(name)}()?` : ""}`, node.index);
   }
 }
 

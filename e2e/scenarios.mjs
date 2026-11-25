@@ -913,6 +913,81 @@ export const scenarios = [
     }
   },
   {
+    name: "a sheet can start with or without the system's suggested rows",
+    async run(page, context) {
+      await boot(page, context);
+      await sheetPage(page);
+      await page.click("#system-dnd5e");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-s-skills")');
+      const seeded = await page.evaluate('document.querySelectorAll("#sheet-s-skills .sheet-row").length');
+      assert.ok(seeded > 0);
+
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-character-btn");
+      await page.waitFor('location.hash.startsWith("#/character/")');
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('document.querySelector("#sheet-picker")');
+      await page.click("#system-dnd5e");
+      await page.click("#sheet-seed");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-s-skills")');
+      assert.equal(await page.evaluate('document.querySelectorAll("#sheet-s-skills .sheet-row").length'), 0);
+      assertClean(page);
+    }
+  },
+  {
+    name: "a system's sections can sit on their own tabs beside the Sheet",
+    async run(page, context) {
+      await boot(page, context);
+
+      await page.evaluate(`(async () => {
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        const table = (key, label) => ({ key, label, columns: ["name"], fields: [{ key: "name", label: "Name", type: "text" }] });
+        await storage.putSystem({
+          format: "omniscribe-system", formatVersion: 1, id: "tabs", version: 1, name: "Tabbed", base: null, overlay: [],
+          fields: [{ key: "a", label: "Aspect", type: "text" }], pools: [], tables: {}, conditions: [], rests: [], rolls: [],
+          collections: [table("gear", "Gear"), table("spells", "Spells")],
+          sections: [
+            { id: "main", title: "Main", layout: "fields", items: ["a"] },
+            { id: "gear", title: "Gear", layout: "table", items: ["gear"], page: "Equipment" },
+            { id: "spells", title: "Spells", layout: "table", items: ["spells"], page: "Magic" }
+          ]
+        });
+        await storage.backend.apply([
+          { store: "characters", put: [["char_tabbed", { id: "char_tabbed", name: "Tabber", createdAt: 1, updatedAt: 1, sheet: { template: { id: "tabs", version: 1 }, values: { a: "x" }, pools: {}, collections: { gear: [], spells: [] }, conditions: [], orphans: {} } }]] },
+          { store: "meta", put: [["schemaVersion", 7]] }
+        ]);
+        storage.close();
+        return true;
+      })()`);
+
+      await page.reload();
+      await page.waitFor('document.querySelector(".tile-link")');
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector(".subnav-link[data-page=p-equipment]")');
+      assert.equal(await page.evaluate('[...document.querySelectorAll(".subnav-link")].map((link) => link.textContent).slice(0, 5).join()'), "Overview,Sheet,Equipment,Magic,Inventory");
+
+      await page.click('.subnav-link[data-page="sheet"]');
+      await page.waitFor('!document.querySelector("#character-sheet").hidden && document.querySelector("#sheet-s-main")');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-s-main").hidden'), false);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-s-gear").hidden'), true);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-s-spells").hidden'), true);
+
+      await page.click('.subnav-link[data-page="p-equipment"]');
+      await page.waitFor('location.hash.endsWith("/p-equipment") && !document.querySelector("#sheet-s-gear").hidden');
+      assert.equal(await page.evaluate('document.querySelector("#sheet-s-main").hidden'), true);
+      assert.equal(await page.evaluate('document.querySelector("#sheet-s-spells").hidden'), true);
+      assert.equal(await page.evaluate('document.querySelector(".sheet-bar").classList.contains("is-off-page")'), true);
+      assert.equal(await page.evaluate('document.querySelector(".subnav-link[aria-current=page]").dataset.page'), "p-equipment");
+
+      await page.reload();
+      await page.waitFor('document.querySelector("#sheet-s-gear") && !document.querySelector("#sheet-s-gear").hidden');
+      assertClean(page);
+    }
+  },
+  {
     name: "layouts can be copied, switched between and deleted",
     async run(page, context) {
       await boot(page, context);
@@ -1575,17 +1650,47 @@ export const scenarios = [
       await go(page, "#/systems", "#systems-title");
 
       await page.setFileInput("#system-import-input", [context.fixture("systems/d20-core.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      assert.match(await page.evaluate('document.querySelector("#system-import-summary").textContent'), /fields, .* pools, .* A new sheet evaluates with no problems/);
+      assert.ok(await page.evaluate('document.querySelectorAll("#system-import-outline li").length') > 0);
+      await page.click("#system-import-cancel");
+      await page.waitFor('!document.querySelector("#system-import-confirm")');
+      assert.equal(await page.evaluate("location.hash"), "#/systems");
+
+      await page.setFileInput("#system-import-input", [context.fixture("systems/d20-core.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      await page.click("#system-import-confirm");
       await page.waitFor('location.hash === "#/systems/test-d20"');
       await go(page, "#/systems", "#systems-title");
       assert.match(await page.evaluate('document.querySelector("[data-id=test-d20]").textContent'), /Test d20/);
 
       await page.setFileInput("#system-import-input", [context.fixture("systems/d20-core.json")]);
-      await page.waitFor('[...document.querySelectorAll(".toast-error")].some((t) => t.textContent.includes("already exists"))');
+      await page.waitFor('document.querySelector("#system-import-errors")');
+      assert.match(await page.evaluate('document.querySelector("#system-import-errors").textContent'), /already on this device/);
+      assert.equal(await page.evaluate('document.querySelector("#system-import-confirm")'), null);
+      await page.click("#system-import-cancel");
 
       await page.setFileInput("#system-import-input", [context.fixture("not-a-pdf.pdf")]);
       await page.waitFor('[...document.querySelectorAll(".toast-error")].some((t) => t.textContent.includes("not valid JSON"))');
 
+      await page.setFileInput("#system-import-input", [context.fixture("systems/tolerant.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      assert.match(await page.evaluate('document.querySelector("#system-import-warnings").textContent'), /read as the formula "3"/);
+      assert.match(await page.evaluate('document.querySelector("#system-import-outline").textContent'), /on the Gear tab/);
+      await page.click("#system-import-confirm");
+      await page.waitFor('location.hash === "#/systems/tolerant"');
+
+      await go(page, "#/systems", "#systems-title");
+      await page.setFileInput("#system-import-input", [context.fixture("systems/broken.json")]);
+      await page.waitFor('document.querySelector("#system-import-errors")');
+      assert.match(await page.evaluate('document.querySelector("#system-import-errors").textContent'), /did you mean floor()/);
+      assert.match(await page.evaluate('document.querySelector("#system-import-errors").textContent'), /use && for and/);
+      assert.equal(await page.evaluate('document.querySelector("#system-import-errors li:nth-child(1) code")?.textContent.startsWith("fields")'), true);
+      await page.click("#system-import-cancel");
+
       await page.setFileInput("#system-import-input", [context.fixture("systems/d20-custom.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      await page.click("#system-import-confirm");
       await page.waitFor('location.hash === "#/systems/test-d20-custom"');
 
       await go(page, "#/systems", "#systems-title");

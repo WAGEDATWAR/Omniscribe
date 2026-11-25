@@ -1,4 +1,4 @@
-import { layoutOf } from "../sheet/layout.js";
+import { layoutOf, pageId } from "../sheet/layout.js";
 import { formatValue } from "../sheet/template.js";
 import { resultCard } from "./dice.js";
 import { button, emptyState, h, replace, section } from "./dom.js";
@@ -552,12 +552,13 @@ export function mountSheetPage(root, handlers) {
 
     drawnKey = key;
     let chosen = null;
+    const seed = h("input", { id: "sheet-seed", type: "checkbox", class: "checkbox", checked: true });
     const confirm = button({
       id: "sheet-picker-confirm",
       label: mode === "start" ? "Start a sheet" : mode === "repair" ? "Use this system" : "Change system",
       variant: "btn-primary",
       disabled: true,
-      onclick: () => (mode === "start" ? handlers.onStart(chosen) : handlers.onChangeSystem(chosen))
+      onclick: () => (mode === "start" ? handlers.onStart(chosen, { seed: seed.checked }) : handlers.onChangeSystem(chosen))
     });
 
     replace(
@@ -583,6 +584,7 @@ export function mountSheetPage(root, handlers) {
             }
           }))
         ),
+        mode === "start" ? h("label", { class: "radio-row" }, seed, h("span", { text: "Start with the system's suggested rows (such as a list of skills). You can rename or delete any of them." })) : null,
         h("div", { class: "section-actions" }, confirm, mode === "change" ? button({ id: "sheet-picker-cancel", label: "Cancel", onclick: () => handlers.onCancelChange() }) : null)
       )
     );
@@ -594,6 +596,7 @@ export function mountSheetPage(root, handlers) {
     const tables = new Map();
     const conditions = new Map();
     const panels = [];
+    const mainOnly = [];
 
     for (const definition of layoutOf(template)) {
       const blocks = [];
@@ -609,7 +612,7 @@ export function mountSheetPage(root, handlers) {
           }
         }
 
-        panels.push(section({ id: `sheet-s-${definition.id}`, title: definition.title }, ...blocks));
+        panels.push(tagged(section({ id: `sheet-s-${definition.id}`, title: definition.title }, ...blocks), definition));
         continue;
       }
 
@@ -630,7 +633,7 @@ export function mountSheetPage(root, handlers) {
         }
       }
 
-      panels.push(section({ id: `sheet-s-${definition.id}`, title: definition.title }, grid));
+      panels.push(tagged(section({ id: `sheet-s-${definition.id}`, title: definition.title }, grid), definition));
     }
 
     if (template.conditions.length) {
@@ -642,7 +645,9 @@ export function mountSheetPage(root, handlers) {
         group.append(toggle);
       }
 
-      panels.push(section({ id: "sheet-conditions", title: "Conditions", description: "Tap a condition to mark it on or off." }, group));
+      const conditionsPanel = section({ id: "sheet-conditions", title: "Conditions", description: "Tap a condition to mark it on or off." }, group);
+      conditionsPanel.dataset.page = "";
+      panels.push(conditionsPanel);
     }
 
     const barTitle = h("p", { class: "sheet-system" });
@@ -680,8 +685,15 @@ export function mountSheetPage(root, handlers) {
         )
       : h("div", {}, rollResult);
 
-    replace(content, bar, notice, problems, rollsPanel, ...panels, orphans);
-    return { controls, pools, tables, conditions, barTitle, notice, noticeText, problems, orphans, characterName, rollResult };
+    const mirror = h("div", { id: "sheet-roll-mirror", class: "roll-slot", role: "status", "aria-live": "polite" });
+    mainOnly.push(bar, notice, problems, rollsPanel, orphans);
+    replace(content, bar, notice, problems, rollsPanel, mirror, ...panels, orphans);
+    return { controls, pools, tables, conditions, barTitle, notice, noticeText, problems, orphans, characterName, rollResult, mirror, mainOnly, panels };
+  }
+
+  function tagged(panel, definition) {
+    panel.dataset.page = definition.page ? pageId(definition.page) : "";
+    return panel;
   }
 
   function updateAside(view, computed, sheet) {
@@ -716,11 +728,13 @@ export function mountSheetPage(root, handlers) {
     showRolls(rolls) {
       if (built) {
         replace(built.rollResult, ...rolls.map(({ roll, text }) => resultCard(roll, text)));
+        replace(built.mirror, ...rolls.map(({ roll, text }) => resultCard(roll, text)));
       }
     },
     showRollError(reason) {
       if (built) {
         replace(built.rollResult, h("p", { class: "field-error", text: reason }));
+        replace(built.mirror, h("p", { class: "field-error", text: reason }));
       }
     },
     focusRow(collectionKey, rowId) {
@@ -739,7 +753,7 @@ export function mountSheetPage(root, handlers) {
       replace(picker);
       picker.hidden = true;
     },
-    render({ character, systems, resolution, computed, update = null }) {
+    render({ character, systems, resolution, computed, update = null, pageId: shownPage = "" }) {
       const sheet = character.sheet;
 
       if (!sheet) {
@@ -816,6 +830,20 @@ export function mountSheetPage(root, handlers) {
         toggle.setAttribute("aria-pressed", String(active.has(name)));
         toggle.classList.toggle("is-on", active.has(name));
       }
+
+      const onMain = shownPage === "" || !built.panels.some((panel) => panel.dataset.page === shownPage);
+      const page = onMain ? "" : shownPage;
+
+      for (const panel of built.panels) {
+        panel.hidden = panel.dataset.page !== page;
+      }
+
+      for (const element of built.mainOnly) {
+        element.classList.toggle("is-off-page", !onMain);
+      }
+
+      built.mirror.hidden = onMain;
+      picker.hidden = picker.hidden || !onMain;
 
       updateAside(built, computed, sheet);
     }

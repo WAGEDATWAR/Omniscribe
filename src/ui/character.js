@@ -1,4 +1,5 @@
 import { CHARACTER_PAGES, routeHref } from "../views.js";
+import { isPageRoute } from "../sheet/layout.js";
 import { CHARACTER_STATUSES, STATUS_LABELS, displayName, initials } from "../schema.js";
 import { LIMITS } from "../limits.js";
 import { KIND_IDS } from "../records/kinds.js";
@@ -162,9 +163,15 @@ export function mountCharacterPage(root, handlers) {
     }
   }
 
-  function drawNav(characterId, sub) {
-    if (!nav.children.length) {
-      replace(nav, CHARACTER_PAGES.map((page) => h("a", { class: "subnav-link", "data-page": page.id, text: page.label })));
+  let navKey = null;
+
+  function drawNav(characterId, sub, sheetPages = []) {
+    const key = sheetPages.map((page) => `${page.id}:${page.title}`).join("|");
+
+    if (!nav.children.length || key !== navKey) {
+      navKey = key;
+      const links = CHARACTER_PAGES.flatMap((page) => [page, ...(page.id === "sheet" ? sheetPages.map((entry) => ({ id: entry.id, label: entry.title })) : [])]);
+      replace(nav, links.map((page) => h("a", { class: "subnav-link", "data-page": page.id, text: page.label })));
     }
 
     for (const link of nav.children) {
@@ -246,7 +253,7 @@ export function mountCharacterPage(root, handlers) {
   return {
     sheetRoot,
     pdfRoot,
-    render(character, { layout = null, force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] }, revisions = [] } = {}) {
+    render(character, { layout = null, sheetPages = [], force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] }, revisions = [] } = {}) {
       const force = forced || character.id !== shownId;
       shownId = character.id;
 
@@ -277,12 +284,12 @@ export function mountCharacterPage(root, handlers) {
       header.querySelector(".page-subtitle").textContent =
         [character.player, character.systemId].filter((part) => part.trim()).join(" · ") || "Character";
 
-      drawNav(character.id, sub);
+      drawNav(character.id, sub, sheetPages);
       drawGlance(character);
       drawCampaigns(campaigns.joined, campaigns.available);
       drawRevisions(revisions);
       overview.hidden = sub !== "overview";
-      sheetRoot.hidden = sub !== "sheet";
+      sheetRoot.hidden = !(sub === "sheet" || isPageRoute(sub));
       pdfRoot.hidden = sub !== "pdf";
       rollsRoot.hidden = sub !== "rolls";
 

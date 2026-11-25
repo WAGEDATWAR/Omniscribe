@@ -1,5 +1,6 @@
 import { campaignsOf, onRoster } from "../campaigns.js";
 import { HEAD_BYTES, checkImage } from "../files.js";
+import { pagesOf } from "../sheet/layout.js";
 import { routeHref } from "../views.js";
 import { mountCharacterPage } from "../ui/character.js";
 import { openCropDialog } from "../ui/cropDialog.js";
@@ -135,8 +136,10 @@ export function initCharacter(ctx) {
     }
 
     const blobId = character.portraitBlobId;
+    const resolvedSystem = character.sheet ? ctx.systems.resolve(character.sheet.template) : null;
     const switched = view.render(character, {
       layout: ctx.layouts.resolved("character"),
+      sheetPages: resolvedSystem?.ok ? pagesOf(resolvedSystem.template) : [],
       force,
       sub: router.current().sub,
       portraitUrl: blobId ? blobUrls.peek(blobId) : null,

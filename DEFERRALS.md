@@ -111,3 +111,13 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-092 | Old revisions that still hold anonymous `custom` entries are migrated when read | a revision written before layouts keeps its entries in the stored snapshot but restoring one drops them | P6 | done |
 | DEF-093 | Fields of your own print in the generated sheet, and a bundle carries only the layouts its records need | L-B ships layouts in every backup and bundle and leaves the PDF without them | P6 | done |
 | DEF-094 | Drag to reorder in the layout editor | L-C moves fields and sections with Up and Down buttons and a section menu, which work from the keyboard; drag was always an extra | P8 | scheduled |
+| DEF-095 | True sub-collections: a collection inside a row of another | SYSTEMS-REVIEW 9; changes the sheet model, rests and the PDF; filtered aggregation and groupBy cover most uses | P8 | scheduled |
+| DEF-096 | Link fields between rows of different collections | SYSTEMS-REVIEW 10; with DEF-095 | P8 | scheduled |
+| DEF-097 | A track field type: named boxes that can be unmarked, marked or crossed | SYSTEMS-REVIEW 14; a new type through the evaluator, the sheet, the PDF and the editor | P8 | scheduled |
+| DEF-098 | Per-character overrides of a system's defaults without forking it | SYSTEMS-REVIEW 15; a house version derived from the system is the supported route today | P8 | scheduled |
+| DEF-099 | Computed field defaults | SYSTEMS-REVIEW 16 | P8 | scheduled |
+| DEF-100 | A roll with its own target that shows the verdict and margin | SYSTEMS-REVIEW 19; `@skill - d%` gives the margin as the total today | P8 | scheduled |
+| DEF-101 | A drawn preview of the sheet before a system import | SYSTEMS-REVIEW 22; the review shows an outline and an evaluation summary | P8 | scheduled |
+| DEF-102 | A hand-curated index of importable system files | SYSTEMS-REVIEW 26; a static list, since there is no server (G-2) | post-v1 | scheduled |
+| DEF-103 | Basic markdown in long text, rendered safely for display | SYSTEMS-REVIEW 29 | P8 | scheduled |
+| DEF-104 | Search across installed game systems | SYSTEMS-REVIEW 30 | P8 | scheduled |

@@ -6,6 +6,13 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ### Added
 
+- Reference page (Alt+6): the game system format, the formula language with every function, dice terms and worked examples, drawn from the code and checked by tests.
+- Game system import review: choosing a file shows every problem with its place, every warning, how a new sheet evaluates and an outline of the sheet, and imports nothing until you confirm.
+- Tabs from sheet sections: a section can name a page and then appears on its own tab beside the Sheet; the system editor sets it.
+- Formula language: `switch`, `join`, `contains`, `startsWith`, `endsWith`, `length`, `trim`, `lower`, `upper`; `min` and `max` over a column take a row test; `.name` works as `$.name`; errors say what to write instead (`and` to `&&`, `=` to `==`, did you mean ...). A number is accepted where a pool maximum or rest amount is expected.
+- A new sheet can start with or without the system's suggested rows.
+- docs/SYSTEMS-REVIEW.md: what six community game systems and a 32-point report taught the format, with every point's disposition.
+
 - Installable offline app: a web manifest with icons (SVG and PNG), a network-first service worker that precaches every shipped file under a content-hash version, and `npm run bundle`, which writes the shipped files to `www/` for every shell. The PDF viewer works offline too. (P7-A)
 
 ## [0.7.0] - 2026-11-25

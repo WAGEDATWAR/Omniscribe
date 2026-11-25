@@ -241,8 +241,8 @@ export function createStore({ characters = [], campaigns = [], now = Date.now, h
       ui = { ...ui, selectedDocumentId: documentId };
       emit("ui");
     },
-    startSheet(characterId, ref, template) {
-      return find(characterId) ? update(characterId, { sheet: { template: { id: ref.id, version: ref.version }, ...createSheet(template) } }) : null;
+    startSheet(characterId, ref, template, options = {}) {
+      return find(characterId) ? update(characterId, { sheet: { template: { id: ref.id, version: ref.version }, ...createSheet(template, options) } }) : null;
     },
     changeSystem(characterId, ref, template) {
       const current = find(characterId);

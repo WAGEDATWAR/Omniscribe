@@ -25,3 +25,36 @@ export function layoutOf(template) {
 
   return output;
 }
+
+/** The tab id of a page title: `p-` and its words as lowercase letters, digits and underscores. */
+export function pageId(title) {
+  const slug = String(title ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 30);
+
+  return slug && /^[a-z]/.test(slug) ? `p-${slug}` : slug ? `p-x${slug}` : "";
+}
+
+export const isPageRoute = (sub) => typeof sub === "string" && /^p-[a-z][a-z0-9_]{0,31}$/.test(sub);
+
+/**
+ * The tabs a system adds to a character beside the Sheet: a section with a `page` title is shown on that tab instead
+ * of the Sheet, in the order the titles first appear. Returns `[{ id, title, sections: [sectionId] }]`.
+ */
+export function pagesOf(template) {
+  const pages = new Map();
+
+  for (const section of layoutOf(template)) {
+    const id = section.page ? pageId(section.page) : "";
+
+    if (id) {
+      pages.set(id, { id, title: String(section.page).trim(), sections: [...(pages.get(id)?.sections ?? []), section.id] });
+    }
+  }
+
+  return [...pages.values()];
+}

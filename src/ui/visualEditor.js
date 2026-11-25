@@ -164,6 +164,7 @@ const REST_SPEC = [{ prop: "label", label: "Label", kind: "text" }];
 const SECTION_SPEC = [
   { prop: "title", label: "Title", kind: "text" },
   { prop: "layout", label: "Layout", kind: "select", options: () => options(SECTION_LAYOUTS) },
+  { prop: "page", label: "Show on a tab named (empty: on the Sheet)", kind: "text" },
   {
     prop: "items",
     label: "Items, comma separated keys",

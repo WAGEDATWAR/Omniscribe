@@ -21,6 +21,7 @@ import { initRolls } from "./app/rolls.js";
 import { initSheet } from "./app/sheet.js";
 import { createRouter } from "./app/router.js";
 import { initSettings } from "./app/settings.js";
+import { mountReferencePage } from "./ui/reference.js";
 import { initShell } from "./app/shell.js";
 import { initShortcuts } from "./app/shortcuts.js";
 import { initSync } from "./app/sync.js";
@@ -187,6 +188,7 @@ async function boot() {
   initDocuments(ctx);
   initData(ctx);
   initSettings(ctx);
+  mountReferencePage(document.querySelector("#page-reference"));
   initShortcuts(ctx);
   initPalette(ctx);
 

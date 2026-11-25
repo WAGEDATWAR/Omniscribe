@@ -1,0 +1,117 @@
+{
+  "format": "omniscribe-system",
+  "formatVersion": 1,
+  "version": 1,
+  "base": null,
+  "overlay": [],
+  "tables": {},
+  "conditions": [],
+  "rests": [
+    {
+      "id": "night",
+      "label": "Night"
+    }
+  ],
+  "rolls": [],
+  "id": "tolerant",
+  "name": "Tolerant",
+  "fields": [
+    {
+      "key": "level",
+      "label": "Level",
+      "type": "number",
+      "default": 3
+    },
+    {
+      "key": "bonus",
+      "label": "Bonus",
+      "type": "derived",
+      "formula": "floor(@level / 2)"
+    }
+  ],
+  "pools": [
+    {
+      "key": "luck",
+      "label": "Luck",
+      "max": 3,
+      "rests": {
+        "night": {
+          "add": 1
+        }
+      }
+    }
+  ],
+  "collections": [
+    {
+      "key": "skills",
+      "label": "Skills",
+      "columns": [
+        "name",
+        "stat",
+        "total"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "text"
+        },
+        {
+          "key": "stat",
+          "label": "Stat",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "type": "derived",
+          "formula": ".stat + @level"
+        }
+      ]
+    },
+    {
+      "key": "gear",
+      "label": "Gear",
+      "columns": [
+        "name"
+      ],
+      "fields": [
+        {
+          "key": "name",
+          "label": "Name",
+          "type": "text"
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "main",
+      "title": "Main",
+      "layout": "fields",
+      "items": [
+        "level",
+        "bonus",
+        "luck"
+      ]
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "layout": "table",
+      "items": [
+        "skills"
+      ]
+    },
+    {
+      "id": "gear",
+      "title": "Gear",
+      "layout": "table",
+      "items": [
+        "gear"
+      ],
+      "page": "Gear"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { ID_PATTERN as SYSTEM_ID_PATTERN } from "./sheet/template.js";
 import { KINDS } from "./records/kinds.js";
+import { isPageRoute } from "./sheet/layout.js";
 import { isValidId } from "./utils.js";
 
 /**
@@ -12,7 +13,8 @@ export const VIEWS = Object.freeze([
   { id: "data", label: "Data", shortcut: "Alt+2", key: "2", description: "Storage, backup and files." },
   { id: "settings", label: "Settings", shortcut: "Alt+3", key: "3", description: "Appearance, shortcuts and about." },
   { id: "systems", label: "Game systems", shortcut: "Alt+4", key: "4", description: "Create, derive, import and export game systems." },
-  { id: "dice", label: "Dice", shortcut: "Alt+5", key: "5", description: "Roll dice with a character's values and keep the log." }
+  { id: "dice", label: "Dice", shortcut: "Alt+5", key: "5", description: "Roll dice with a character's values and keep the log." },
+  { id: "reference", label: "Reference", shortcut: "Alt+6", key: "6", description: "The game system format and the formula language." }
 ]);
 
 export const DEFAULT_VIEW = "library";
@@ -73,7 +75,7 @@ export function parseRoute(hash) {
       return { view: "character", id, sub: "overview" };
     }
 
-    if (parts.length === 3 && SUB_IDS.has(sub)) {
+    if (parts.length === 3 && (SUB_IDS.has(sub) || isPageRoute(sub))) {
       return { view: "character", id, sub };
     }
   }
@@ -93,7 +95,7 @@ export function parseRoute(hash) {
 
 export function routeHref(view, id = null, sub = "overview") {
   if (view === "character" && id) {
-    return sub && sub !== "overview" && SUB_IDS.has(sub) ? `#/character/${id}/${sub}` : `#/character/${id}`;
+    return sub && sub !== "overview" && (SUB_IDS.has(sub) || isPageRoute(sub)) ? `#/character/${id}/${sub}` : `#/character/${id}`;
   }
 
   if (view === "campaign" && id) {

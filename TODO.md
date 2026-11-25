@@ -114,6 +114,7 @@ P6 is done (0.7.0). P7 has its spec (`docs/DISTRIBUTION.md`, R-1 to R-8); the wo
 - [x] `H` `P6` Phase gate twice, release 0.7.0.
 - [x] `H` `P7` `docs/DISTRIBUTION.md`: the bundle, the PWA, Pages, Windows, Android, the release workflow, the UI evaluation (R-1 to R-8).
 - [x] `H` `P7-A` Manifest, icons, `sw.js`, `npm run bundle`, registration, offline scenario (DEF-065).
+- [x] `H` `P7-S` Usability pass from the community systems and report: Reference page, import review, formula additions and hints, tabs from sheet sections, optional starter rows (`docs/SYSTEMS-REVIEW.md`, S-18 to S-22).
 - [ ] `H` `P7-B` `release.yml`, Pages from Actions, `ci.yml` builds the bundle (DEF-067).
 - [ ] `H` `P7-C` `desktop/` Electron wrapper and the Windows job (DEF-066).
 - [ ] `H` `P7-D` Capacitor project, APK build, Android job, a device check of downloads (DEF-061 debug).

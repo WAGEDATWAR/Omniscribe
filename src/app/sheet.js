@@ -2,6 +2,7 @@ import { createRow, evaluateSheet } from "../sheet/evaluate.js";
 import { validateValue } from "../sheet/template.js";
 import { diffSystems } from "../sheet/diff.js";
 import { reconcileSheet } from "../sheet/evaluate.js";
+import { isPageRoute } from "../sheet/layout.js";
 import { mountSheetPage } from "../ui/sheet.js";
 import { h, replace } from "../ui/dom.js";
 
@@ -11,7 +12,7 @@ export function initSheet(ctx) {
 
   function currentId() {
     const route = router.current();
-    return route.view === "character" && route.sub === "sheet" ? route.id : null;
+    return route.view === "character" && (route.sub === "sheet" || isPageRoute(route.sub)) ? route.id : null;
   }
 
   function resolution() {
@@ -48,7 +49,7 @@ export function initSheet(ctx) {
   }
 
   const view = mountSheetPage(document.querySelector("#character-sheet"), {
-    onStart(ref) {
+    onStart(ref, options = {}) {
       const id = currentId();
       const resolved = ref ? systems.resolve(ref) : null;
 
@@ -57,7 +58,7 @@ export function initSheet(ctx) {
         return;
       }
 
-      store.startSheet(id, ref, resolved.template);
+      store.startSheet(id, ref, resolved.template, { seed: options.seed !== false });
 
       if (!store.getCharacter(id)?.systemId) {
         store.updateCharacter(id, { systemId: resolved.template.name });
@@ -298,7 +299,9 @@ export function initSheet(ctx) {
     const latest = character.sheet ? systems.latest(character.sheet.template.id) : null;
     const update = latest && latest > character.sheet.template.version && systems.resolve({ id: character.sheet.template.id, version: latest }).ok ? { version: latest } : null;
 
-    view.render({ character, systems: systems.list(), resolution: resolved ?? { ok: false, errors: [] }, computed, update });
+    const sub = router.current().sub;
+
+    view.render({ character, systems: systems.list(), resolution: resolved ?? { ok: false, errors: [] }, computed, update, pageId: isPageRoute(sub) ? sub : "" });
   }
 
   router.onRoute(() => show());

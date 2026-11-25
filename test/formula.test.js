@@ -283,7 +283,7 @@ test("static checks govern collections, rows and tables", () => {
   assert.deepEqual(problems("max(@powers.cost)", env), []);
   assert.match(problems("sum(@a)", env)[0], /needs a collection column/);
   assert.match(problems("sum(@powers)", env)[0], /needs a collection column/);
-  assert.match(problems("max(@powers.cost, 1)", env)[0], /takes only the column/);
+  assert.deepEqual(problems("max(@powers.cost, $.awake)", env), []);
   assert.match(problems("sum(@powers.cost, $.nope)", env)[0], /no field named "nope"/);
   assert.match(problems("$.cost", env)[0], /\$ can only be used inside/);
   assert.match(problems("@powers.cost + 1", env)[0], /is a collection/);
@@ -307,7 +307,7 @@ test("a row formula may use $ for its own fields only", () => {
 test("the function table has exactly the documented functions", () => {
   assert.deepEqual(
     Object.keys(FUNCTIONS).sort(),
-    ["abs", "avg", "ceil", "clamp", "concat", "count", "floor", "has", "if", "index", "lookup", "max", "min", "number", "round", "signed", "step", "sum", "text"]
+    ["abs", "avg", "ceil", "clamp", "concat", "contains", "count", "endsWith", "floor", "has", "if", "index", "join", "length", "lookup", "lower", "max", "min", "number", "round", "signed", "startsWith", "step", "sum", "switch", "text", "trim", "upper"]
   );
 });
 
@@ -364,4 +364,46 @@ test("pathological formulas stay within budgets", () => {
   assert.equal(value(wide), 119);
   assert.equal(value(nested), 1);
   assert.ok(Date.now() - started < 2000);
+});
+
+test("switch picks the matching case or the default", () => {
+  assert.equal(value('switch(@r, "a", 1, "b", 2, 0)', { scalars: { r: "b" } }), 2);
+  assert.equal(value('switch(@r, "a", 1, "b", 2, 0)', { scalars: { r: "z" } }), 0);
+  assert.match(failure("switch(@r, 1, 2)", { scalars: { r: 1 } }), /wrong number of arguments/);
+});
+
+test("text functions", () => {
+  assert.equal(value('contains("Dragon Slayer", "Slay")'), true);
+  assert.equal(value('startsWith("abc", "ab")'), true);
+  assert.equal(value('endsWith("abc", "bc")'), true);
+  assert.equal(value('length(trim("  hi "))'), 2);
+  assert.equal(value('upper("a") + lower("B")'.replace(" + ", ", ").replace(/^(.*)$/, "concat($1)")), "Ab");
+  assert.match(failure("length(3)"), /needs text/);
+});
+
+test("join builds text from a list or a column and skips empty parts", () => {
+  const options = { lists: { tags: ["a", "b"] }, collections: { gear: [{ name: "Rope", w: 1 }, { name: "", w: 2 }, { name: "Lamp", w: 5 }] } };
+  assert.equal(value('join(@tags, " / ")', options), "a / b");
+  assert.equal(value("join(@gear.name)", options), "Rope, Lamp");
+  assert.equal(value('join(@gear.name, "+", $.w > 1)', options), "Lamp");
+});
+
+test("min and max over a column take a test, like sum", () => {
+  const options = { collections: { abilities: [{ essence: "Power", level: 4 }, { essence: "Power", level: 2 }, { essence: "Speed", level: 1 }] } };
+  assert.equal(value('min(@abilities.level, $.essence == "Power")', options), 2);
+  assert.equal(value('max(@abilities.level, $.essence == "Power")', options), 4);
+  assert.equal(value('sum(@abilities.level, $.essence == "Speed")', options), 1);
+});
+
+test(".name means the same as $.name inside a row formula", () => {
+  const options = { item: { stat: "int" }, scalars: { int: 6 } };
+  assert.equal(value('if(.stat == "int", @int, 0)', options), 6);
+  assert.equal(value('if($.stat == "int", @int, 0)', options), 6);
+});
+
+test("mistakes get a hint", () => {
+  assert.match(failure("@a and @b"), /use && for and/);
+  assert.match(failure("@a or @b"), /use \|\| for or/);
+  assert.match(failure("@a = 1"), /compare with ==/);
+  assert.match(failure("flor(1.5)", {}), /did you mean floor\(\)/);
 });

@@ -1,7 +1,9 @@
 import { createSheet, evaluateSheet } from "../sheet/evaluate.js";
 import { makeOverlay } from "../sheet/overlay.js";
 import { ID_PATTERN, KEY_PATTERN, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION } from "../sheet/template.js";
+import { layoutOf } from "../sheet/layout.js";
 import { mountSystemEditor } from "../ui/systemEditor.js";
+import { openSystemImportDialog } from "../ui/systemImportDialog.js";
 import { mountSystemsPage } from "../ui/systems.js";
 import { routeHref } from "../views.js";
 
@@ -103,6 +105,33 @@ export function initSystems(ctx) {
     toast(`Deleted ${entry.name} version ${entry.version}.`);
   }
 
+  /** Everything the import review shows, worked out without saving anything. */
+  function reviewOf(raw, fileName) {
+    const result = systems.check(raw);
+    const template = result.ok ? result.template : null;
+    const computed = template ? evaluateSheet(template, createSheet(template)) : null;
+    const taken = raw && systems.lookup(raw.id, raw.version);
+    const outline = template
+      ? layoutOf(template).map((section) => {
+          const label = (key) => template.fields.find((entry) => entry.key === key)?.label ?? template.pools.find((entry) => entry.key === key)?.label ?? template.collections.find((entry) => entry.key === key)?.label ?? key;
+          return { title: section.title, where: section.page ? `on the ${section.page} tab` : "on the Sheet", items: section.items.map(label) };
+        })
+      : [];
+    const counts = template ? `${template.fields.length} fields, ${template.pools.length} pools, ${template.collections.length} collections, ${Object.keys(template.tables).length} tables, ${template.rolls.length} rolls.` : "";
+
+    return {
+      ok: result.ok && !taken,
+      fileName,
+      name: raw?.name ?? fileName,
+      version: raw?.version,
+      errors: taken ? [{ path: "", message: `A system with the id "${raw.id}" and version ${raw.version} is already on this device. Change its version or id in the file to import it as something new.` }] : result.errors ?? [],
+      warnings: result.warnings ?? [],
+      evalErrors: computed?.errors ?? [],
+      outline,
+      summary: result.ok && !taken ? `${counts} A new sheet evaluates with ${computed.errors.length ? `${computed.errors.length} problem${computed.errors.length === 1 ? "" : "s"}` : "no problems"}.` : "Nothing was imported."
+    };
+  }
+
   async function importFile(file) {
     if (file.size > MAX_FILE) {
       toast("That file is larger than 1 MB, the limit for a system file.", { tone: "error" });
@@ -118,10 +147,16 @@ export function initSystems(ctx) {
       return;
     }
 
+    const report = reviewOf(raw, file.name);
+
+    if (!(await openSystemImportDialog(report))) {
+      return;
+    }
+
     const added = await saveFile(raw);
 
     if (!added.ok) {
-      toast(`Could not import: ${added.errors[0]?.path ? `${added.errors[0].path}: ` : ""}${added.errors[0]?.message ?? "the file is not a valid system"}${added.errors.length > 1 ? ` (and ${added.errors.length - 1} more)` : ""}`, { tone: "error" });
+      toast(`Could not import: ${added.errors[0]?.path ? `${added.errors[0].path}: ` : ""}${added.errors[0]?.message ?? "the file is not a valid system"}`, { tone: "error" });
       return;
     }
 

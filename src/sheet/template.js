@@ -1,3 +1,4 @@
+import { pageId } from "./layout.js";
 import { FORMULA_LIMITS, checkFormula, parseFormula } from "./formula.js";
 
 /**
@@ -49,6 +50,46 @@ const ENVELOPE_KEYS = new Set([
 const isObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const isString = (value, max) => typeof value === "string" && value.length <= max;
 const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
+
+/**
+ * A number where a formula is expected (a pool's maximum, a rest's add or set) means that number, so `"max": 3`
+ * is accepted as `"max": "3"` and the file is told so. Anything else is left for validation to judge.
+ */
+function friendlyPool(pool, path, warnings) {
+  if (!isObject(pool)) {
+    return pool;
+  }
+
+  let next = pool;
+
+  if (isFiniteNumber(pool.max)) {
+    warnings.push({ path: `${path}.max`, message: "A number was given where a formula is expected; it was read as the formula \"" + pool.max + "\"" });
+    next = { ...next, max: String(pool.max) };
+  }
+
+  if (isObject(pool.rests)) {
+    const rests = {};
+
+    for (const [restId, rule] of Object.entries(pool.rests)) {
+      let fixed = rule;
+
+      if (isObject(rule)) {
+        for (const verb of ["add", "set"]) {
+          if (isFiniteNumber(rule[verb])) {
+            warnings.push({ path: `${path}.rests.${restId}.${verb}`, message: "A number was given where a formula is expected; it was read as the formula \"" + rule[verb] + "\"" });
+            fixed = { ...fixed, [verb]: String(rule[verb]) };
+          }
+        }
+      }
+
+      rests[restId] = fixed;
+    }
+
+    next = { ...next, rests };
+  }
+
+  return next;
+}
 
 /**
  * Checks the envelope of a system file and fills in empty parts. Unknown top-level keys are kept in
@@ -130,6 +171,8 @@ export function normalizeSystemFile(raw) {
     sections: Array.isArray(raw.sections) ? raw.sections : [],
     extensions
   };
+
+  template.pools = template.pools.map((pool, position) => friendlyPool(pool, `pools.${pool?.key ?? position}`, warnings));
 
   for (const part of ["fields", "pools", "collections", "conditions", "rests", "rolls", "sections"]) {
     if (raw[part] !== undefined && !Array.isArray(raw[part])) {
@@ -792,12 +835,28 @@ export function validateTemplate(template) {
       }
     }
 
+    const pageOwners = new Map();
+
     template.sections.forEach((section, position) => {
       const path = `sections.${section?.id ?? position}`;
 
       if (!isObject(section) || typeof section.id !== "string" || !KEY_PATTERN.test(section.id) || !isString(section.title, TEMPLATE_LIMITS.label) || !section.title || !SECTION_LAYOUTS.includes(section.layout) || !Array.isArray(section.items)) {
         err(path, "a section needs an id, a title, a layout (fields, table or text) and items");
         return;
+      }
+
+      if (section.page !== undefined) {
+        if (!isString(section.page, 40) || !section.page.trim() || !pageId(section.page) || pageId(section.page) === "p-sheet") {
+          err(`${path}.page`, "page is the name of a tab, up to 40 characters with at least one letter or digit, and not \"Sheet\"");
+        } else {
+          const owner = pageOwners.get(pageId(section.page));
+
+          if (owner !== undefined && owner !== section.page.trim()) {
+            err(`${path}.page`, `"${section.page}" and "${owner}" make the same tab address; rename one`);
+          }
+
+          pageOwners.set(pageId(section.page), section.page.trim());
+        }
       }
 
       for (const item of section.items) {
