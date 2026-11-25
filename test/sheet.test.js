@@ -737,3 +737,37 @@ test("default rows start every new sheet and are validated by the system", () =>
   assert.match(text, /defaultRows\.2: a default row must be an object/);
   assert.match(messages(validateTemplate(mutate(core, (file) => { file.collections[0].defaultRows = "x"; }))).join("\n"), /defaultRows must be a list/);
 });
+
+test("a number field can work its default out when a sheet starts (DEF-099)", async () => {
+  const { createRegistry } = await import("../src/systems.js");
+  const { seededRng } = await import("../src/dice/rng.js");
+  const file = (fields) => ({
+    format: "omniscribe-system", formatVersion: 1, id: "defaults", version: 1, name: "Defaults", base: null, overlay: [],
+    fields, pools: [], collections: [], tables: {}, conditions: [], rests: [], rolls: [], sections: []
+  });
+
+  const registry = createRegistry({});
+  const added = registry.add(file([
+    { key: "base", label: "Base", type: "number", default: 4 },
+    { key: "double", label: "Double", type: "number", default: 0, defaultFormula: "@base * 2" },
+    { key: "rolled", label: "Rolled", type: "number", default: 0, defaultFormula: "1d1 + 3" },
+    { key: "broken", label: "Broken", type: "number", default: 7, defaultFormula: "@missing + 1" }
+  ]));
+
+  assert.equal(added.ok, false);
+  assert.match(added.errors[0].message, /@missing/);
+
+  const good = createRegistry({});
+  assert.equal(good.add(file([
+    { key: "base", label: "Base", type: "number", default: 4 },
+    { key: "double", label: "Double", type: "number", default: 0, defaultFormula: "@base * 2" },
+    { key: "rolled", label: "Rolled", type: "number", default: 0, defaultFormula: "1d1 + @double" }
+  ])).ok, true);
+
+  const { template } = good.resolve({ id: "defaults", version: 1 });
+  const sheet = createSheet(template, { rng: seededRng(1) });
+  assert.deepEqual(sheet.values, { base: 4, double: 8, rolled: 9 });
+
+  const text = createRegistry({}).add(file([{ key: "name", label: "Name", type: "text", defaultFormula: "1" }]));
+  assert.match(text.errors[0].message, /only a number field/);
+});

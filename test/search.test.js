@@ -74,3 +74,14 @@ test("values of your own fields are searchable under their label, orphaned ones 
   assert.equal(search(index, "rarity legendary").hits.length, 1);
   assert.equal(search(index, "hidden word").hits.length, 0);
 });
+
+test("game systems are searchable by name, description and the labels of their parts", () => {
+  const { characters, campaigns } = library();
+  const index = buildIndex(characters, campaigns, new Map(), [{ id: "risus", name: "Risus", version: 1, system: "Risus", description: "The Anything RPG", labels: ["Clichés", "Lucky Shots"] }]);
+  const hit = search(index, "lucky shots").hits[0];
+
+  assert.equal(hit.kind, "Game system");
+  assert.deepEqual(hit.route, { view: "system", id: "risus", sub: null });
+  assert.equal(search(index, "anything").hits[0].title, "Risus");
+  assert.equal(search(index, "cliches").hits.length, 1);
+});

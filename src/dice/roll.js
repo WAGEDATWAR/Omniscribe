@@ -271,6 +271,21 @@ function resolvedText(source, inputs) {
  * `options`: `{ adv | dis, critMin, label, characterId, campaignId, groupId, now }`.
  * Returns `{ ok: true, roll }` or `{ ok: false, error: { message, index } }`; a failed roll has thrown no recorded dice.
  */
+/**
+ * Judges a total against a target (DEF-100): "under" succeeds at or below it, "over" at or above it. The margin is how far
+ * past the line the total landed, and is never negative; `success` says which side it is on.
+ */
+export function verdictOf(total, target) {
+  if (!target || !Number.isFinite(target.value)) {
+    return null;
+  }
+
+  const compare = target.compare === "over" ? "over" : "under";
+  const success = compare === "over" ? total >= target.value : total <= target.value;
+
+  return { target: target.value, compare, success, margin: Math.abs(total - target.value) };
+}
+
 export function rollExpression(source, { scope = {}, item = null, rng = cryptoRng(), options = {} } = {}) {
   const parsed = parseFormula(source, { dice: true });
 
@@ -346,6 +361,7 @@ export function rollExpression(source, { scope = {}, item = null, rng = cryptoRn
       expression: source,
       resolved: resolvedText(source, inputs),
       total: result.value,
+      verdict: verdictOf(result.value, options.target),
       mode: state.pool ? "pool" : "total",
       terms: state.terms,
       inputs,

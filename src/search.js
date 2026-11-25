@@ -49,7 +49,7 @@ function entry({ kind, title, detail, body = "", route }) {
   return { kind, title: String(title ?? "").trim() || "Untitled", detail, route, foldedTitle: fold(title), folded: fold(`${title} ${body}`) };
 }
 
-export function buildIndex(characters, campaigns, labels = new Map()) {
+export function buildIndex(characters, campaigns, labels = new Map(), systems = []) {
   const entries = [];
 
   for (const character of characters) {
@@ -110,6 +110,18 @@ export function buildIndex(characters, campaigns, labels = new Map()) {
         );
       }
     }
+  }
+
+  for (const system of systems) {
+    entries.push(
+      entry({
+        kind: "Game system",
+        title: system.name,
+        detail: `version ${system.version}`,
+        body: [system.system, system.description, ...(system.labels ?? [])].join(" "),
+        route: { view: "system", id: system.id, sub: null }
+      })
+    );
   }
 
   return entries;

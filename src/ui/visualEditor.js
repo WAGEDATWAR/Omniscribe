@@ -55,6 +55,7 @@ const fieldSpec = (inCollection, rests) => [
   { prop: "min", label: "Minimum", kind: "number", showIf: (entry) => entry.type === "number" },
   { prop: "max", label: "Maximum", kind: "number", showIf: (entry) => entry.type === "number" },
   { prop: "integer", label: "Whole numbers only", kind: "flag", defaultTrue: true, showIf: (entry) => entry.type === "number" },
+  { prop: "defaultFormula", label: "Work the default out when a sheet starts (a formula or dice, such as 4d10)", kind: "text", mono: true, showIf: (entry) => entry.type === "number" },
   {
     prop: "choices",
     label: "Choices, one per line as value | label",
@@ -156,7 +157,9 @@ function collectionSpec(entry) {
 const ROLL_SPEC = [
   { prop: "label", label: "Label", kind: "text" },
   { prop: "group", label: "Group", kind: "text" },
-  { prop: "expression", label: "Expression", kind: "text", mono: true }
+  { prop: "expression", label: "Expression", kind: "text", mono: true },
+  { prop: "target", label: "Target to beat (optional, a formula such as @skill)", kind: "text", mono: true },
+  { prop: "compare", label: "Success when the roll is", kind: "select", options: () => [{ value: "", label: "At or below the target (default)" }, { value: "over", label: "At or above the target" }], showIf: (entry) => Boolean(entry.target) }
 ];
 
 const REST_SPEC = [{ prop: "label", label: "Label", kind: "text" }];

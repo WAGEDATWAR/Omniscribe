@@ -50,7 +50,7 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
       accessibility. (DEF-060, DEF-061, DEF-062, DEF-065, DEF-066, DEF-067)
 - [ ] **v1.**
-- [ ] **P8 - Expansion (post-v1, DEF-014).** Random tables, 3D dice, PDF form mapping, importers,
+- [~] **P8 - Expansion (post-v1, DEF-014; plan `docs/EXPANSION.md`, P8-A first three built).** Random tables, 3D dice, PDF form mapping, importers,
       encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051, DEF-077, DEF-080, DEF-081, DEF-087)
 
 ## Decisions needed

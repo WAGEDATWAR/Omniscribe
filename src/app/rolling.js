@@ -28,7 +28,7 @@ export function createRolling(ctx) {
 
   function systemRolls(characterId) {
     const template = templateOf(characterId ? store.getCharacter(characterId) : null);
-    return (template?.rolls ?? []).map((roll) => ({ id: `system:${roll.key}`, label: roll.label, expression: roll.expression, group: roll.group ?? "", critMin: roll.critMin ?? null, steps: null }));
+    return (template?.rolls ?? []).map((roll) => ({ id: `system:${roll.key}`, label: roll.label, expression: roll.expression, group: roll.group ?? "", critMin: roll.critMin ?? null, target: roll.target ?? null, compare: roll.compare ?? "under", steps: null }));
   }
 
   function characterRolls(characterId) {
@@ -41,12 +41,25 @@ export function createRolling(ctx) {
   }
 
   /** Throws one expression. Returns `{ ok, roll, text }` or `{ ok: false, error }`, and logs a success. */
-  async function roll(expression, { characterId = null, label, item = null, options = {}, groupId = null } = {}) {
+  async function roll(expression, { characterId = null, label, item = null, options = {}, groupId = null, target = null } = {}) {
+    const scope = scopeFor(characterId);
+    let judged;
+
+    if (target?.formula) {
+      const bar = rollExpression(String(target.formula), { scope, item, rng });
+
+      if (!bar.ok) {
+        return { ok: false, error: { message: `The target ${target.formula} could not be worked out: ${bar.error.message}`, index: null } };
+      }
+
+      judged = { value: bar.roll.total, compare: target.compare };
+    }
+
     const result = rollExpression(expression, {
-      scope: scopeFor(characterId),
+      scope,
       item,
       rng,
-      options: { ...options, label, characterId, groupId }
+      options: { ...options, label, characterId, groupId, target: judged }
     });
 
     if (!result.ok) {
@@ -76,6 +89,7 @@ export function createRolling(ctx) {
         characterId,
         label: steps.length > 1 ? `${preset.label}: ${step.label}` : preset.label,
         groupId,
+        target: preset.target ? { formula: preset.target, compare: preset.compare } : null,
         options: { ...options, critMin: preset.critMin ?? undefined, adv: index === 0 ? options.adv : false, dis: index === 0 ? options.dis : false }
       });
 

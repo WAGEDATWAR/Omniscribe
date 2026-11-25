@@ -59,7 +59,7 @@ export const DICE_MODIFIERS = Object.freeze([
 ]);
 
 export const FIELD_TYPES = Object.freeze([
-  { type: "number", props: "default, min, max, integer, subs, subFormats", meaning: "A whole or decimal number that is checked against min and max." },
+  { type: "number", props: "default, defaultFormula, min, max, integer, subs, subFormats", meaning: "A whole or decimal number that is checked against min and max. A defaultFormula (such as 4d10 or @level * 2) is worked out once when a sheet starts, from the fields before it; the default is the fallback." },
   { type: "text", props: "default, maxLength", meaning: "One line of text." },
   { type: "longtext", props: "default", meaning: "Several lines of text." },
   { type: "flag", props: "default", meaning: "On or off." },
@@ -79,7 +79,7 @@ export const EXAMPLES = Object.freeze([
   { title: "Text from parts that may be empty", why: "A line built from several fields, skipping the empty ones.", code: 'join(@gear.name, ", ", $.equipped)' },
   { title: "A table keyed by a number", why: "Blood pool by generation; the choice value 13 finds the key \"13\".", code: 'lookup("blood_by_generation", @generation)' },
   { title: "Roll under, with the margin", why: "A percentile skill: the total is how far under the skill the roll was, so 0 or more is a success by that much and below 0 a failure.", code: "@skill - d%" },
-  { title: "Roll under, pass or fail", why: "A roll can only produce a number, so choose one with if().", code: "if(d% <= @skill, 1, 0)" },
+  { title: "Roll under, with a verdict", why: "Give a saved roll the expression d% and the target @skill: the result reads success or failure by the margin.", code: "d%" },
   { title: "Tap a row to roll it", why: "Give a collection a field of type roll whose default reads its own row; the row then shows a Roll button. $.total is this row's total.", code: "1d10 + $.total" },
   { title: "Dice counts from a row", why: "Risus: roll as many dice as a cliche is rated, read from the row.", code: "($.dice)d6" }
 ]);
@@ -91,7 +91,7 @@ export const SYSTEM_PARTS = Object.freeze([
   { key: "tables", shape: "object", meaning: "Lookup data for lookup() and step(): { name: { key: value } }. Keys are text; a number is matched as its text." },
   { key: "conditions", shape: "list of text", meaning: "Names a character can have switched on." },
   { key: "rests", shape: "list", meaning: "{ id, label }. A rest button applies each pool's rule for that id and refills every uses field that resets on it." },
-  { key: "rolls", shape: "list", meaning: "Saved rolls: { key, label, expression, group }. The expression is a dice expression that may read the sheet." },
+  { key: "rolls", shape: "list", meaning: 'Saved rolls: { key, label, expression, group, target, compare }. The expression is a dice expression that may read the sheet. With a target formula (such as "@skill") the result also says success or failure and by how much: compare "under" (the default) succeeds at or below the target, "over" at or above it.' },
   { key: "sections", shape: "list", meaning: '{ id, title, layout: "fields" | "table" | "text", items: [keys], page }. A section with a page title is shown on a tab of that name instead of the Sheet.' },
   { key: "base, overlay", shape: "id and list", meaning: "Derive a system from another: add, override or remove parts instead of copying them." }
 ]);

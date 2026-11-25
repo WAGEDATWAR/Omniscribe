@@ -15,6 +15,7 @@ export function resultCard(roll, text) {
     { class: `roll-result${roll.flags.critical ? " is-critical" : ""}${roll.flags.fumble || roll.flags.botch ? " is-fumble" : ""}` },
     h("p", { class: "roll-label", text: roll.label }),
     h("p", { class: "roll-total", text: String(roll.total) }),
+    roll.verdict ? h("p", { class: "roll-verdict", text: `${roll.verdict.success ? "Success" : "Failure"} by ${roll.verdict.margin} (target ${roll.verdict.target})` }) : null,
     h("p", { class: "roll-explain", text }),
     flags.length ? h("p", { class: "roll-flags", text: flags.join(", ") }) : null
   );

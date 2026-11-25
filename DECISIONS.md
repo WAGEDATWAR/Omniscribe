@@ -214,6 +214,14 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | R-7 | **A release is gated by the benchmark** (200 characters, 5,000 items) as well as the other gates. | locked |
 | R-8 | **v1.0.0 is the first release with a Windows build and an APK attached.** | locked |
 
+## Expansion (E-series)
+
+| # | Decision | Status |
+|---|---|---|
+| E-1 | **P8 is delivered in independent slices ordered by value at the table, then by how little of the model they disturb;** it tracks v1 and never gates it. The plan is `docs/EXPANSION.md`. | locked |
+| E-2 | **A number field may work its default out when a sheet starts** (`defaultFormula`, formula or dice, from the fields before it); the plain default is the fallback. | locked |
+| E-3 | **A saved roll may carry a target and a direction** and its record then carries a verdict with a margin; the roll still only produces a number. | locked |
+
 ## Open
 
 | # | Question | Needed by |

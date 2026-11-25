@@ -809,6 +809,28 @@ export function validateTemplate(template) {
     const sheetEnv = analysis.sheetEnv;
     const rollKeys = new Set();
 
+    for (const field of template.fields) {
+      if (field?.defaultFormula === undefined) {
+        continue;
+      }
+
+      const where = `fields.${field.key}.defaultFormula`;
+
+      if (field.type !== "number") {
+        err(where, "only a number field can have a default formula");
+      } else if (typeof field.defaultFormula !== "string" || !field.defaultFormula.trim() || field.defaultFormula.length > FORMULA_LIMITS.chars) {
+        err(where, "a default formula is text such as 4d10 or @level * 2");
+      } else {
+        const parsed = parseFormula(field.defaultFormula, { dice: true });
+
+        if (!parsed.ok) {
+          err(where, parsed.error.message);
+        } else {
+          checkRollRefs(field.defaultFormula, where, sheetEnv, errors);
+        }
+      }
+    }
+
     template.rolls.forEach((roll, position) => {
       const path = `rolls.${roll?.key ?? position}`;
 
@@ -823,6 +845,18 @@ export function validateTemplate(template) {
 
       rollKeys.add(roll.key);
       checkRollRefs(roll.expression, `${path}.expression`, sheetEnv, errors);
+
+      if (roll.target !== undefined) {
+        if (typeof roll.target !== "string" || !roll.target.trim() || roll.target.length > FORMULA_LIMITS.chars) {
+          err(`${path}.target`, "target is a formula, such as @skill or 12");
+        } else {
+          checkRollRefs(roll.target, `${path}.target`, sheetEnv, errors);
+        }
+      }
+
+      if (roll.compare !== undefined && roll.compare !== "" && roll.compare !== "under" && roll.compare !== "over") {
+        err(`${path}.compare`, 'compare is "under" (succeed at or below the target) or "over" (at or above it)');
+      }
     });
 
     for (const collection of template.collections) {

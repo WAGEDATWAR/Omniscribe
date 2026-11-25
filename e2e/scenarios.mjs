@@ -108,6 +108,15 @@ function samplePixels(page) {
   })()`);
 }
 
+async function sampleToSheet(page) {
+  await page.click("#sample-btn");
+  await page.waitFor('document.querySelectorAll(".tile").length === 1');
+  await page.evaluate('document.querySelector(".tile-link").click(); true');
+  await page.waitFor('document.querySelector(".subnav-link[data-page=sheet]")');
+  await page.click('.subnav-link[data-page="sheet"]');
+  await page.waitFor('!document.querySelector("#character-sheet").hidden && document.querySelector("#sheet-picker")');
+}
+
 async function sheetPage(page) {
   await page.click("#sample-btn");
   await page.waitFor('document.querySelectorAll(".tile").length === 1');
@@ -909,6 +918,27 @@ export const scenarios = [
       await page.waitFor('document.querySelectorAll("#layout-editor .layout-section-edit").length === 1');
       await page.click("#layout-done");
       await page.waitFor('document.querySelector("#rec-inventory-weight")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a saved roll with a target says success or failure and by how much",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.setFileInput("#system-import-input", [context.fixture("systems/tolerant.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      await page.click("#system-import-confirm");
+      await page.waitFor('location.hash === "#/systems/tolerant"');
+      await go(page, "#/library", "#library-title");
+      await sampleToSheet(page);
+      await page.click("#system-tolerant");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-rolls")');
+      await page.click("#sheet-rolls .toolbar button");
+      await page.waitFor('document.querySelector("#sheet-roll-result .roll-verdict")');
+      assert.match(await page.evaluate('document.querySelector("#sheet-roll-result .roll-verdict").textContent'), /^(Success|Failure) by \d+ \(target 3\)$/);
+      assert.match(await page.evaluate('document.querySelector("#sheet-roll-result .roll-explain").textContent'), /vs 3: (success|failure) by \d+$/);
       assertClean(page);
     }
   },

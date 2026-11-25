@@ -1,3 +1,5 @@
+import { rollExpression } from "../dice/roll.js";
+import { cryptoRng } from "../dice/rng.js";
 import { createId, isValidId } from "../utils.js";
 import { evaluateFormula } from "./formula.js";
 import { TEMPLATE_LIMITS, analyzeTemplate, fieldDefault, nodeLabel, validateValue } from "./template.js";
@@ -8,12 +10,33 @@ import { TEMPLATE_LIMITS, analyzeTemplate, fieldDefault, nodeLabel, validateValu
  */
 const MAX_CONDITIONS = 50;
 
-export function createSheet(template, { seed = true } = {}) {
+/**
+ * A new sheet: every field at its default, the system's suggested rows unless `seed` is false, and any number field
+ * that has a `defaultFormula` worked out once from the values before it (DEF-099). A default formula may roll dice
+ * (`4d10`), which is why a random source can be passed.
+ */
+export function createSheet(template, { seed = true, rng = null } = {}) {
   const values = {};
 
   for (const field of template.fields) {
     if (field.type !== "derived") {
       values[field.key] = fieldDefault(field);
+    }
+  }
+
+  const computedDefaults = template.fields.filter((field) => field.type === "number" && typeof field.defaultFormula === "string" && field.defaultFormula.trim());
+
+  if (computedDefaults.length) {
+    const source = rng ?? cryptoRng();
+
+    for (const field of computedDefaults) {
+      const known = evaluateSheet(template, { values, pools: {}, collections: {}, conditions: [], orphans: {} });
+      const result = rollExpression(field.defaultFormula, { scope: known.values, rng: source });
+      const checked = result.ok ? validateValue(field, result.roll.total) : { ok: false };
+
+      if (checked.ok) {
+        values[field.key] = checked.value;
+      }
     }
   }
 

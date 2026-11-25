@@ -237,3 +237,21 @@ test("hostile dice text never throws", () => {
     }
   }
 });
+
+test("a target turns a roll into a verdict with its margin (DEF-100)", async () => {
+  const { rollExpression, verdictOf } = await import("../src/dice/roll.js");
+  const { explain } = await import("../src/dice/explain.js");
+
+  const under = rollExpression("10", { options: { target: { value: 12, compare: "under" } } }).roll;
+  assert.deepEqual(under.verdict, { target: 12, compare: "under", success: true, margin: 2 });
+  assert.match(explain(under), /vs 12: success by 2$/);
+
+  const over = rollExpression("10", { options: { target: { value: 12, compare: "over" } } }).roll;
+  assert.deepEqual(over.verdict, { target: 12, compare: "over", success: false, margin: 2 });
+  assert.match(explain(over), /failure by 2$/);
+
+  assert.equal(verdictOf(12, { value: 12 }).success, true);
+  assert.equal(verdictOf(12, { value: 12, compare: "over" }).margin, 0);
+  assert.equal(rollExpression("10").roll.verdict, null);
+  assert.equal(verdictOf(5, { value: Number.NaN }), null);
+});

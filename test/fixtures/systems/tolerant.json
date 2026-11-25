@@ -12,7 +12,15 @@
       "label": "Night"
     }
   ],
-  "rolls": [],
+  "rolls": [
+    {
+      "key": "check",
+      "label": "Check",
+      "expression": "1d20",
+      "target": "@level",
+      "compare": "over"
+    }
+  ],
   "id": "tolerant",
   "name": "Tolerant",
   "fields": [

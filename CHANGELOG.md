@@ -6,6 +6,8 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 
 ### Added
 
+- A number field can work its default out when a sheet starts (a formula or dice such as `4d10`). A saved roll can have a target and says success or failure and by how much. The command palette also searches installed game systems. (P8-A, `docs/EXPANSION.md`)
+
 - Reference page (Alt+6): the game system format, the formula language with every function, dice terms and worked examples, drawn from the code and checked by tests.
 - Game system import review: choosing a file shows every problem with its place, every warning, how a new sheet evaluates and an outline of the sheet, and imports nothing until you confirm.
 - Tabs from sheet sections: a section can name a page and then appears on its own tab beside the Sheet; the system editor sets it.

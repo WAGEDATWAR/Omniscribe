@@ -29,5 +29,6 @@ export function explain(roll) {
   const head = lone ? parts[0] : `${roll.resolved} -> ${parts.join(", ")}`;
   const tail = pools.length ? ` = ${roll.total} (${pools.join("; ")})` : ` = ${roll.total}`;
   const flags = [roll.flags.critical ? "critical" : "", roll.flags.fumble ? "fumble" : "", roll.flags.botch ? "botch" : ""].filter(Boolean);
-  return `${head}${tail}${flags.length ? ` (${flags.join(", ")})` : ""}`;
+  const verdict = roll.verdict ? ` vs ${roll.verdict.target}: ${roll.verdict.success ? "success" : "failure"} by ${roll.verdict.margin}` : "";
+  return `${head}${tail}${flags.length ? ` (${flags.join(", ")})` : ""}${verdict}`;
 }

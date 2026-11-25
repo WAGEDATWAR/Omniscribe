@@ -90,11 +90,24 @@ export function initPalette(ctx) {
     indexed = { characters: null, campaigns: null, index: [] };
   });
 
+  /** One searchable entry per game system: its name, description and the labels of its fields, pools and tables. */
+  function systemEntries() {
+    return ctx.systems.list().map((entry) => {
+      const file = ctx.systems.lookup(entry.id, entry.version);
+      const labels = [...(file?.fields ?? []), ...(file?.pools ?? []), ...(file?.collections ?? []), ...(file?.rolls ?? [])].map((part) => part.label).filter(Boolean);
+      return { id: entry.id, name: entry.name, version: entry.version, system: entry.system, description: entry.description, labels };
+    });
+  }
+
+  ctx.bus.on("systems:changed", () => {
+    indexed = { characters: null, campaigns: null, index: [] };
+  });
+
   function getSearch(query, base) {
     const state = store.getState();
 
     if (indexed.characters !== state.characters || indexed.campaigns !== state.campaigns) {
-      indexed = { characters: state.characters, campaigns: state.campaigns, index: buildIndex(state.characters, state.campaigns, ctx.layouts.ownLabels()) };
+      indexed = { characters: state.characters, campaigns: state.campaigns, index: buildIndex(state.characters, state.campaigns, ctx.layouts.ownLabels(), systemEntries()) };
     }
 
     const shown = new Set(base.map((command) => command.id));
