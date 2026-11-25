@@ -44,7 +44,7 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
       (DEF-002, DEF-063, DEF-079)
 - [x] **P5 - Campaigns.** Records, roster, party view, sessions, initiative, handouts. (DEF-013,
       DEF-040, DEF-042)
-- [~] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
+- [x] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
       PDF sheet with the upload override. (DEF-022, DEF-030, DEF-032, DEF-033, DEF-052, DEF-064,
       DEF-071)
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
@@ -63,7 +63,7 @@ are resolved.
 
 ## Next Up
 
-P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in slices A to F.
+P6 is done (0.7.0). P7 is next: UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds.
 
 - [x] `H` `P3` `docs/DICE.md`: the grammar, resolution, the roll record, presets, the log, the page, limits,
       tests (D-9 to D-15).
@@ -111,7 +111,7 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
 - [x] `M` `P6-F1` Portrait cropping and handout PDFs in the app viewer (DEF-022, DEF-090).
 - [x] `M` `P6-F2` Familiar sheet editor and translation maps moved to P8 (DEF-087, DEF-080).
 - [x] `H` `P6-G` Page layouts replace the trailing "Your own fields" (`docs/LAYOUTS.md`, L-1 to L-6): [x] L-A pure core (`src/layouts/`), [x] L-B pages, [x] L-C in-place editor, [x] L-D wiring.
-- [ ] `H` `P6` Phase gate twice, release 0.7.0.
+- [x] `H` `P6` Phase gate twice, release 0.7.0.
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
 
