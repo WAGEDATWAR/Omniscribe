@@ -1,3 +1,4 @@
+import { cropSquare } from "../crop.js";
 import { fitWithin } from "../files.js";
 import { LIMITS } from "../limits.js";
 
@@ -24,4 +25,17 @@ export async function scalePortrait(file, max = LIMITS.portraitPixels) {
   } finally {
     bitmap.close?.();
   }
+}
+
+/** Crops a square from a decoded image (see `cropSquare`) and scales it to at most the portrait size. */
+export async function cropPortrait(bitmap, crop, max = LIMITS.portraitPixels) {
+  const { x, y, size } = cropSquare({ width: bitmap.width, height: bitmap.height, ...crop });
+  const side = Math.max(1, Math.min(max, Math.round(size)));
+  const canvas = document.createElement("canvas");
+  canvas.width = side;
+  canvas.height = side;
+  canvas.getContext("2d").drawImage(bitmap, x, y, size, size, 0, 0, side, side);
+
+  const webp = await toBlob(canvas, "image/webp", 0.85);
+  return webp && webp.type === "image/webp" ? webp : await toBlob(canvas, "image/png");
 }

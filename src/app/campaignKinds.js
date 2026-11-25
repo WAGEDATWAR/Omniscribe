@@ -1,4 +1,5 @@
 import { recapText } from "../campaigns.js";
+import { openViewerDialog } from "../ui/viewerDialog.js";
 import { HEAD_BYTES, checkHandout, cleanFileName } from "../files.js";
 import { evaluateFormulaText } from "../party.js";
 import { routeHref } from "../views.js";
@@ -74,6 +75,15 @@ export function createCampaignKindUi({ store, storage, router, toast, bus, blobU
   }
 
   async function open(record, { download = false } = {}) {
+    if (record.kind === "pdf" && !download) {
+      const stored = await storage.getBlob(record.blobId);
+
+      if (stored) {
+        await openViewerDialog({ title: record.name, blob: stored.data, onDownload: () => open(record, { download: true }) });
+        return;
+      }
+    }
+
     await blobUrls.ensure([record.blobId]);
     const url = blobUrls.peek(record.blobId);
 

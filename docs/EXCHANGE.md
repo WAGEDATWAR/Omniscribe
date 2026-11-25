@@ -176,6 +176,8 @@ print and PDF agree.
   formulas, show them in a review dialog, apply on confirmation as one Undo step. Authored maps ship per pair (the
   generic system to 5e and 3.5e first). If the slice runs long, it moves to P8 and its row says why.
 
+**As built (slice F, first part).** `src/crop.js` (pure) holds the crop maths; `src/ui/cropDialog.js` is the dialog and "Keep the whole image" falls back to the uncropped 512 px scaler. `src/ui/viewerDialog.js` hosts the existing viewer in a dialog for PDF handouts. The familiar sheet editor (DEF-087) and translation (DEF-080) moved to P8: both need work across the store and Sheet page that is not a loose end.
+
 ## 13. Limits added
 
 `zipEntries` 6,000; `zipInflatedBytes` 512 MB; `zipEntryBytes` 64 MB; `zipRatio` 200; `revisionsPerCharacter` 20;

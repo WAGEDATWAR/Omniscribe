@@ -2,7 +2,8 @@ import { campaignsOf, onRoster } from "../campaigns.js";
 import { HEAD_BYTES, checkImage } from "../files.js";
 import { routeHref } from "../views.js";
 import { mountCharacterPage } from "../ui/character.js";
-import { scalePortrait } from "./images.js";
+import { openCropDialog } from "../ui/cropDialog.js";
+import { cropPortrait, scalePortrait } from "./images.js";
 
 export function initCharacter(ctx) {
   const { store, storage, router, actions, bus, toast, blobUrls } = ctx;
@@ -30,8 +31,17 @@ export function initCharacter(ctx) {
       return;
     }
 
+    let bitmap = null;
+
     try {
-      const image = await scalePortrait(file);
+      bitmap = await createImageBitmap(file);
+      const choice = await openCropDialog(bitmap);
+
+      if (!choice) {
+        return;
+      }
+
+      const image = choice === "whole" ? await scalePortrait(file) : await cropPortrait(bitmap, choice);
       const meta = await storage.putBlob({ type: image.type, data: image });
 
       if (!store.getCharacter(id)) {
@@ -44,6 +54,8 @@ export function initCharacter(ctx) {
       toast("Portrait updated.");
     } catch {
       toast("That image could not be read.", { tone: "error" });
+    } finally {
+      bitmap?.close?.();
     }
   }
 

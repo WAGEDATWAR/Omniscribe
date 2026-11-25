@@ -730,6 +730,8 @@ export const scenarios = [
       await page.waitFor('document.querySelector("#portrait-input")');
 
       await page.setFileInput("#portrait-input", [context.fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#crop-whole")');
+      await page.click("#crop-whole");
       await page.waitFor('document.querySelector("#portrait-img")?.complete && document.querySelector("#portrait-img").naturalWidth > 0');
 
       assert.equal(await page.evaluate('document.querySelector("#portrait-img").naturalWidth'), 512);
@@ -2164,6 +2166,59 @@ export const scenarios = [
       await page.waitFor('document.querySelector("#pdf-viewer-title").textContent.includes("generated sheet")');
       await page.click("#generated-journal");
       await page.waitFor('document.querySelector("#generated-journal").checked');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a PDF handout opens in the app viewer and closes again",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+      await go(page, "#/library", "#library-title");
+      await page.click("#new-campaign-btn");
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await page.click('.subnav-link[data-page="handouts"]');
+      await page.waitFor('document.querySelector("#handout-input")');
+      await page.setFileInput("#handout-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll("#rec-handouts-list [data-record]").length === 1');
+      await page.click('#rec-handouts-list button[aria-label^="Open"]');
+      await page.waitFor('document.querySelector("#viewer-dialog-host .pdf-page[data-rendered=true]")', { timeout: 20000 });
+      assert.equal(await page.evaluate('document.querySelector("#viewer-dialog-host .pdf-count").textContent'), "2 pages");
+      await page.click("#viewer-dialog-close");
+      await page.waitFor('!document.querySelector("#viewer-dialog-host")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "a portrait is cropped to a square, and cancelling changes nothing",
+    async run(page, context) {
+      await boot(page, context);
+      await page.click("#sample-btn");
+      await page.waitFor('document.querySelectorAll(".tile").length === 1');
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector("#portrait-input")');
+
+      await page.setFileInput("#portrait-input", [context.fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#crop-ok")');
+      await page.click("#crop-cancel");
+      await page.waitFor('!document.querySelector("#crop-ok")');
+      assert.equal(await page.evaluate('document.querySelector("#portrait-img")'), null);
+
+      await page.setFileInput("#portrait-input", [context.fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#crop-ok")');
+      await page.evaluate(`(() => {
+        const zoom = document.querySelector("#crop-zoom");
+        zoom.value = "2";
+        zoom.dispatchEvent(new Event("input", { bubbles: true }));
+        document.querySelector("#crop-preview").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        return true;
+      })()`);
+      await page.click("#crop-ok");
+      await page.waitFor('document.querySelector("#portrait-img")?.complete && document.querySelector("#portrait-img").naturalWidth > 0');
+      assert.equal(await page.evaluate('document.querySelector("#portrait-img").naturalWidth'), await page.evaluate('document.querySelector("#portrait-img").naturalHeight'));
+      await saved(page);
       assertClean(page);
     }
   },

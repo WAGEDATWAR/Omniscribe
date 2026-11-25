@@ -46,12 +46,12 @@ Planned in `docs/OMNISCRIBE.md` 7. Each gate is in `PLAN.md`; a regression block
       DEF-040, DEF-042)
 - [~] **P6 - Durability and exchange.** Zip backup, bundles, revisions, integrity, search, the generated
       PDF sheet with the upload override. (DEF-022, DEF-030, DEF-032, DEF-033, DEF-052, DEF-064,
-      DEF-071, DEF-080)
+      DEF-071)
 - [ ] **P7 - Release.** UI evaluation and redesign, PWA, GitHub Pages, Windows and Android builds,
       accessibility. (DEF-060, DEF-061, DEF-062, DEF-065, DEF-066, DEF-067)
 - [ ] **v1.**
 - [ ] **P8 - Expansion (post-v1, DEF-014).** Random tables, 3D dice, PDF form mapping, importers,
-      encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051, DEF-077, DEF-081)
+      encryption. (DEF-004, DEF-012, DEF-014, DEF-020, DEF-031, DEF-041, DEF-050, DEF-051, DEF-077, DEF-080, DEF-081, DEF-087)
 
 ## Decisions needed
 
@@ -108,7 +108,8 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
 - [x] `M` `P6` Import entry points on the Library and in the palette.
 - [x] `M` `P6-D` Search everywhere.
 - [x] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
-- [ ] `M` `P6-F` Portrait cropping, handout PDFs in the viewer, familiar sheet editor, translation (DEF-022, DEF-090, DEF-087, DEF-080).
+- [x] `M` `P6-F1` Portrait cropping and handout PDFs in the app viewer (DEF-022, DEF-090).
+- [x] `M` `P6-F2` Familiar sheet editor and translation maps moved to P8 (DEF-087, DEF-080).
 - [ ] `H` `P6` Phase gate twice, release 0.7.0.
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).
 - [ ] `M` Review the Sheet page and the visual editor by eye on a real phone.
@@ -119,7 +120,7 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
   fields, pools, collections and their columns, tables, conditions, rests, rolls and sections, with a
   Visual and JSON switch. A derived system's form edits are written back as overlay operations by
   `makeOverlay` (round-tripped by tests); an override can clear a property or table entry with `null`.
-  Also: the translation layer concept is scheduled (S-17; DEF-079 in P4, DEF-080 in P6, DEF-081 later).
+  Also: the translation layer concept is scheduled (S-17; DEF-079 in P4, DEF-080 in P8, DEF-081 later).
 - **P2 built-ins, diff and sidebar (uncommitted after 422cd88).** D&D 3.5e and 5e as built-in systems
   (generated from a script for the long lists, checked against hand-computed numbers including multiclass
   attack lines and expertise), `defaultRows` so a new sheet starts with its skill list, the newer-version

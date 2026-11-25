@@ -1695,3 +1695,29 @@ textarea.input {
   border: 0;
   visibility: hidden;
 }
+
+.crop-stage {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.crop-preview {
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  cursor: grab;
+  touch-action: none;
+}
+
+.dialog-viewer {
+  width: min(900px, calc(100vw - 24px));
+}
+
+.dialog-viewer .pdf-pages {
+  max-height: calc(100vh - 220px);
+}

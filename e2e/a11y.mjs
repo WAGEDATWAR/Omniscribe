@@ -437,13 +437,45 @@ const states = [
     await page.evaluate('document.querySelector(".tile-link").click(); true');
     await page.waitFor('document.querySelector("#portrait-input")');
     await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#crop-whole")');
+      await page.click("#crop-whole");
     await page.waitFor('document.querySelector("#portrait-img")?.complete && document.querySelector("#portrait-img").naturalWidth > 0');
+  } },
+  { name: "portrait crop dialog", setup: async (page) => {
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#portrait-input")');
+    await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+    await page.waitFor('document.querySelector("#crop-ok")');
+  } },
+  { name: "mobile portrait crop dialog", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await addSample(page);
+    await page.evaluate('document.querySelector(".tile-link").click(); true');
+    await page.waitFor('document.querySelector("#portrait-input")');
+    await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+    await page.waitFor('document.querySelector("#crop-ok")');
+  } },
+  { name: "handout pdf viewer dialog", setup: async (page) => {
+    await page.click("#sample-btn");
+    await page.waitFor('document.querySelectorAll(".tile").length === 1');
+    await openPage(page, "#/library", "#library-title");
+    await page.click("#new-campaign-btn");
+    await page.waitFor('location.hash.startsWith("#/campaign/")');
+    await page.click('.subnav-link[data-page="handouts"]');
+    await page.waitFor('document.querySelector("#handout-input")');
+    await page.setFileInput("#handout-input", [fixture("sample.pdf")]);
+    await page.waitFor('document.querySelectorAll("#rec-handouts-list [data-record]").length === 1');
+    await page.click('#rec-handouts-list button[aria-label^="Open"]');
+    await page.waitFor('document.querySelector("#viewer-dialog-host .pdf-page[data-rendered=true]")', { timeout: 20000 });
   } },
   { name: "library with a portrait tile", setup: async (page) => {
     await addSample(page);
     await page.evaluate('document.querySelector(".tile-link").click(); true');
     await page.waitFor('document.querySelector("#portrait-input")');
     await page.setFileInput("#portrait-input", [fixture("portrait.png")]);
+      await page.waitFor('document.querySelector("#crop-whole")');
+      await page.click("#crop-whole");
     await page.waitFor('document.querySelector("#portrait-img")?.complete');
     await openPage(page, "#/library", "#library-title");
     await page.waitFor('document.querySelector(".tile img.avatar")');

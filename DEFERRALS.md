@@ -28,7 +28,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-004 | Level-up assistant driven by template data | automation of progression steps per template | post-v1 | scheduled |
 | DEF-005 | Rest actions: short and long rest reset pools | S-7; `applyRest` is built and tested, the buttons and undo come with the Sheet page | P2 | doing |
 | DEF-079 | Renames in a system version: a new version declares old-key to new-key maps so a move carries values instead of orphaning them | S-17 stage 1; small, safe and fixes the common update case; the diff dialog shows renames | P4 | scheduled |
-| DEF-080 | Translation between different systems: proposed field, row and column maps with conversion formulas, reviewed and confirmed in a dialog | S-17 stage 2; higher value, harder; needs maps authored per source system | P6 | scheduled |
+| DEF-080 | Translation between different systems: proposed field, row and column maps with conversion formulas, reviewed and confirmed in a dialog | S-17 stage 2; higher value, harder; needs maps authored per source system ; moved from P6 to P8 (needs per-pair maps and a review dialog; the spec allows the move) | P8 | scheduled |
 | DEF-081 | A visual editor for translation maps | after DEF-080 works from a file | post-v1 | scheduled |
 
 ## D. Dice
@@ -49,7 +49,7 @@ Owners are `P0`-`P7` or `post-v1`.
 |---|---|---|---|---|
 | DEF-020 | Read and write an uploaded PDF's form fields and map them to sheet values | the libraries are approved (P-14); this is the mapping surface | post-v1 | scheduled |
 | DEF-021 | A PDF fallback where inline viewing is unsupported | the in-app viewer (U-8) renders on every shell, so no fallback is needed | P7 | dropped |
-| DEF-022 | Image handouts and portrait cropping | portraits are scaled to 512 px and kept whole in P1 | P6 | scheduled |
+| DEF-022 | Image handouts and portrait cropping | portraits are scaled to 512 px and kept whole in P1 | P6 | done |
 | DEF-075 | Text selection and search inside the PDF viewer | needs PDF.js's text layer; the viewer draws canvases only | P7 | scheduled |
 | DEF-077 | Assisted import from a flat (non-form) PDF | such sheets, e.g. a printed web sheet, have no fields to map (DEF-020); extract text and let the person confirm values | post-v1 | scheduled |
 | DEF-076 | CJK character maps for PDFs with non-embedded Asian fonts | about 1.5 MB of `cmaps/` to vendor; excluded in P1 | P7 | scheduled |
@@ -103,8 +103,8 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-084 | Shared item and ability libraries with give-to actions | across characters; the charter backlog | post-v1 | scheduled |
 | DEF-085 | Journal attachments and images | text only in P4 | post-v1 | scheduled |
 | DEF-086 | Roll presets on inventory items | abilities carry rolls in P4 | post-v1 | scheduled |
-| DEF-087 | An editor for a familiar's own sheet on its page | a familiar keeps a sheet when promoted; editing one in place needs the Sheet builder to take a target other than the character | P6 | scheduled |
+| DEF-087 | An editor for a familiar's own sheet on its page | a familiar keeps a sheet when promoted; editing one in place needs the Sheet builder to take a target other than the character ; moved from P6 to P8 (the store, Sheet page and dice are tied to a character id, so a target is a refactor of its own) | P8 | scheduled |
 | DEF-088 | Conditions and effects on initiative entries | P5 tracks order, turns and notes only (K-12) | post-v1 | scheduled |
 | DEF-089 | Campaign calendar and in-fiction time | sessions carry a date only | post-v1 | scheduled |
-| DEF-090 | Handout PDFs open in the app's own viewer | P5 opens a PDF handout in the browser's tab and offers a download; the viewer is bound to a character's documents today | P6 | scheduled |
+| DEF-090 | Handout PDFs open in the app's own viewer | P5 opens a PDF handout in the browser's tab and offers a download; the viewer is bound to a character's documents today | P6 | done |
 | DEF-091 | Backup options for settings and the roll log (X-12) | the first backup holds characters, campaigns, systems and files | P6 | scheduled |
