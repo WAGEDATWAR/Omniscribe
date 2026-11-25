@@ -1,3 +1,4 @@
+import { layoutOf } from "../sheet/layout.js";
 import { formatValue } from "../sheet/template.js";
 import { resultCard } from "./dice.js";
 import { button, emptyState, h, replace, section } from "./dom.js";
@@ -509,30 +510,6 @@ function createTable(collection, handlers) {
       wrap.hidden = computedRows.length === 0;
     }
   };
-}
-
-function layoutOf(template) {
-  const used = new Set();
-  const sections = template.sections.map((definition) => {
-    definition.items.forEach((item) => used.add(item));
-    return definition;
-  });
-  const extraItems = [
-    ...template.fields.filter((field) => !used.has(field.key)).map((field) => field.key),
-    ...template.pools.filter((pool) => !used.has(pool.key)).map((pool) => pool.key)
-  ];
-  const extraTables = template.collections.filter((collection) => !used.has(collection.key));
-  const output = [...sections];
-
-  if (extraItems.length) {
-    output.push({ id: "other", title: "Other", layout: "fields", items: extraItems });
-  }
-
-  for (const collection of extraTables) {
-    output.push({ id: `table_${collection.key}`, title: collection.label, layout: "table", items: [collection.key] });
-  }
-
-  return output;
 }
 
 function systemCard(entry, { current, name, onChoose }) {

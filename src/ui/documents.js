@@ -31,6 +31,26 @@ export function mountDocumentsPage(root, handlers) {
     onclick: () => input.click()
   });
 
+  const journalBox = h("input", { id: "generated-journal", type: "checkbox", onchange: (event) => handlers.onIncludeJournal(event.target.checked) });
+  const generatedMeta = h("p", { class: "muted", id: "generated-meta" });
+  const generatedView = button({ id: "generated-view", label: "View", variant: "btn-small", onclick: () => handlers.onSelect("generated") });
+  const generatedSection = section(
+    {
+      id: "pdf-generated",
+      title: "Generated sheet",
+      description: "A PDF built from this character's values, inventory, abilities and more. It is always available and always current; an uploaded PDF replaces it only when you use that one as the sheet."
+    },
+    generatedMeta,
+    h("label", { class: "radio-row" }, journalBox, h("span", { text: "Include journal text and secret entries" })),
+    h(
+      "div",
+      { class: "section-actions" },
+      generatedView,
+      button({ id: "generated-download", label: "Download", variant: "btn-small", onclick: () => handlers.onDownloadGenerated() }),
+      button({ id: "generated-print", icon: "download", label: "Print the sheet", variant: "btn-small", onclick: () => handlers.onPrint() })
+    )
+  );
+
   const list = h("ul", { class: "doc-list", "aria-label": "PDF documents" });
   const empty = h("div", { id: "pdf-empty" });
   const viewerTitle = h("h3", { class: "viewer-title", id: "pdf-viewer-title" });
@@ -49,7 +69,7 @@ export function mountDocumentsPage(root, handlers) {
     list
   );
 
-  replace(root, h("div", { class: "stack" }, documentsSection, viewerPanel));
+  replace(root, h("div", { class: "stack" }, generatedSection, documentsSection, viewerPanel));
 
   root.addEventListener("dragover", (event) => {
     if (event.dataTransfer?.types?.includes("Files")) {
@@ -123,7 +143,14 @@ export function mountDocumentsPage(root, handlers) {
 
   return {
     viewerHost,
-    render({ documents, selectedId, sheetId, missing }) {
+    render({ documents, selectedId, sheetId, missing, includeJournal = false, generated = null }) {
+      const showingGenerated = selectedId === "generated";
+
+      journalBox.checked = includeJournal;
+      generatedView.setAttribute("aria-pressed", String(showingGenerated));
+      generatedMeta.textContent = [sheetId ? "Your uploaded PDF is the sheet" : "This is the sheet", generated ? `${generated.pages} page${generated.pages === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ");
+      generatedSection.classList.toggle("is-selected", showingGenerated);
+
       const known = new Set(documents.map((document) => document.id));
 
       for (const [id, row] of rows) {
@@ -155,8 +182,8 @@ export function mountDocumentsPage(root, handlers) {
       const selected = documents.find((document) => document.id === selectedId);
 
       list.hidden = documents.length === 0;
-      viewerPanel.hidden = !selected;
-      viewerTitle.textContent = selected ? `Viewing ${selected.name}` : "";
+      viewerPanel.hidden = !selected && !showingGenerated;
+      viewerTitle.textContent = showingGenerated ? "Viewing the generated sheet" : selected ? `Viewing ${selected.name}` : "";
 
       if (documents.length === 0) {
         replace(
@@ -164,7 +191,7 @@ export function mountDocumentsPage(root, handlers) {
           emptyState(
             {
               title: "No PDF sheets yet",
-              message: "Upload a PDF character sheet to keep it with this character. A sheet generated from this character's values is planned for a later phase."
+              message: "Upload a PDF character sheet to keep it with this character, or use the generated sheet above."
             },
             button({ icon: "plus", label: "Upload PDF", variant: "btn-primary", onclick: () => input.click() })
           )

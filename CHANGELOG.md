@@ -13,6 +13,7 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - Check your library on the Data page finds and repairs links to missing files and characters, items in broken containers, and unused files.
 - Import: an Import button on the Library and an Import command in the palette choose a backup or bundle and open its review on the Data page.
 - Search everything: the command palette also searches characters, inventory, abilities, journal, relations, familiars, progression, campaigns, roster, sessions and handouts (secret session notes excluded). Type a word, or start with ? to search content only; up to 50 results.
+- A generated sheet on the PDF sheets page: a PDF built from the character (values in the system's section order, pools, conditions, inventory, abilities, familiars, relations, journal titles), drawn with our own small PDF writer. It is the sheet unless you use an uploaded PDF as the sheet. View, Download, and Print the sheet; journal text and secret entries only if you tick the box.
 - The zip reader refuses archives with too many entries, too much inflated data, suspicious compression, unsafe paths, zip64 or encryption before it inflates anything.
 - The Data page warns when storage is 80% full, lists the largest files with their owners, and refuses new uploads at 95%.
 

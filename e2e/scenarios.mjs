@@ -633,6 +633,8 @@ export const scenarios = [
 
       await page.reload();
       await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.click('.doc button[aria-label^="View"]');
+      await page.waitFor('document.querySelector("#pdf-viewer-title").textContent.startsWith("Viewing")');
       await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
       assert.match(await route(page), /\/pdf$/);
       assert.deepEqual(await samplePixels(page), { dark: true, light: true });
@@ -2110,6 +2112,61 @@ export const scenarios = [
     }
   }
   ,
+  {
+    name: "the generated sheet shows by default, downloads as a PDF and gives way to an uploaded sheet",
+    timeout: 60000,
+    async run(page, context) {
+      await boot(page, context);
+      await sampleToPdfPage(page);
+      await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+      assert.match(await page.evaluate('document.querySelector("#pdf-viewer-title").textContent'), /generated sheet/);
+      assert.match(await page.evaluate('document.querySelector("#generated-meta").textContent'), /This is the sheet · \d+ pages?/);
+      assert.equal(
+        await page.evaluate(`(() => {
+          const canvas = document.querySelector(".pdf-page canvas");
+          const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+          for (let index = 0; index < data.length; index += 4) if (data[index] < 60 && data[index + 3] === 255) return true;
+          return false;
+        })()`),
+        true
+      );
+
+      await page.evaluate(`(() => {
+        window.__blobs = [];
+        window.__frames = [];
+        const original = URL.createObjectURL.bind(URL);
+        URL.createObjectURL = (blob) => { window.__blobs.push(blob); return original(blob); };
+        const click = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function () { if (!this.download) click.call(this); };
+        new MutationObserver((records) => records.forEach((record) => record.addedNodes.forEach((node) => { if (node.tagName === "IFRAME") window.__frames.push(node.src); }))).observe(document.body, { childList: true });
+        return true;
+      })()`);
+
+      await page.click("#generated-download");
+      await page.waitFor("window.__blobs.length >= 1");
+      const head = await page.evaluate(`(async () => {
+        const bytes = new Uint8Array(await window.__blobs.at(-1).arrayBuffer());
+        return { start: String.fromCharCode(...bytes.subarray(0, 8)), end: String.fromCharCode(...bytes.subarray(bytes.length - 6)), size: bytes.length };
+      })()`);
+      assert.equal(head.start.slice(0, 5), "%PDF-");
+      assert.match(head.end, /%%EOF/);
+
+      await page.setFileInput("#pdf-input", [context.fixture("sample.pdf")]);
+      await page.waitFor('document.querySelectorAll(".doc").length === 1');
+      await page.click(".doc .doc-actions button:nth-child(2)");
+      await page.waitFor('document.querySelector("#generated-meta").textContent.startsWith("Your uploaded PDF is the sheet")');
+
+      await page.click("#generated-print");
+      await page.waitFor("window.__frames.length === 1");
+      assert.match(await page.evaluate("window.__frames[0]"), /^blob:/);
+
+      await page.click("#generated-view");
+      await page.waitFor('document.querySelector("#pdf-viewer-title").textContent.includes("generated sheet")');
+      await page.click("#generated-journal");
+      await page.waitFor('document.querySelector("#generated-journal").checked');
+      assertClean(page);
+    }
+  },
   {
     name: "a character bundle and a campaign bundle export, then import back without overwriting",
     async run(page, context) {

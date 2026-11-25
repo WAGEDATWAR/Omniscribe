@@ -87,7 +87,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-061 | A signed release APK and keystore | milestone debug APKs are cut by the plan | P7 | scheduled |
 | DEF-062 | A manual screen-reader pass on top of axe | | P7 | scheduled |
 | DEF-063 | Relations graph view | the list ships in P4 | P4 | scheduled |
-| DEF-064 | Generated PDF sheet from a character's data and system, with the uploaded PDF as an override | G-19; replaces the plain print view | P6 | scheduled |
+| DEF-064 | Generated PDF sheet from a character's data and system, with the uploaded PDF as an override | G-19; replaces the plain print view | P6 | done |
 | DEF-065 | PWA shell: service worker, manifest, icons | network-first with a hashed cache, as Loreweaver | P7 | scheduled |
 | DEF-066 | Windows build published with each tag | Electron wrapper in `desktop/` (P-15) | P7 | scheduled |
 | DEF-067 | Release workflow: Pages deploy, Windows build and APK attached to a GitHub release | G-18; Loreweaver's deploy workflow is the starting point | P7 | scheduled |

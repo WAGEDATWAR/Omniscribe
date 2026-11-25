@@ -1687,3 +1687,11 @@ textarea.input {
 .initiative-input {
   max-width: 7em;
 }
+
+.print-frame {
+  position: fixed;
+  width: 0;
+  height: 0;
+  border: 0;
+  visibility: hidden;
+}

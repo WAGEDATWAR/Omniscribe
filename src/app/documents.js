@@ -1,5 +1,10 @@
 import { HEAD_BYTES, checkPdf, cleanFileName } from "../files.js";
+import { buildPdf } from "../pdf/generate.js";
+import { sheetDocument } from "../pdf/sheetModel.js";
 import { createPdfViewer } from "../pdf/view.js";
+import { signatureOf } from "../revisions.js";
+import { evaluateSheet } from "../sheet/evaluate.js";
+import { saveFile } from "./download.js";
 import { mountDocumentsPage } from "../ui/documents.js";
 import { displayName } from "../schema.js";
 
@@ -10,6 +15,67 @@ export function initDocuments(ctx) {
   let renderToken = 0;
   let checkedKey = null;
   let missing = new Set();
+  let includeJournal = false;
+  let cache = null;
+
+  function generate(character) {
+    const key = `${signatureOf(character)}|${includeJournal}`;
+
+    if (cache?.key === key) {
+      return cache;
+    }
+
+    const resolved = character.sheet ? ctx.systems.resolve(character.sheet.template) : null;
+    const template = resolved?.ok ? resolved.template : null;
+    const computed = template ? evaluateSheet(template, character.sheet) : null;
+    const built = buildPdf(sheetDocument(character, { template, computed, systemName: template?.name ?? "", includeJournal }));
+
+    cache = { key, blob: new Blob([built.bytes], { type: "application/pdf" }), pages: built.pages, replaced: built.replaced };
+    return cache;
+  }
+
+  const fileNameOf = (character) => `${displayName(character).replace(/[\\/:*?"<>|]+/g, "").trim() || "character"} - sheet.pdf`;
+
+  function downloadGenerated() {
+    const character = store.getCharacter(currentId());
+
+    if (character) {
+      saveFile(generate(character).blob, fileNameOf(character));
+    }
+  }
+
+  async function print() {
+    const character = store.getCharacter(currentId());
+
+    if (!character) {
+      return;
+    }
+
+    const uploaded = character.documents.find((item) => item.id === character.pdf.uploadedId);
+    const record = uploaded && !missing.has(uploaded.blobId) ? await storage.getBlob(uploaded.blobId) : null;
+    const blob = record?.data ?? generate(character).blob;
+    const url = URL.createObjectURL(blob);
+    const frame = globalThis.document.createElement("iframe");
+
+    frame.className = "print-frame";
+    frame.setAttribute("aria-hidden", "true");
+    frame.tabIndex = -1;
+    frame.src = url;
+    frame.onload = () => {
+      try {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      } catch {
+        toast("Printing is not available here. Download the PDF and print it from there.", { tone: "error" });
+      }
+
+      setTimeout(() => {
+        frame.remove();
+        URL.revokeObjectURL(url);
+      }, 60000);
+    };
+    globalThis.document.body.append(frame);
+  }
 
   function currentId() {
     const route = router.current();
@@ -109,6 +175,13 @@ export function initDocuments(ctx) {
   }
 
   const view = mountDocumentsPage(document.querySelector("#character-pdf"), {
+    onIncludeJournal(value) {
+      includeJournal = value;
+      shown = null;
+      render();
+    },
+    onDownloadGenerated: downloadGenerated,
+    onPrint: print,
     onFiles: addFiles,
     onRename: (documentId, name) => store.renameDocument(currentId(), documentId, name),
     onSelect: (documentId) => store.selectDocument(documentId),
@@ -144,12 +217,13 @@ export function initDocuments(ctx) {
 
     const token = ++renderToken;
     const { selectedDocumentId } = store.getUi();
-    const selectedId = character.documents.some((item) => item.id === selectedDocumentId)
+    const selectedId = selectedDocumentId === "generated" || character.documents.some((item) => item.id === selectedDocumentId)
       ? selectedDocumentId
-      : character.pdf.uploadedId ?? character.documents[0]?.id ?? null;
+      : character.pdf.uploadedId ?? "generated";
+    const generated = selectedId === "generated" ? generate(character) : null;
     const blobKey = `${id}|${character.documents.map((item) => item.blobId).join(",")}`;
 
-    view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing });
+    view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing, includeJournal, generated });
 
     if (blobKey !== checkedKey) {
       const present = new Set((await storage.listBlobs()).map((blob) => blob.id));
@@ -160,7 +234,18 @@ export function initDocuments(ctx) {
 
       missing = new Set(character.documents.filter((item) => !present.has(item.blobId)).map((item) => item.blobId));
       checkedKey = blobKey;
-      view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing });
+      view.render({ documents: character.documents, selectedId, sheetId: character.pdf.uploadedId, missing, includeJournal, generated });
+    }
+
+    if (generated) {
+      const generatedKey = `generated:${generated.key}`;
+
+      if (generatedKey !== shown) {
+        shown = generatedKey;
+        viewer.show(generated.blob, { name: displayName(character) });
+      }
+
+      return;
     }
 
     const selected = character.documents.find((item) => item.id === selectedId);

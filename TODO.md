@@ -107,7 +107,7 @@ P5 is done (0.6.0). P6 has its spec (`docs/EXCHANGE.md`); the code follows in sl
 - [x] `H` `P6-C` Revisions and the integrity check with repair (DEF-032).
 - [x] `M` `P6` Import entry points on the Library and in the palette.
 - [x] `M` `P6-D` Search everywhere.
-- [ ] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
+- [x] `H` `P6-E` Generated PDF sheet, the main-sheet override and print (DEF-064).
 - [ ] `M` `P6-F` Portrait cropping, handout PDFs in the viewer, familiar sheet editor, translation (DEF-022, DEF-090, DEF-087, DEF-080).
 - [ ] `H` `P6` Phase gate twice, release 0.7.0.
 - [x] `H` The Sheet page and the character pages fit a phone screen (a grid track let wide content push the page sideways).

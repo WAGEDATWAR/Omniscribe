@@ -415,7 +415,17 @@ const states = [
     await openPdfPage(page);
     await uploadSample(page);
     await page.click('.doc button[aria-label^="Use"]');
-    await page.waitFor('document.querySelector(".doc-meta").textContent.includes("This is the sheet")');
+    await page.waitFor('document.querySelector(".doc .doc-meta").textContent.includes("This is the sheet")');
+  } },
+  { name: "character pdf sheets, the generated sheet with journal text", setup: async (page) => {
+    await openPdfPage(page);
+    await page.click("#generated-journal");
+    await page.waitFor('document.querySelector("#generated-journal").checked && document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
+  } },
+  { name: "mobile character pdf sheets with the generated sheet", setup: async (page) => {
+    await page.setViewport(390, 844);
+    await openPdfPage(page);
+    await page.waitFor('document.querySelector(".pdf-page[data-rendered=true]")', { timeout: 20000 });
   } },
   { name: "character pdf sheets, damaged file", setup: async (page) => {
     await openPdfPage(page);
