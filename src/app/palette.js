@@ -79,11 +79,15 @@ export function initPalette(ctx) {
 
   let indexed = { characters: null, campaigns: null, index: [] };
 
+  ctx.bus.on("layouts:changed", () => {
+    indexed = { characters: null, campaigns: null, index: [] };
+  });
+
   function getSearch(query, base) {
     const state = store.getState();
 
     if (indexed.characters !== state.characters || indexed.campaigns !== state.campaigns) {
-      indexed = { characters: state.characters, campaigns: state.campaigns, index: buildIndex(state.characters, state.campaigns) };
+      indexed = { characters: state.characters, campaigns: state.campaigns, index: buildIndex(state.characters, state.campaigns, ctx.layouts.ownLabels()) };
     }
 
     const shown = new Set(base.map((command) => command.id));

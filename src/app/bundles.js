@@ -16,7 +16,7 @@ export function createBundles(ctx) {
   async function build(kind, options, name) {
     await autosave.flush();
     const state = store.getState();
-    const contents = bundleContents({ kind, ...options, characters: state.characters, customSystems: await storage.listSystems() });
+    const contents = bundleContents({ kind, ...options, characters: state.characters, customSystems: await storage.listSystems(), layouts: ctx.layouts.all() });
     const blobs = [];
 
     for (const id of contents.blobIds) {
@@ -27,7 +27,7 @@ export function createBundles(ctx) {
       }
     }
 
-    const { bytes } = await buildArchive({ kind, characters: contents.characters, campaigns: contents.campaigns, systems: contents.systems, blobs, appVersion: ctx.version });
+    const { bytes } = await buildArchive({ kind, characters: contents.characters, campaigns: contents.campaigns, systems: contents.systems, layouts: contents.layouts, blobs, appVersion: ctx.version });
     saveFile(new Blob([bytes], { type: "application/zip" }), `${name}.omniscribe-bundle.zip`);
     return bytes.length;
   }

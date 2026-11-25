@@ -19,7 +19,7 @@ export function fold(text) {
 const TEXT_TYPES = new Set(["text", "long", "tags", "choice"]);
 const NEVER_INDEXED = new Set(["secretNotes"]);
 
-function bodyOf(descriptor, record) {
+function bodyOf(descriptor, record, labels) {
   const parts = [];
 
   for (const field of descriptor.fields) {
@@ -36,8 +36,10 @@ function bodyOf(descriptor, record) {
     }
   }
 
-  for (const entry of record.custom ?? []) {
-    parts.push(`${entry.label ?? ""} ${entry.value ?? ""}`);
+  for (const [id, value] of Object.entries(record.fields ?? {})) {
+    if (labels.has(id) && value !== false && value !== null && value !== "") {
+      parts.push(`${labels.get(id)} ${Array.isArray(value) ? value.join(" ") : value === true ? "" : value}`);
+    }
   }
 
   return parts.join(" ");
@@ -47,7 +49,7 @@ function entry({ kind, title, detail, body = "", route }) {
   return { kind, title: String(title ?? "").trim() || "Untitled", detail, route, foldedTitle: fold(title), folded: fold(`${title} ${body}`) };
 }
 
-export function buildIndex(characters, campaigns) {
+export function buildIndex(characters, campaigns, labels = new Map()) {
   const entries = [];
 
   for (const character of characters) {
@@ -58,7 +60,7 @@ export function buildIndex(characters, campaigns) {
         kind: "Character",
         title: name,
         detail: [character.player, character.systemId].filter((part) => part?.trim()).join(" · "),
-        body: [character.player, character.systemId, character.summary, character.notes, character.tags.join(" ")].join(" "),
+        body: [character.player, character.systemId, character.summary, character.notes, character.tags.join(" "), bodyOf({ fields: [] }, character, labels)].join(" "),
         route: { view: "character", id: character.id, sub: "overview" }
       })
     );
@@ -70,7 +72,7 @@ export function buildIndex(characters, campaigns) {
             kind: descriptor.label,
             title: record[descriptor.title],
             detail: name,
-            body: bodyOf(descriptor, record),
+            body: bodyOf(descriptor, record, labels),
             route: { view: "character", id: character.id, sub: kindId }
           })
         );
@@ -86,7 +88,7 @@ export function buildIndex(characters, campaigns) {
         kind: "Campaign",
         title: name,
         detail: campaign.system,
-        body: [campaign.system, campaign.description, campaign.tags.join(" ")].join(" "),
+        body: [campaign.system, campaign.description, campaign.tags.join(" "), bodyOf({ fields: [] }, campaign, labels)].join(" "),
         route: { view: "campaign", id: campaign.id, sub: "overview" }
       })
     );
@@ -102,7 +104,7 @@ export function buildIndex(characters, campaigns) {
             kind: descriptor.label,
             title: rosterName ?? record[descriptor.title],
             detail: name,
-            body: bodyOf(descriptor, record),
+            body: bodyOf(descriptor, record, labels),
             route: { view: "campaign", id: campaign.id, sub: kindId }
           })
         );

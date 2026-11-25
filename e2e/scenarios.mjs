@@ -29,6 +29,26 @@ async function type(page, selector, value) {
   })()`);
 }
 
+const SCHOOL_LAYOUT = { id: "lay_abilities", name: "My layout", surface: "abilities", base: "default", ops: [
+  { op: "add", target: "section", id: "magic", title: "Magic", after: "main" },
+  { op: "add", target: "field", field: { id: "cf_school", label: "School", type: "text", showInList: true }, section: "magic" }
+] };
+
+async function seedLayouts(page, layouts) {
+  await page.evaluate(`new Promise((resolve, reject) => {
+    const open = indexedDB.open("omniscribe", 1);
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const transaction = open.result.transaction("meta", "readwrite");
+      transaction.objectStore("meta").put(${JSON.stringify(layouts)}, "layouts");
+      transaction.oncomplete = () => { open.result.close(); resolve(true); };
+      transaction.onerror = () => reject(transaction.error);
+    };
+  })`);
+  await page.reload();
+  await page.waitFor('document.querySelector("#library-title") && !document.querySelector("#page-library").hidden');
+}
+
 const saved = (page) => page.waitFor('document.querySelector("#save-state").dataset.state === "saved"');
 const tileCount = (page) => page.evaluate('document.querySelectorAll(".tile").length');
 const route = (page) => page.evaluate("location.hash");
@@ -820,6 +840,55 @@ export const scenarios = [
     }
   },
   {
+    name: "anonymous custom fields from before layouts become declared fields, with every value kept",
+    async run(page, context) {
+      await boot(page, context);
+
+      await page.evaluate(`(async () => {
+        const { openStorage } = await import("/src/storage.js");
+        const storage = await openStorage();
+        const lists = { abilities: [], journal: [], relations: [], progression: [], familiars: [] };
+        const item = (id, name, custom) => ({ id, name, quantity: 1, custom });
+        await storage.backend.apply([
+          { store: "characters", put: [["char_old", { id: "char_old", name: "Old Hero", createdAt: 1, updatedAt: 1, documents: [], pdf: { preference: "generated", uploadedId: null }, sheet: null, rollPresets: [], ...lists,
+            inventory: { wallets: {}, items: [
+              item("item_a", "Sword", [{ label: "Rarity", type: "text", value: "Rare" }, { label: "Cursed", type: "checkbox", value: true }]),
+              item("item_b", "Shield", [{ label: "rarity", type: "text", value: "Common" }])
+            ] } }]] },
+          { store: "campaigns", put: [["camp_old", { id: "camp_old", name: "Old Saga", custom: [{ label: "Mood", type: "text", value: "Dark" }], roster: [], sessions: [], handouts: [], partyColumns: [] }]] },
+          { store: "meta", put: [["schemaVersion", 6]] }
+        ]);
+        storage.close();
+        return true;
+      })()`);
+
+      await page.reload();
+      await page.waitFor('document.querySelector(".tile-title")');
+      await saved(page);
+      await page.reload();
+      await page.waitFor('document.querySelector(".tile-title")');
+
+      await page.evaluate('document.querySelector(".tile-link").click(); true');
+      await page.waitFor('document.querySelector(".subnav-link[data-page=inventory]")');
+      await page.click('.subnav-link[data-page="inventory"]');
+      await page.waitFor('document.querySelectorAll("#rec-inventory-list [data-record]").length === 2');
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-inventory-form .layout-section").length'), 2);
+      assert.equal(await page.evaluate('document.querySelector("#rec-inventory-form [data-section=earlier] .subsection-title").textContent'), "From earlier");
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-inventory-form [data-section=earlier] .field").length'), 2);
+
+      await page.evaluate('document.querySelector("button[aria-label=\\"Edit Sword\\"]").click(); true');
+      assert.equal(await page.evaluate('[...document.querySelectorAll("#rec-inventory-form [data-section=earlier] input[type=text]")].map((input) => input.value).join()'), "Rare");
+      assert.equal(await page.evaluate('document.querySelector("#rec-inventory-form [data-section=earlier] input[type=checkbox]").checked'), true);
+
+      await go(page, "#/library", "#library-title");
+      await page.evaluate('document.querySelectorAll(".tile-link")[1].click(); true');
+      await page.waitFor('location.hash.startsWith("#/campaign/")');
+      await page.waitFor('document.querySelector("#campaign-s-earlier")');
+      assert.equal(await page.evaluate('document.querySelector("#campaign-s-earlier input").value'), "Dark");
+      assertClean(page);
+    }
+  },
+  {
     name: "data saved before documents existed is migrated and still opens",
     async run(page, context) {
       await boot(page, context);
@@ -848,7 +917,7 @@ export const scenarios = [
         return { value, documents: record.documents, pdf: record.pdf };
       })()`);
 
-      assert.equal(stored.value, 6);
+      assert.equal(stored.value, 7);
       assert.deepEqual(stored.documents, []);
       assert.deepEqual(stored.pdf, { preference: "generated", uploadedId: null });
 
@@ -1610,6 +1679,7 @@ export const scenarios = [
     name: "abilities count uses, roll their expression and take fields of your own",
     async run(page, context) {
       await boot(page, context);
+      await seedLayouts(page, [SCHOOL_LAYOUT]);
       await newCharacter(page, "Caster");
       await openRecords(page, "abilities");
 
@@ -1620,8 +1690,7 @@ export const scenarios = [
       await type(page, "#rec-abilities-expression", "2d6 + 1");
       await type(page, "#rec-abilities-name", "Fire bolt");
       await type(page, "#rec-abilities-uses-max", "2");
-      await page.click("#rec-abilities-add-custom");
-      await page.evaluate('(() => { const row = document.querySelector(".custom-row"); const inputs = row.querySelectorAll("input"); inputs[0].value = "School"; inputs[1].value = "Evocation"; return true; })()');
+      await type(page, "#rec-abilities-cf_school", "Evocation");
       await page.click("#rec-abilities-save");
       await page.waitFor('document.querySelectorAll("#rec-abilities-list [data-record]").length === 1');
       assert.match(await page.evaluate('document.querySelector("#rec-abilities-list").textContent'), /School: Evocation/);

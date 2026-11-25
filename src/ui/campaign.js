@@ -2,7 +2,7 @@ import { CAMPAIGN_LIMITS, CAMPAIGN_STATUSES, CAMPAIGN_STATUS_LABELS, campaignNam
 import { CAMPAIGN_PAGES, routeHref } from "../views.js";
 import { button, field, h, pageHeader, replace, section } from "./dom.js";
 import { createTagInput } from "./tagInput.js";
-import { customEditor } from "./records.js";
+import { createLayoutForm } from "./layoutForm.js";
 
 const ROOTS = CAMPAIGN_PAGES.filter((page) => page.id !== "overview").map((page) => page.id);
 
@@ -31,7 +31,28 @@ export function mountCampaignPage(root, handlers) {
     oninput: (event) => handlers.onChange({ initiativeExpression: event.target.value }, "initiative")
   });
   const tags = createTagInput({ id: "campaign-tags", label: "Tags", onChange: (next) => handlers.onChange({ tags: next }, null) });
-  const custom = customEditor("campaign");
+  let shownFields = {};
+  const details = createLayoutForm({
+    prefix: "campaign",
+    panels: true,
+    builtins: new Map([
+      ["name", { control: name }],
+      ["status", { control: status }],
+      ["system", { control: system }],
+      ["tags", { control: tags.element, id: "campaign-tags" }],
+      ["description", { control: description }],
+      ["initiativeExpression", { control: expression }]
+    ]),
+    descriptions: { details: "The basics of this campaign. Changes save as you type." },
+    onOwnChange: () => {
+      const read = details.read(shownFields);
+
+      if (!read.error) {
+        shownFields = read.values;
+        handlers.onOwnFields(read.values);
+      }
+    }
+  });
   const rolls = h("ol", { class: "roll-log", id: "campaign-rolls-list" });
   const counts = h("div", { class: "stat-row", id: "campaign-glance" });
   const secretsBox = h("input", { id: "campaign-export-secrets", type: "checkbox" });
@@ -41,31 +62,14 @@ export function mountCampaignPage(root, handlers) {
   const overview = h(
     "div",
     { class: "stack", id: "campaign-overview" },
-    section(
-      { id: "campaign-details", title: "Details", description: "The basics of this campaign. Changes save as you type." },
-      h(
-        "div",
-        { class: "field-grid" },
-        field({ id: "campaign-name", label: "Name" }, name),
-        field({ id: "campaign-status", label: "Status" }, status),
-        field({ id: "campaign-system", label: "Game system", hint: "Free text; a campaign may mix systems." }, system),
-        field({ id: "campaign-tags", label: "Tags", wide: true }, tags.element),
-        field({ id: "campaign-description", label: "Description", wide: true }, description),
-        field({ id: "campaign-initiative-expression", label: "Initiative roll", hint: "Optional. Empty uses the game system's, then 1d20." }, expression)
-      )
-    ),
+    details.element,
     section({ id: "campaign-glance-section", title: "At a glance" }, counts),
     section(
       { id: "campaign-share-section", title: "Share this campaign", description: "Export the campaign with its roster characters and files as one bundle. Anyone can import it from the Data page." },
       h("label", { class: "radio-row" }, secretsBox, h("span", { text: "Include secret notes and secret journal entries" })),
       button({ id: "campaign-export", icon: "download", label: "Export bundle", variant: "btn-small", onclick: () => handlers.onExport(secretsBox.checked) })
     ),
-    section({ id: "campaign-rolls-section", title: "Recent rolls", description: "Rolls made for this campaign, such as initiative. Secret rolls are left out." }, rolls),
-    section(
-      { id: "campaign-custom-section", title: "Your own fields", description: "Anything this page has no field for." },
-      custom.element,
-      button({ id: "campaign-custom-save", label: "Save your fields", variant: "btn-small", onclick: () => handlers.onCustom(custom.read()) })
-    )
+    section({ id: "campaign-rolls-section", title: "Recent rolls", description: "Rolls made for this campaign, such as initiative. Secret rolls are left out." }, rolls)
   );
 
   const roots = new Map(ROOTS.map((id) => [id, h("div", { id: `campaign-${id}`, hidden: true })]));
@@ -96,7 +100,7 @@ export function mountCampaignPage(root, handlers) {
   }
 
   return {
-    render(campaign, { force: forced = false, sub = "overview", recentRolls = [] } = {}) {
+    render(campaign, { layout = null, force: forced = false, sub = "overview", recentRolls = [] } = {}) {
       const force = forced || campaign.id !== shownId;
       shownId = campaign.id;
 
@@ -126,6 +130,10 @@ export function mountCampaignPage(root, handlers) {
         element.hidden = sub !== id;
       }
 
+      if (layout) {
+        details.setLayout(layout);
+      }
+
       setValue(name, campaign.name, force);
       setValue(system, campaign.system, force);
       setValue(status, campaign.status, true);
@@ -136,9 +144,8 @@ export function mountCampaignPage(root, handlers) {
         tags.set(campaign.tags);
       }
 
-      if (force) {
-        custom.set(campaign.custom);
-      }
+      shownFields = campaign.fields;
+      details.write(campaign.fields, { keepFocus: !force });
 
       replace(
         counts,

@@ -119,6 +119,26 @@ async function createSystem(page) {
 }
 
 /* Every new dialog or page joins this list in the same change (U-3). */
+const SCHOOL_LAYOUT = { id: "lay_abilities", name: "My layout", surface: "abilities", base: "default", ops: [
+  { op: "add", target: "section", id: "magic", title: "Magic", after: "main" },
+  { op: "add", target: "field", field: { id: "cf_school", label: "School", type: "text", showInList: true }, section: "magic" }
+] };
+
+async function seedLayouts(page, layouts) {
+  await page.evaluate(`new Promise((resolve, reject) => {
+    const open = indexedDB.open("omniscribe", 1);
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const transaction = open.result.transaction("meta", "readwrite");
+      transaction.objectStore("meta").put(${JSON.stringify(layouts)}, "layouts");
+      transaction.oncomplete = () => { open.result.close(); resolve(true); };
+      transaction.onerror = () => reject(transaction.error);
+    };
+  })`);
+  await page.reload();
+  await page.waitFor('document.querySelector("#library-title") && !document.querySelector("#page-library").hidden');
+}
+
 const states = [
   { name: "dice page, empty", setup: async (page) => openPage(page, "#/dice", "#dice-title") },
   { name: "dice page with a result, a bad expression and a log", setup: async (page) => {
@@ -249,8 +269,11 @@ const states = [
     await page.waitFor('!document.querySelector("#rec-inventory-error").hidden');
   } },
   { name: "abilities page with a roll result and a custom field", setup: async (page) => {
+    await seedLayouts(page, [{ id: "lay_abilities", name: "My layout", surface: "abilities", base: "default", ops: [
+      { op: "add", target: "section", id: "magic", title: "Magic", after: "main" },
+      { op: "add", target: "field", field: { id: "cf_school", label: "School", type: "text", showInList: true }, section: "magic" }
+    ] }]);
     await openRecordsPage(page, "abilities");
-    await page.click("#rec-abilities-add-custom");
     await fillRecord(page, "abilities", { name: "Fire bolt", expression: "2d6", "uses-max": "3" });
     await page.waitFor('document.querySelectorAll("#rec-abilities-list [data-record]").length === 1');
     await page.evaluate('document.querySelector("button[aria-label=\\"Roll Fire bolt\\"]").click(); true');

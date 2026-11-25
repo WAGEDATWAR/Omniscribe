@@ -27,10 +27,10 @@ const CAMPAIGN = [
     fields: [
       { key: "name", type: "text", label: "Name", required: true },
       { key: "status", type: "choice", label: "Status" },
-      { key: "system", type: "text", label: "Game system" },
+      { key: "system", type: "text", label: "Game system", hint: "Free text; a campaign may mix systems." },
       { key: "tags", type: "tags", label: "Tags", wide: true },
       { key: "description", type: "long", label: "Description", wide: true },
-      { key: "initiativeExpression", type: "text", label: "Initiative roll" }
+      { key: "initiativeExpression", type: "text", label: "Initiative roll", hint: "Optional. Empty uses the game system's, then 1d20." }
     ]
   }
 ];
@@ -66,5 +66,5 @@ export function defaultSections(surface) {
   }
 
   const kind = KINDS[surface] ?? CAMPAIGN_KINDS[surface];
-  return RECORD_SURFACES.includes(surface) && kind ? fromKind(kind) : [];
+  return kind ? fromKind(kind) : [];
 }

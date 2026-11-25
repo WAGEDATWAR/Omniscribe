@@ -1,3 +1,4 @@
+import { mergeLayouts } from "./layouts/migrate.js";
 import { SCHEMA_VERSION, isNewerVersion, migrateProject } from "./migrations.js";
 import { normalizeProject } from "./schema.js";
 import { createIndexedDbBackend, isIndexedDbAvailable, openDatabase } from "./storage/idb.js";
@@ -39,14 +40,19 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
 
       const records = await backend.getAll("characters");
       const campaigns = await backend.getAll("campaigns");
-      const project = normalizeProject(
-        migrateProject({ version: stored ?? SCHEMA_VERSION, characters: records, campaigns }),
-        { now: now() }
-      );
+      const migratedProject = migrateProject({ version: stored ?? SCHEMA_VERSION, characters: records, campaigns });
+      const project = normalizeProject(migratedProject, { now: now() });
+      const have = (await backend.get("meta", "layouts")) ?? [];
+      const layouts = mergeLayouts(Array.isArray(have) ? have : [], migratedProject.layouts ?? []);
+
+      if (layouts.length !== have.length || (migratedProject.layouts ?? []).length) {
+        await backend.apply([{ store: "meta", put: [["layouts", layouts]] }]);
+      }
 
       return {
         characters: project.characters,
         campaigns: project.campaigns,
+        layouts,
         migrated: stored !== null && stored < SCHEMA_VERSION,
         empty: stored === null && records.length === 0 && campaigns.length === 0
       };
@@ -94,6 +100,15 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
       });
     },
 
+    async getLayouts() {
+      const list = await backend.get("meta", "layouts");
+      return Array.isArray(list) ? list : [];
+    },
+
+    saveLayouts(list) {
+      return enqueue(() => backend.apply([{ store: "meta", put: [["layouts", list]] }]));
+    },
+
     async listSystems() {
       return (await backend.getAll("templates")).map((record) => record.file);
     },
@@ -116,7 +131,7 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
      * Swaps the whole library in one transaction (X-4): every record, user system and file not in the new set goes,
      * so a failure leaves the old data. `blobs` are `{ id, type, addedAt, data: Blob }`.
      */
-    replaceLibrary({ characters = [], campaigns = [], systems = [], blobs = [], keepBlobs = [] }) {
+    replaceLibrary({ characters = [], campaigns = [], systems = [], layouts = [], blobs = [], keepBlobs = [] }) {
       return enqueue(async () => {
         const savedAt = now();
         const keep = new Set([...blobs.map((blob) => blob.id), ...keepBlobs]);
@@ -129,7 +144,7 @@ export function createStorage(backend, { now = Date.now, degraded = false } = {}
           { store: "templates", delete: await backend.keys("templates"), put: systems.map((file) => [systemKey(file), { key: systemKey(file), file, addedAt: savedAt }]) },
           { store: "blobs", delete: oldBlobs, put: blobs.map((blob) => [blob.id, { id: blob.id, type: blob.type, size: blob.data.size, addedAt: blob.addedAt ?? savedAt, data: blob.data }]) },
           { store: "revisions", delete: (await backend.keys("revisions")).filter((key) => String(key).startsWith("rev_")), put: [] },
-          { store: "meta", put: [["schemaVersion", SCHEMA_VERSION], ["savedAt", savedAt]] }
+          { store: "meta", put: [["schemaVersion", SCHEMA_VERSION], ["savedAt", savedAt], ["layouts", layouts]] }
         ]);
 
         return savedAt;

@@ -1,5 +1,6 @@
 import { repairContainers } from "../inventory.js";
 import { cleanText, createId, finiteNumber, isPlainObject, isValidId, normalizeTags } from "../utils.js";
+import { normalizeStoredValues } from "../layouts/values.js";
 import { RECORD_LIMITS, kindOf } from "./kinds.js";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -105,35 +106,6 @@ export function defaultValue(spec, now = Date.now()) {
   }
 }
 
-/** User-defined fields on any record (C-11): a label, a type and a value. Bad entries are dropped. */
-export function normalizeCustom(raw) {
-  const fields = [];
-
-  for (const entry of Array.isArray(raw) ? raw : []) {
-    if (!isPlainObject(entry)) {
-      continue;
-    }
-
-    const label = cleanText(entry.label, RECORD_LIMITS.customLabel).trim();
-    const type = CUSTOM_TYPES.includes(entry.type) ? entry.type : "text";
-
-    if (!label) {
-      continue;
-    }
-
-    const value =
-      type === "number" ? finiteNumber(entry.value, 0) : type === "checkbox" ? entry.value === true : cleanText(entry.value, RECORD_LIMITS.customText);
-
-    fields.push({ label, type, value });
-
-    if (fields.length >= RECORD_LIMITS.custom) {
-      break;
-    }
-  }
-
-  return fields;
-}
-
 /** Cleans one stored record of a kind, or returns null when it is not a record. Unknown keys are kept in `extensions`. */
 export function normalizeRecord(kindId, raw, hooks = {}) {
   const kind = kindOf(kindId);
@@ -142,7 +114,7 @@ export function normalizeRecord(kindId, raw, hooks = {}) {
     return null;
   }
 
-  const known = new Set(["id", "custom", "extensions", ...kind.fields.map((field) => field.key)]);
+  const known = new Set(["id", "custom", "fields", "extensions", ...kind.fields.map((field) => field.key)]);
   const extensions = isPlainObject(raw.extensions) ? plainCopy(raw.extensions) : {};
   const unknown = {};
 
@@ -162,7 +134,7 @@ export function normalizeRecord(kindId, raw, hooks = {}) {
     record[spec.key] = normalizeValue(spec, raw[spec.key], hooks);
   }
 
-  record.custom = normalizeCustom(raw.custom);
+  record.fields = normalizeStoredValues(raw.fields);
   record.extensions = extensions;
   return record;
 }

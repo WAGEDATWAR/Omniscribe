@@ -184,10 +184,6 @@ export function sheetDocument(character, { template = null, computed = null, sys
     blocks.push(...systemBlocks(template, computed));
   }
 
-  if (character.custom?.length) {
-    blocks.push({ type: "heading", text: "Your own fields" }, { type: "pairs", rows: character.custom.map((entry) => [entry.label || "Field", entry.value]) });
-  }
-
   blocks.push(
     ...inventoryBlocks(character),
     ...tableBlock("Abilities", [{ label: "Name" }, { label: "Kind" }, { label: "Summary" }], character.abilities.map((entry) => [entry.name || "Unnamed", entry.kind, entry.summary])),

@@ -16,6 +16,7 @@ later phase adds records, not stores. Only `meta`, `characters` and `blobs` are 
 | Store | Key | Value |
 |---|---|---|
 | `meta` | `schemaVersion`, `savedAt` | the schema version that wrote the data, the last save time |
+| `meta` | `layouts` | the user's page layouts (docs/LAYOUTS.md), a list of layout files; schema 7 moved anonymous `custom` entries to `fields` and created them |
 | `characters` | `char_*` | one character aggregate |
 | `blobs` | `blob_*` | `{ id, type, size, addedAt, data: Blob }` |
 

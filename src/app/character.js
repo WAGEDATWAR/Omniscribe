@@ -67,6 +67,13 @@ export function initCharacter(ctx) {
         store.updateCharacter(id, patch, { key: key ? `${id}:${key}` : null });
       }
     },
+    onOwnFields(fields) {
+      const id = currentId();
+
+      if (id) {
+        store.updateCharacter(id, { fields }, { key: `${id}:fields` });
+      }
+    },
     onExport: () => ctx.bundles.exportCharacter(currentId()),
     onDuplicate: () => actions.duplicate(currentId(), { open: true }),
     async onDelete() {
@@ -128,6 +135,7 @@ export function initCharacter(ctx) {
 
     const blobId = character.portraitBlobId;
     const switched = view.render(character, {
+      layout: ctx.layouts.resolved("character"),
       force,
       sub: router.current().sub,
       portraitUrl: blobId ? blobUrls.peek(blobId) : null,
@@ -160,4 +168,5 @@ export function initCharacter(ctx) {
   store.subscribe(() => show());
   bus.on("data:reloaded", () => show({ force: true }));
   bus.on("revisions:changed", () => show());
+  bus.on("layouts:changed", () => show({ force: true }));
 }

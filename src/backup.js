@@ -1,3 +1,5 @@
+import { mergeLayouts } from "./layouts/migrate.js";
+import { validateLayoutFile } from "./layouts/resolve.js";
 import { isShared } from "./campaigns.js";
 import { referencedBlobIds } from "./integrity.js";
 import { LIMITS } from "./limits.js";
@@ -19,7 +21,7 @@ export async function sha256Hex(bytes) {
  * Builds a backup or bundle zip (X-3). `blobs` is `[{ id, type, size, addedAt, bytes }]`; only the blobs given are
  * written, so a bundle passes the ones its records reference. Returns `{ bytes, manifest }`.
  */
-export async function buildArchive({ kind = "backup", characters, campaigns = [], systems = [], blobs = [], appVersion = "", now = Date.now() }) {
+export async function buildArchive({ kind = "backup", characters, campaigns = [], systems = [], layouts = [], blobs = [], appVersion = "", now = Date.now() }) {
   const files = [];
   const entries = [];
 
@@ -35,13 +37,13 @@ export async function buildArchive({ kind = "backup", characters, campaigns = []
     schemaVersion: SCHEMA_VERSION,
     appVersion,
     createdAt: now,
-    counts: { characters: characters.length, campaigns: campaigns.length, systems: systems.length, blobs: blobs.length }
+    counts: { characters: characters.length, campaigns: campaigns.length, systems: systems.length, layouts: layouts.length, blobs: blobs.length }
   };
 
   const text = (value) => encoder.encode(JSON.stringify(value));
   const bytes = await writeZip([
     { path: "manifest.json", data: text(manifest) },
-    { path: "project.json", data: text({ characters, campaigns, systems }) },
+    { path: "project.json", data: text({ characters, campaigns, systems, layouts }) },
     { path: "files.json", data: text(files) },
     ...entries
   ], { now: new Date(now) });
@@ -98,10 +100,10 @@ export async function readArchive(bytes, { now = Date.now(), caps } = {}) {
     fail("The backup holds more records than this app allows.");
   }
 
-  const project = normalizeProject(
-    migrateProject({ version: manifest.schemaVersion, characters: raw.characters, campaigns: Array.isArray(raw.campaigns) ? raw.campaigns : [] }),
-    { now }
-  );
+  const migrated = migrateProject({ version: manifest.schemaVersion, characters: raw.characters, campaigns: Array.isArray(raw.campaigns) ? raw.campaigns : [] });
+  const project = normalizeProject(migrated, { now });
+  const storedLayouts = (Array.isArray(raw.layouts) ? raw.layouts : []).map((layout) => validateLayoutFile(layout)).filter((checked) => checked.ok).map((checked) => checked.file);
+  const layouts = mergeLayouts(storedLayouts, migrated.layouts ?? []);
   const files = new Map();
   const problems = [];
 
@@ -118,6 +120,7 @@ export async function readArchive(bytes, { now = Date.now(), caps } = {}) {
     manifest,
     characters: project.characters,
     campaigns: project.campaigns,
+    layouts,
     systems: Array.isArray(raw.systems) ? raw.systems.filter((file) => file && typeof file.id === "string") : [],
     files,
     problems,
@@ -236,6 +239,7 @@ export function planAdd(archive, { characterIds = new Set(), campaignIds = new S
     characters,
     campaigns,
     systems: archive.systems,
+    layouts: archive.layouts,
     blobs: addedBlobs.map((id) => ({ from: id, to: map.get(id) ?? id, meta: archive.files.get(id) })),
     reused,
     renamed,
@@ -278,7 +282,7 @@ function withoutSecrets(character) {
  * What a bundle holds (X-6, X-8): one character, or a campaign with the characters on its roster. A shared bundle
  * (`secrets: false`) drops secret session notes and secret journal entries; handouts are for players and stay.
  */
-export function bundleContents({ kind, character = null, campaign = null, characters = [], customSystems = [], secrets = false }) {
+export function bundleContents({ kind, character = null, campaign = null, characters = [], customSystems = [], layouts = [], secrets = false }) {
   const chosen = kind === "campaign" ? campaign.roster.map((row) => characters.find((entry) => entry.id === row.characterId)).filter(Boolean) : [character];
   const unique = [...new Map(chosen.map((entry) => [entry.id, entry])).values()];
   const outCharacters = secrets ? unique : unique.map(withoutSecrets);
@@ -288,6 +292,7 @@ export function bundleContents({ kind, character = null, campaign = null, charac
     characters: outCharacters,
     campaigns: outCampaigns,
     systems: neededSystems(outCharacters, customSystems),
+    layouts,
     blobIds: [...referencedBlobIds(outCharacters, outCampaigns)]
   };
 }

@@ -1,5 +1,6 @@
 import { LIMITS } from "./limits.js";
-import { normalizeCustom, normalizeList } from "./records/normalize.js";
+import { normalizeStoredValues } from "./layouts/values.js";
+import { normalizeList } from "./records/normalize.js";
 import { createId, cleanText, finiteNumber, isPlainObject, isValidId, normalizeTags } from "./utils.js";
 
 /**
@@ -26,6 +27,7 @@ const CAMPAIGN_FIELDS = new Set([
   "initiative",
   "initiativeExpression",
   "custom",
+  "fields",
   "extensions",
   "createdAt",
   "updatedAt"
@@ -84,7 +86,7 @@ export function normalizeCampaign(raw, { now = Date.now() } = {}) {
     status: CAMPAIGN_STATUSES.includes(raw.status) ? raw.status : "planning",
     tags: normalizeTags(raw.tags, { max: LIMITS.tags, maxLength: LIMITS.tagLength }),
     initiativeExpression: cleanText(raw.initiativeExpression, CAMPAIGN_LIMITS.expression),
-    custom: normalizeCustom(raw.custom),
+    fields: normalizeStoredValues(raw.fields),
     extensions,
     createdAt,
     updatedAt: finiteNumber(raw.updatedAt, createdAt)

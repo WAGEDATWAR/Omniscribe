@@ -1,4 +1,5 @@
 import { createActions } from "./app/actions.js";
+import { createLayouts } from "./app/layouts.js";
 import { createBus } from "./app/bus.js";
 import { createBlobUrls } from "./app/blobs.js";
 import { createBundles } from "./app/bundles.js";
@@ -163,6 +164,7 @@ async function boot() {
     }
   };
 
+  ctx.layouts = createLayouts(ctx, loaded.layouts);
   ctx.actions = createActions(ctx);
   ctx.bundles = createBundles(ctx);
   ctx.rolling = createRolling(ctx);

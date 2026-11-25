@@ -1,4 +1,5 @@
 import { buildArchive, planAdd, readArchive, sha256Hex, verifyFiles } from "../backup.js";
+import { mergeLayouts } from "../layouts/migrate.js";
 import { referencedBlobIds } from "../integrity.js";
 import { LIMITS } from "../limits.js";
 import { createId, formatBytes, plural } from "../utils.js";
@@ -25,7 +26,7 @@ export function createBackupHandlers(ctx, getView, refresh) {
       }
     }
 
-    return buildArchive({ characters, campaigns, systems: await storage.listSystems(), blobs, appVersion: ctx.version });
+    return buildArchive({ characters, campaigns, systems: await storage.listSystems(), layouts: ctx.layouts.all(), blobs, appVersion: ctx.version });
   }
 
   async function review(bytes) {
@@ -87,7 +88,7 @@ export function createBackupHandlers(ctx, getView, refresh) {
     const safety = await snapshot();
 
     await storage.putSafetyBackup(new Blob([safety.bytes], { type: "application/zip" }));
-    const savedAt = await storage.replaceLibrary({ characters: plan.characters, campaigns: plan.campaigns, systems: plan.systems, blobs });
+    const savedAt = await storage.replaceLibrary({ characters: plan.characters, campaigns: plan.campaigns, systems: plan.systems, layouts: plan.layouts, blobs });
     store.replaceAll(plan.characters, plan.campaigns);
     guard.notifySaved(savedAt);
     toast("Restored. Reloading…");
@@ -134,6 +135,7 @@ export function createBackupHandlers(ctx, getView, refresh) {
     }
 
     store.addMany(plan.characters, plan.campaigns);
+    await ctx.layouts.replaceAll(mergeLayouts(ctx.layouts.all(), plan.layouts));
     await autosave.flush();
     toast(`Added ${plural(plan.characters.length, "character")} and ${plural(plan.campaigns.length, "campaign")}. Undo removes them.`);
 

@@ -1,5 +1,6 @@
-import { RECORD_LIMITS } from "../records/kinds.js";
 import { button, emptyState, field, h, replace, section } from "./dom.js";
+import { isEmptyValue } from "../layouts/values.js";
+import { createLayoutForm, showOwn } from "./layoutForm.js";
 
 function controlFor(kind, spec) {
   const id = `rec-${kind.id}-${spec.key}`;
@@ -83,84 +84,6 @@ function readControl(spec, control) {
   return { value: control.value };
 }
 
-export function customEditor(kindId) {
-  const rows = h("div", { class: "stack custom-rows", id: `rec-${kindId}-custom-rows` });
-  const entries = [];
-
-  function addRow(entry = { label: "", type: "text", value: "" }) {
-    const index = entries.length + 1;
-    const label = h("input", { class: "input", type: "text", maxLength: RECORD_LIMITS.customLabel, "aria-label": `Custom field ${index} name`, placeholder: "Name" });
-    const type = h("select", { class: "input", "aria-label": `Custom field ${index} type` }, [["text", "Text"], ["number", "Number"], ["checkbox", "Yes or no"]].map(([value, text]) => h("option", { value, text })));
-    const value = h("input", { class: "input", type: "text", maxLength: RECORD_LIMITS.customText, "aria-label": `Custom field ${index} value` });
-    const check = h("input", { class: "checkbox", type: "checkbox", "aria-label": `Custom field ${index} value` });
-    const row = h("div", { class: "custom-row" });
-    const record = { row, label, type, value, check };
-
-    function sync() {
-      value.hidden = type.value === "checkbox";
-      check.hidden = type.value !== "checkbox";
-      value.type = type.value === "number" ? "number" : "text";
-      value.step = "any";
-    }
-
-    type.addEventListener("change", sync);
-    label.value = entry.label;
-    type.value = entry.type;
-
-    if (entry.type === "checkbox") {
-      check.checked = entry.value === true;
-    } else {
-      value.value = String(entry.value ?? "");
-    }
-
-    sync();
-    row.append(label, type, value, check, button({ label: "Remove", ariaLabel: `Remove custom field ${index}`, variant: "btn-small btn-danger-text", onclick: () => {
-      entries.splice(entries.indexOf(record), 1);
-      row.remove();
-    } }));
-    entries.push(record);
-    rows.append(row);
-  }
-
-  return {
-    element: h(
-      "div",
-      { class: "stack" },
-      h("h3", { class: "subsection-title", text: "Your own fields" }),
-      h("p", { class: "field-hint", text: "Anything this page has no field for: a rarity, a school, an alignment. Each field has a name, a type and a value." }),
-      rows,
-      button({ id: `rec-${kindId}-add-custom`, label: "Add a field", variant: "btn-small", onclick: () => addRow() })
-    ),
-    set(list) {
-      entries.length = 0;
-      rows.replaceChildren();
-
-      for (const entry of list ?? []) {
-        addRow(entry);
-      }
-    },
-    read() {
-      const custom = [];
-
-      for (const { label, type, value, check } of entries) {
-        const name = label.value.trim();
-
-        if (!name) {
-          continue;
-        }
-
-        custom.push({
-          label: name,
-          type: type.value,
-          value: type.value === "checkbox" ? check.checked : type.value === "number" ? (value.value.trim() === "" ? 0 : Number(value.value)) : value.value
-        });
-      }
-
-      return custom;
-    }
-  };
-}
-
 /**
  * The one list page every kind of record uses (C-11). It is built from the kind's descriptor, plus the
  * kind's own hooks for what a descriptor cannot say (`ui`): `rowControls`, `summary`, `formExtras`, `top`,
@@ -175,30 +98,22 @@ export function mountRecordPage(root, kind, ui, handlers) {
   const extra = h("div", { class: "stack", id: `rec-${kind.id}-extra` });
   const error = h("p", { class: "field-error", id: `rec-${kind.id}-error`, hidden: true, role: "alert" });
   const controls = new Map();
-  const custom = customEditor(kind.id);
   const extras = ui.formExtras ?? [];
   const saveButton = button({ id: `rec-${kind.id}-save`, label: `Add ${kind.noun}`, variant: "btn-primary", type: "submit" });
   const cancelButton = button({ id: `rec-${kind.id}-cancel`, label: "Cancel", onclick: () => reset() });
   const filterBar = h("div", { class: "toolbar", id: `rec-${kind.id}-filters` });
   let editing = null;
+  let editingRecord = null;
   let filterState = {};
   let lastView = { records: [], character: null };
 
-  const fieldNodes = [];
+  const builtins = new Map();
+  const trailing = [];
 
   for (const spec of kind.fields.filter((entry) => !entry.hidden && entry.type !== "uses")) {
     const control = controlFor(kind, spec);
     controls.set(spec.key, control);
-
-    if (spec.type === "bool") {
-      fieldNodes.push(h("div", { class: "field" }, h("label", { class: "check-label" }, control, h("span", { text: spec.label }))));
-    } else {
-      fieldNodes.push(field({ id: control.id, label: spec.label, hint: spec.hint, wide: spec.type === "long" }, control));
-    }
-
-    if (control.listElement) {
-      fieldNodes.push(control.listElement);
-    }
+    builtins.set(spec.key, { control });
   }
 
   if (kind.fields.some((spec) => spec.type === "uses")) {
@@ -206,7 +121,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
     const resetOn = h("input", { id: `rec-${kind.id}-uses-reset`, class: "input", type: "text", maxLength: 40, autocomplete: "off", placeholder: "long, short, daily" });
     controls.set("uses.max", max);
     controls.set("uses.resetOn", resetOn);
-    fieldNodes.push(
+    trailing.push(
       field({ id: max.id, label: "Uses", hint: "Leave empty when it has no limit." }, max),
       field({ id: resetOn.id, label: "Restores on", hint: "A rest from the game system, or empty to restore by hand." }, resetOn)
     );
@@ -215,11 +130,25 @@ export function mountRecordPage(root, kind, ui, handlers) {
   const extraControls = extras.map((extra) => ({ extra, node: extra.build() }));
 
   for (const { extra, node } of extraControls) {
-    fieldNodes.push(field({ id: node.id, label: extra.label, hint: extra.hint }, node));
+    trailing.push(field({ id: node.id, label: extra.label, hint: extra.hint }, node));
   }
+
+  const layoutForm = createLayoutForm({ prefix: `rec-${kind.id}`, builtins, trailing });
+  const layoutOf = () => handlers.layout?.();
+
+  function applyLayout() {
+    const resolved = layoutOf();
+
+    if (resolved && layoutForm.setLayout(resolved) && editingRecord) {
+      layoutForm.write(editingRecord.fields);
+    }
+  }
+
+  applyLayout();
 
   function reset() {
     editing = null;
+    editingRecord = null;
     error.hidden = true;
 
     for (const spec of kind.fields) {
@@ -235,7 +164,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
       extra.write(node, null, lastView);
     }
 
-    custom.set([]);
+    layoutForm.write({});
     saveButton.querySelector("span").textContent = `Add ${kind.noun}`;
     cancelButton.hidden = true;
 
@@ -280,7 +209,13 @@ export function mountRecordPage(root, kind, ui, handlers) {
       Object.assign(fields, extra.read(node));
     }
 
-    fields.custom = custom.read();
+    const own = layoutForm.read(editingRecord?.fields ?? {});
+
+    if (own.error) {
+      return { error: own.error };
+    }
+
+    fields.fields = own.values;
     return { fields };
   }
 
@@ -307,6 +242,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
 
   function startEdit(record) {
     editing = record.id;
+    editingRecord = record;
     error.hidden = true;
 
     for (const spec of kind.fields) {
@@ -324,7 +260,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
       extra.write(node, record, lastView);
     }
 
-    custom.set(record.custom);
+    layoutForm.write(record.fields);
     saveButton.querySelector("span").textContent = `Save ${kind.noun}`;
     cancelButton.hidden = false;
     form.hidden = false;
@@ -335,8 +271,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
     "form",
     { id: `rec-${kind.id}-form`, class: "panel", onsubmit: submit, novalidate: true },
     h("h2", { class: "panel-title", text: `Add or edit ${/^[aeiou]/i.test(kind.noun) ? "an" : "a"} ${kind.noun}` }),
-    h("div", { class: "field-grid" }, fieldNodes),
-    custom.element,
+    layoutForm.element,
     error,
     h("div", { class: "section-actions" }, saveButton, cancelButton)
   );
@@ -367,7 +302,11 @@ export function mountRecordPage(root, kind, ui, handlers) {
     const title = (ui.title ? ui.title(record, character) : String(record[kind.title] ?? "").trim()) || `Untitled ${kind.noun}`;
     const api = { character, update: (patch, key) => handlers.onUpdate(record.id, patch, key), record };
     const summary = ui.summary ? ui.summary(record, character) : "";
-    const custom = record.custom.length ? record.custom.map((entry) => `${entry.label}: ${entry.type === "checkbox" ? (entry.value ? "yes" : "no") : entry.value}`).join(" · ") : "";
+    const listed = (layoutOf()?.sections ?? [])
+      .flatMap((entry) => entry.items)
+      .filter((item) => item.own && item.showInList && !item.hidden && !isEmptyValue(item.def, record.fields?.[item.key]))
+      .map((item) => `${item.label}: ${showOwn(item, record.fields[item.key])}`)
+      .join(" · ");
 
     return h(
       "article",
@@ -377,7 +316,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
         { class: "record-main" },
         h("strong", { class: "record-title", text: title }),
         summary ? h("p", { class: "record-summary", text: summary }) : null,
-        custom ? h("p", { class: "field-hint", text: custom }) : null,
+        listed ? h("p", { class: "field-hint", text: listed }) : null,
         ui.detail ? ui.detail(record, character) : null
       ),
       h(
@@ -400,6 +339,7 @@ export function mountRecordPage(root, kind, ui, handlers) {
     query: () => search.value.trim().toLowerCase(),
     filters: () => filterState,
     render(character, records) {
+      applyLayout();
       lastView = { records, character };
       const query = search.value.trim().toLowerCase();
       const visible = ui.filter ? ui.filter(records, { query, filters: filterState, character }) : records.filter((record) => JSON.stringify(record).toLowerCase().includes(query));

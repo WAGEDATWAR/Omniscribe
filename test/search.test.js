@@ -64,3 +64,13 @@ test("results are capped and say so", () => {
   assert.equal(result.truncated, true);
   assert.deepEqual(search(buildIndex([], []), "   "), { hits: [], total: 0, truncated: false });
 });
+
+test("values of your own fields are searchable under their label, orphaned ones are not", () => {
+  const { characters, campaigns } = library();
+  characters[0].inventory.items[0].fields = { cf_rarity: "Legendary", cf_gone: "Hidden word" };
+  const index = buildIndex(characters, campaigns, new Map([["cf_rarity", "Rarity"]]));
+
+  assert.equal(search(index, "legendary").hits[0].title, "Lantern");
+  assert.equal(search(index, "rarity legendary").hits.length, 1);
+  assert.equal(search(index, "hidden word").hits.length, 0);
+});

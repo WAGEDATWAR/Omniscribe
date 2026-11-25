@@ -3,6 +3,7 @@ import { CHARACTER_STATUSES, STATUS_LABELS, displayName, initials } from "../sch
 import { LIMITS } from "../limits.js";
 import { KIND_IDS } from "../records/kinds.js";
 import { button, field, h, pageHeader, replace, section } from "./dom.js";
+import { createLayoutForm } from "./layoutForm.js";
 import { createTagInput } from "./tagInput.js";
 
 /**
@@ -96,42 +97,35 @@ export function mountCharacterPage(root, handlers) {
 
   const header = h("div", { id: "character-header" });
   const nav = h("nav", { class: "subnav", "aria-label": "Character pages" });
-  const overview = h(
-    "div",
-    { class: "stack", id: "character-overview" },
-    section(
-      { id: "character-identity", title: "Identity", description: "Who this character is. Everything saves as you type." },
-      h(
-        "div",
-        { class: "field-grid" },
-        field({ id: "character-name", label: "Name" }, name),
-        field({ id: "character-player", label: "Player" }, player),
-        field({ id: "character-system", label: "Game system", hint: "A free label for now; game systems become real sheets in a later phase." }, system),
-        field({ id: "character-status", label: "Status" }, status),
-        field({ id: "character-summary", label: "Summary", wide: true }, summary),
-        field({ id: "character-tags", label: "Tags", hint: "Press Enter or comma to add a tag.", wide: true }, tags.element)
-      )
-    ),
-    section(
-      { id: "character-portrait-section", title: "Portrait", description: "Shown on this character's tile. Images are scaled down to 512 px and kept on this device." },
-      h(
-        "div",
-        { class: "portrait-block" },
-        portraitFrame,
-        h(
-          "div",
-          { class: "portrait-actions" },
-          button({ id: "portrait-choose", label: "Choose image", onclick: () => portraitInput.click() }),
-          removePortrait,
-          portraitInput
-        )
-      )
-    ),
-    section(
-      { id: "character-notes-section", title: "Notes", description: "Anything worth keeping that has no field yet." },
-      field({ id: "character-notes", label: "Notes", wide: true }, notes)
-    )
+  const portraitPanel = section(
+    { id: "character-portrait-section", title: "Portrait", description: "Shown on this character's tile. Images are cropped to a square and kept on this device." },
+    h("div", { class: "portrait-block" }, portraitFrame, h("div", { class: "portrait-actions" }, button({ id: "portrait-choose", label: "Choose image", onclick: () => portraitInput.click() }), removePortrait, portraitInput))
   );
+  let shownFields = {};
+  const details = createLayoutForm({
+    prefix: "character",
+    panels: true,
+    builtins: new Map([
+      ["name", { control: name }],
+      ["player", { control: player }],
+      ["systemId", { control: system }],
+      ["status", { control: status }],
+      ["summary", { control: summary }],
+      ["tags", { control: tags.element, id: "character-tags" }],
+      ["notes", { control: notes }]
+    ]),
+    descriptions: { identity: "Who this character is. Everything saves as you type.", notes: "Anything worth keeping that has no field yet." },
+    blocks: [{ afterIndex: 1, node: portraitPanel }],
+    onOwnChange: () => {
+      const read = details.read(shownFields);
+
+      if (!read.error) {
+        shownFields = read.values;
+        handlers.onOwnFields(read.values);
+      }
+    }
+  });
+  const overview = h("div", { class: "stack", id: "character-overview" }, details.element);
   const glance = h("div", { class: "stat-row", id: "character-glance" });
   overview.append(section({ id: "character-glance-section", title: "At a glance", description: "What this character has recorded on the other pages." }, glance));
   const campaignList = h("div", { class: "stack", id: "character-campaign-list" });
@@ -250,7 +244,7 @@ export function mountCharacterPage(root, handlers) {
   return {
     sheetRoot,
     pdfRoot,
-    render(character, { force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] }, revisions = [] } = {}) {
+    render(character, { layout = null, force: forced = false, sub = "overview", portraitUrl = null, campaigns = { joined: [], available: [] }, revisions = [] } = {}) {
       const force = forced || character.id !== shownId;
       shownId = character.id;
 
@@ -294,6 +288,12 @@ export function mountCharacterPage(root, handlers) {
         element.hidden = sub !== id;
       }
 
+      if (layout) {
+        details.setLayout(layout);
+      }
+
+      shownFields = character.fields;
+      details.write(character.fields, { keepFocus: !force });
       setValue(name, character.name, force);
       setValue(player, character.player, force);
       setValue(system, character.systemId, force);

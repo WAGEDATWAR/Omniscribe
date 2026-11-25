@@ -23,7 +23,7 @@ const LABELS = {
   relations: "relations",
   progression: "progression",
   familiars: "familiars",
-  custom: "your own fields",
+  fields: "your own fields",
   wallets: "money",
   portraitBlobId: "portrait"
 };

@@ -119,7 +119,8 @@ function mountKinds(ctx, adapter, kindIds, kindUi) {
       onMove(recordId, delta) {
         adapter.move(adapter.currentId(), kindId, recordId, delta);
       },
-      onRefresh: () => render(kindId)
+      onRefresh: () => render(kindId),
+      layout: () => ctx.layouts.resolved(kindId)
     };
 
     views.set(kindId, mountRecordPage(root, kind, kindUi[kindId] ?? {}, handlers));
@@ -146,6 +147,7 @@ function mountKinds(ctx, adapter, kindIds, kindUi) {
 
   ctx.router.onRoute(() => renderCurrent());
   ctx.bus.on("records:refresh", () => renderCurrent());
+  ctx.bus.on("layouts:changed", () => renderCurrent());
   ctx.store.subscribe(() => renderCurrent());
   return views;
 }

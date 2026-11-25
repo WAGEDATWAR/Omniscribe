@@ -118,6 +118,8 @@ the change is migrated as it is read. Nothing is lost, and the user can then mov
 
 Release 0.7.0 waits for L-A to L-C at least (the old editors must not ship beside the new idea).
 
+**As built (slice L-B).** Schema 7 (`addLayoutFields`) moves `custom` to `fields` and returns `project.layouts`; `storage.load` merges them into `meta.layouts` before records are rewritten, and a backup or bundle carries `layouts` in `project.json` (an older archive migrates as it is read). `src/app/layouts.js` resolves the active layout of a page on demand; `src/ui/layoutForm.js` draws a resolved layout for the record forms, the character Overview and the campaign Overview. A page with no layout file shows the default. Search indexes values under their field's label. Record forms keep the uses and roll controls of abilities and the container of inventory in the first section, as they are not fields a layout describes. There is no editor yet (L-C), so a field of your own can only come from migration or a restored layout.
+
 ## 8. Not in scope
 
 Formulas or conditions in own fields, linking an own field to a sheet value, per-field permissions, and changing

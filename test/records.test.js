@@ -3,7 +3,7 @@ import test from "node:test";
 import { applyDelta, canContain, carriedWeight, repairContainers, withoutContainer } from "../src/inventory.js";
 import { migrateProject } from "../src/migrations.js";
 import { KINDS, KIND_IDS } from "../src/records/kinds.js";
-import { createRecord, isCalendarDay, listOf, normalizeCustom, normalizeInventory, normalizeList, normalizeRecord } from "../src/records/normalize.js";
+import { createRecord, isCalendarDay, listOf, normalizeInventory, normalizeList, normalizeRecord } from "../src/records/normalize.js";
 import { normalizeCharacter } from "../src/schema.js";
 import { createStore } from "../src/store.js";
 
@@ -31,12 +31,6 @@ test("values are typed and bounded, and unknown keys survive", () => {
   assert.equal(normalizeRecord("journal", { title: "t", kind: "bogus" }).kind, "note");
   assert.equal(normalizeRecord("journal", { title: "t", date: "2026-02-30" }).date, "");
   assert.equal(isCalendarDay("2026-02-28"), true);
-});
-
-test("custom fields are typed, labelled and capped", () => {
-  const fields = normalizeCustom([{ label: " Rarity ", type: "text", value: "rare" }, { label: "", value: 1 }, { label: "N", type: "number", value: "x" }, { label: "B", type: "checkbox", value: true }, 5]);
-  assert.deepEqual(fields, [{ label: "Rarity", type: "text", value: "rare" }, { label: "N", type: "number", value: 0 }, { label: "B", type: "checkbox", value: true }]);
-  assert.equal(normalizeCustom(Array.from({ length: 80 }, (_, i) => ({ label: `L${i}`, value: "v" }))).length, 30);
 });
 
 test("lists keep their ids unique and respect the limit", () => {

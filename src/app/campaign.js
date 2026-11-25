@@ -21,9 +21,12 @@ export function initCampaign(ctx) {
         store.updateCampaign(id, patch, { key: key ? `${id}:${key}` : null });
       }
     },
-    onCustom(custom) {
-      store.updateCampaign(currentId(), { custom });
-      toast("Saved your fields.");
+    onOwnFields(fields) {
+      const id = currentId();
+
+      if (id) {
+        store.updateCampaign(id, { fields }, { key: `${id}:fields` });
+      }
     },
     onExport: (secrets) => ctx.bundles.exportCampaign(currentId(), secrets),
     onDuplicate: () => actions.duplicateCampaign(currentId()),
@@ -56,7 +59,7 @@ export function initCampaign(ctx) {
       .filter((roll) => roll.campaignId === id && isShared(roll))
       .slice(0, 10)
       .map((roll) => ({ roll, text: explain(roll) }));
-    const switched = view.render(campaign, { force, sub: router.current().sub, recentRolls });
+    const switched = view.render(campaign, { layout: ctx.layouts.resolved("campaign"), force, sub: router.current().sub, recentRolls });
 
     if (switched && focusNameFor === id) {
       focusNameFor = null;
@@ -72,4 +75,5 @@ export function initCampaign(ctx) {
   router.onRoute(() => show());
   store.subscribe(() => show());
   bus.on("data:reloaded", () => show({ force: true }));
+  bus.on("layouts:changed", () => show({ force: true }));
 }

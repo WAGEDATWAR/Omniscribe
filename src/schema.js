@@ -1,5 +1,6 @@
 import { normalizePresets } from "./dice/presets.js";
 import { normalizeCampaigns } from "./campaigns.js";
+import { normalizeStoredValues } from "./layouts/values.js";
 import { LIMITS } from "./limits.js";
 import { SCHEMA_VERSION } from "./migrations.js";
 import { normalizeInventory, normalizeList } from "./records/normalize.js";
@@ -24,6 +25,7 @@ const CHARACTER_FIELDS = new Set([
   "summary",
   "tags",
   "notes",
+  "fields",
   "portraitBlobId",
   "documents",
   "pdf",
@@ -167,6 +169,7 @@ export function normalizeCharacter(raw, { now = Date.now() } = {}) {
     summary: cleanText(raw.summary, LIMITS.summaryLength),
     tags: normalizeTags(raw.tags, { max: LIMITS.tags, maxLength: LIMITS.tagLength }),
     notes: cleanText(raw.notes, LIMITS.notesLength),
+    fields: normalizeStoredValues(raw.fields),
     portraitBlobId: isValidId(raw.portraitBlobId) ? raw.portraitBlobId : null,
     documents,
     pdf: normalizePdfChoice(raw.pdf, documents),

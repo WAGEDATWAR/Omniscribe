@@ -11,7 +11,7 @@ function makeStorage() {
 test("an empty database loads as empty and unmigrated", async () => {
   const loaded = await makeStorage().load();
 
-  assert.deepEqual(loaded, { characters: [], campaigns: [], migrated: false, empty: true });
+  assert.deepEqual(loaded, { characters: [], campaigns: [], layouts: [], migrated: false, empty: true });
 });
 
 test("saved characters load back, normalized", async () => {
@@ -157,4 +157,26 @@ test("checkPersistence reports without asking", async () => {
   assert.deepEqual(await checkPersistence({}), { supported: false, persisted: false });
   assert.deepEqual(await checkPersistence({ storage: { persisted: async () => true } }), { supported: true, persisted: true });
   assert.deepEqual(await checkPersistence({ storage: { persisted: async () => { throw new Error("no"); } } }), { supported: true, persisted: false });
+});
+
+test("anonymous custom entries migrate to declared fields and the declarations are stored", async () => {
+  const storage = makeStorage();
+
+  await storage.backend.apply([
+    { store: "characters", put: [["char_a", { id: "char_a", name: "A", inventory: { items: [{ id: "item_a", name: "Sword", custom: [{ label: "Rarity", type: "text", value: "Rare" }] }], wallets: {} } }]] },
+    { store: "meta", put: [["schemaVersion", 6]] }
+  ]);
+  const loaded = await storage.load();
+  const sword = loaded.characters[0].inventory.items[0];
+  const [layout] = loaded.layouts;
+
+  assert.equal(loaded.migrated, true);
+  assert.equal(layout.surface, "inventory");
+  assert.equal(Object.values(sword.fields)[0], "Rare");
+  assert.equal("custom" in sword, false);
+  assert.deepEqual(await storage.getLayouts(), loaded.layouts);
+
+  const again = await storage.load();
+  assert.equal(again.layouts.length, 1);
+  assert.equal(again.layouts[0].ops.length, layout.ops.length);
 });

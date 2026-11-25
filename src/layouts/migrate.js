@@ -24,7 +24,7 @@ const TYPE_OF = { text: "text", number: "number", checkbox: "checkbox" };
 export function migrateCustom(surface, records) {
   const defs = new Map();
   const migrated = records.map((record) => {
-    if (!Array.isArray(record.custom)) {
+    if (!record || typeof record !== "object" || !Array.isArray(record.custom)) {
       return record;
     }
 
@@ -64,4 +64,16 @@ export function migrateCustom(surface, records) {
 export function mergeOps(existing, added) {
   const seen = new Set(existing.map((operation) => `${operation.target}:${operation.id ?? operation.field?.id}`));
   return [...existing, ...added.filter((operation) => !seen.has(`${operation.target}:${operation.id ?? operation.field?.id}`))];
+}
+
+/** Merges layouts that arrive (from a migration or an import) into the stored ones by id, never dropping an operation. */
+export function mergeLayouts(stored, incoming) {
+  const byId = new Map(stored.map((layout) => [layout.id, layout]));
+
+  for (const layout of incoming) {
+    const have = byId.get(layout.id);
+    byId.set(layout.id, have ? { ...have, ops: mergeOps(have.ops, layout.ops) } : layout);
+  }
+
+  return [...byId.values()];
 }
