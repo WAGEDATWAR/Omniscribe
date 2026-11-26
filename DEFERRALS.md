@@ -112,7 +112,7 @@ Owners are `P0`-`P7` or `post-v1`.
 | DEF-093 | Fields of your own print in the generated sheet, and a bundle carries only the layouts its records need | L-B ships layouts in every backup and bundle and leaves the PDF without them | P6 | done |
 | DEF-094 | Drag to reorder in the layout editor | L-C moves fields and sections with Up and Down buttons and a section menu, which work from the keyboard; drag was always an extra | P8 | scheduled |
 | DEF-095 | True sub-collections: a collection inside a row of another | SYSTEMS-REVIEW 9; changes the sheet model, rests and the PDF; filtered aggregation and groupBy cover most uses | P8 | scheduled |
-| DEF-096 | Link fields between rows of different collections | SYSTEMS-REVIEW 10; with DEF-095 | P8 | scheduled |
+| DEF-096 | Link fields between rows of different collections | SYSTEMS-REVIEW 10; with DEF-095 | P8 | done |
 | DEF-097 | A track field type: named boxes that can be unmarked, marked or crossed | SYSTEMS-REVIEW 14; a new type through the evaluator, the sheet, the PDF and the editor | P8 | done |
 | DEF-098 | Per-character overrides of a system's defaults without forking it | SYSTEMS-REVIEW 15; a house version derived from the system is the supported route today | P8 | scheduled |
 | DEF-099 | Computed field defaults | SYSTEMS-REVIEW 16 | P8 | done |

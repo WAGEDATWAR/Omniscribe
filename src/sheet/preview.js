@@ -1,5 +1,6 @@
 import { createSheet, evaluateSheet } from "./evaluate.js";
 import { layoutOf } from "./layout.js";
+import { linkLabel } from "./links.js";
 import { formatValue } from "./template.js";
 
 /**
@@ -47,7 +48,7 @@ export function sheetPreview(template, { rng = null } = {}) {
           return {
             label: collection.label,
             columns: columns.map((field) => field.label ?? field.key),
-            rows: rows.slice(0, 5).map((row) => columns.map((field) => (field.type === "uses" ? `${row.uses[field.key]?.left ?? ""}` : show(field, { values: row.values })))),
+            rows: rows.slice(0, 5).map((row) => columns.map((field) => (field.type === "uses" ? `${row.uses[field.key]?.left ?? ""}` : field.type === "link" ? linkLabel(template, computed, field, row.values[field.key]) : show(field, { values: row.values })))),
             more: Math.max(0, rows.length - 5)
           };
         });

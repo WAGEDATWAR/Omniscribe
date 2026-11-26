@@ -2,6 +2,7 @@ import { carriedWeight, totalValue } from "../inventory.js";
 import { STATUS_LABELS, displayName } from "../schema.js";
 import { isEmptyValue } from "../layouts/values.js";
 import { layoutOf } from "../sheet/layout.js";
+import { linkLabel } from "../sheet/links.js";
 import { formatValue } from "../sheet/template.js";
 
 /**
@@ -68,7 +69,7 @@ function systemBlocks(template, computed) {
                 return use ? `${use.left ?? use.used}${use.max === null ? "" : ` / ${use.max}`}` : "";
               }
 
-              return showValue(field, row.values[field.key]);
+              return field.type === "link" ? linkLabel(template, computed, field, row.values[field.key]) : showValue(field, row.values[field.key]);
             })
           )
         });

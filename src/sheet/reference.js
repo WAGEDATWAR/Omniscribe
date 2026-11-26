@@ -68,7 +68,8 @@ export const FIELD_TYPES = Object.freeze([
   { type: "derived", props: "formula, format (number, signed, integer, percent, text)", meaning: "Computed from other values; never stored." },
   { type: "track", props: "boxes: [names]", meaning: "A row of named boxes, each empty, marked or crossed (harm ladders, health levels). Formulas read @track (the marked boxes), @track.crossed and @track.boxes. Not available in collection rows." },
   { type: "uses", props: "max (a formula), resetOn (a rest id)", meaning: "Collection rows only: a counter of uses that a named rest refills." },
-  { type: "roll", props: "default (a dice expression)", meaning: "Collection rows only: a dice expression kept on the row, such as a weapon's damage." }
+  { type: "roll", props: "default (a dice expression)", meaning: "Collection rows only: a dice expression kept on the row, such as a weapon's damage." },
+  { type: "link", props: "to (a collection key)", meaning: "Collection rows only: points at one row of another collection, chosen from a list of its names. A formula reads the linked row with $.link.field, such as $.owner.dots; a link that points at nothing reads as 0, off or empty text." }
 ]);
 
 export const EXAMPLES = Object.freeze([

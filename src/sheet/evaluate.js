@@ -107,16 +107,70 @@ function normalizeRows(collection, stored, errors) {
   });
 }
 
-function rowScope(row) {
-  return { get: (field) => row.derived[field] ?? row.authored[field] };
+function emptyOf(field) {
+  return field.type === "number" || field.type === "derived" ? 0 : field.type === "flag" ? false : "";
 }
 
-function buildContext(template, analysis, values, rows) {
+/**
+ * What `$.field` and `$.link.field` read on one row. A link that points at nothing, or at a row that was removed,
+ * reads as the target field's empty value (0, off or empty text) so a new row never breaks the sheet.
+ */
+function linkedRead(template, collectionKey, linkKey, column, idOf, find) {
+  const link = template.collections.find((entry) => entry.key === collectionKey)?.fields.find((field) => field.key === linkKey && field.type === "link");
+  const targetField = link ? template.collections.find((entry) => entry.key === link.to)?.fields.find((field) => field.key === column) : null;
+
+  if (!targetField) {
+    return undefined;
+  }
+
+  const id = idOf();
+  const found = id ? find(link.to, id, column) : undefined;
+  return found === undefined ? (id && find(link.to, id, null) ? undefined : emptyOf(targetField)) : found;
+}
+
+function makeScope(template, rows) {
+  return (collectionKey, row) => ({
+    get: (field) => row.derived[field] ?? row.authored[field],
+    via: (linkKey, column) =>
+      linkedRead(
+        template,
+        collectionKey,
+        linkKey,
+        column,
+        () => row.authored[linkKey],
+        (target, id, field) => {
+          const found = rows[target]?.find((entry) => entry.id === id);
+          return field === null ? found : found ? found.derived[field] ?? found.authored[field] : undefined;
+        }
+      )
+  });
+}
+
+/** A computed row as the scope formulas and rolls read from it, linked rows included. */
+export function computedRowScope(template, computed, collectionKey, row) {
+  return {
+    get: (field) => row.values[field],
+    via: (linkKey, column) =>
+      linkedRead(
+        template,
+        collectionKey,
+        linkKey,
+        column,
+        () => row.values[linkKey],
+        (target, id, field) => {
+          const found = computed.collections[target]?.find((entry) => entry.id === id);
+          return field === null ? found : found ? found.values[field] : undefined;
+        }
+      )
+  };
+}
+
+function buildContext(template, analysis, values, rows, scopeOf) {
   return {
     scalar: (path) => values[path.join(".")],
     collection(path) {
       const list = rows[path[0]];
-      return list ? { rows: list.map(rowScope), field: path[1] ?? null } : null;
+      return list ? { rows: list.map((row) => scopeOf(path[0], row)), field: path[1] ?? null } : null;
     },
     list: (path) => (path.length === 1 && Array.isArray(values[path[0]]) ? values[path[0]] : null),
     choiceIndex(path) {
@@ -188,7 +242,8 @@ function compute(template, sheet) {
     };
   }
 
-  const context = buildContext(template, analysis, values, rows);
+  const scopeOf = makeScope(template, rows);
+  const context = buildContext(template, analysis, values, rows, scopeOf);
 
   function fail(id, message) {
     failed.add(id);
@@ -239,7 +294,7 @@ function compute(template, sheet) {
       let broken = false;
 
       for (const row of rows[node.collection.key]) {
-        const result = evaluateFormula(node.parsed, { ...context, item: rowScope(row) });
+        const result = evaluateFormula(node.parsed, { ...context, item: scopeOf(node.collection.key, row) });
         const where = `collections.${node.collection.key}.${row.id}.${node.field.key}`;
 
         if (!result.ok) {

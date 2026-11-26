@@ -9,6 +9,7 @@ All notable changes to Omniscribe are documented here. The format is based on [K
 - A number field can work its default out when a sheet starts (a formula or dice such as `4d10`). A saved roll can have a target and says success or failure and by how much. The command palette also searches installed game systems. (P8-A, `docs/EXPANSION.md`)
 - Tracks: a field type of named boxes that are empty, marked or crossed, read by formulas as `@track`, `@track.crossed` and `@track.boxes`. Long text (journal, abilities, session notes) shows bold, italics, lists, quotes and headings. The system import review draws a new sheet with its starting values.
 
+- Links between rows: a `link` field in a collection row points at a row of another table, and a formula reads through it (`$.owner.dots`). (P8-B, `docs/EXPANSION.md`)
 - Reference page (Alt+6): the game system format, the formula language with every function, dice terms and worked examples, drawn from the code and checked by tests.
 - Game system import review: choosing a file shows every problem with its place, every warning, how a new sheet evaluates and an outline of the sheet, and imports nothing until you confirm.
 - Tabs from sheet sections: a section can name a page and then appears on its own tab beside the Sheet; the system editor sets it.

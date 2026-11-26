@@ -1,4 +1,4 @@
-import { createRow, evaluateSheet } from "../sheet/evaluate.js";
+import { computedRowScope, createRow, evaluateSheet } from "../sheet/evaluate.js";
 import { validateValue } from "../sheet/template.js";
 import { diffSystems } from "../sheet/diff.js";
 import { reconcileSheet } from "../sheet/evaluate.js";
@@ -213,7 +213,7 @@ export function initSheet(ctx) {
       const result = await ctx.rolling.roll(expression, {
         characterId: character.id,
         label: `${name}: ${column.label}`,
-        item: { get: (field) => row.values[field] }
+        item: computedRowScope(template, computed, collectionKey, row)
       });
 
       showResults([result]);

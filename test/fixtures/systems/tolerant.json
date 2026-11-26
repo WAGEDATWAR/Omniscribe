@@ -98,13 +98,27 @@
       "key": "gear",
       "label": "Gear",
       "columns": [
-        "name"
+        "name",
+        "skill",
+        "bonus"
       ],
       "fields": [
         {
           "key": "name",
           "label": "Name",
           "type": "text"
+        },
+        {
+          "key": "skill",
+          "label": "Skill",
+          "type": "link",
+          "to": "skills"
+        },
+        {
+          "key": "bonus",
+          "label": "Bonus",
+          "type": "derived",
+          "formula": "$.skill.total"
         }
       ]
     }

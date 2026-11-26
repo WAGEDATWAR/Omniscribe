@@ -48,7 +48,7 @@ function parsePairs(text, separator) {
 
 /* ---- specs: what a form shows for each kind of entry ---- */
 
-const fieldSpec = (inCollection, rests) => [
+const fieldSpec = (inCollection, rests, collections = []) => [
   { prop: "label", label: "Label", kind: "text" },
   { prop: "type", label: "Type", kind: "select", options: () => options(inCollection ? ITEM_FIELD_TYPES : FIELD_TYPES) },
   { prop: "default", label: "Default", kind: "scalar", showIf: (entry) => ["number", "text", "longtext", "flag", "choice", "roll"].includes(entry.type) },
@@ -78,6 +78,7 @@ const fieldSpec = (inCollection, rests) => [
   { prop: "formula", label: "Formula", kind: "text", mono: true, showIf: (entry) => entry.type === "derived" },
   { prop: "format", label: "Show as", kind: "select", options: () => noneFirst(options(DISPLAY_FORMATS)), showIf: (entry) => entry.type === "derived" },
   { prop: "max", label: "Uses (a number or a formula)", kind: "usesMax", showIf: (entry) => inCollection && entry.type === "uses" },
+  { prop: "to", label: "Links to rows of", kind: "select", options: () => noneFirst(collections.map((entry) => ({ value: entry.key, label: entry.label ?? entry.key }))), showIf: (entry) => inCollection && entry.type === "link" },
   { prop: "resetOn", label: "Resets on", kind: "select", options: () => noneFirst(rests.map((rest) => ({ value: rest.id, label: rest.label }))), showIf: (entry) => inCollection && entry.type === "uses" },
   { prop: "marker", label: "Marker (up to 4 characters)", kind: "text" },
   { prop: "hint", label: "Hint", kind: "text" },
@@ -335,7 +336,7 @@ export function mountVisualEditor(root, handlers) {
   function listPanel(kind, flat, readOnly) {
     const items = flat[LISTS[kind]];
     const spec = {
-      field: () => fieldSpec(false, flat.rests),
+      field: () => fieldSpec(false, flat.rests, flat.collections),
       pool: () => poolSpec(flat.rests),
       roll: () => ROLL_SPEC,
       rest: () => REST_SPEC,
@@ -393,7 +394,7 @@ export function mountVisualEditor(root, handlers) {
       { class: "columns-panel" },
       h("h4", { class: "entry-title", text: "Columns (the fields of each row)" }),
       h("ul", { class: "entry-list", "aria-label": "Columns" }, collection.fields.map((entry) => h("li", {}, h("button", { type: "button", class: `entry-btn${entry.key === key ? " is-current" : ""}`, "aria-pressed": String(entry.key === key), onclick: () => { itemSelected = entry.key; draw(); }, text: `${entry.label ?? entry.key} (${entry.key})` })))),
-      field ? buildForm(fieldSpec(true, flat.rests), field, { readOnly, commit: (prop, value) => handlers.onCommit("item", `${collection.key}.${key}`, prop, value) }) : null,
+      field ? buildForm(fieldSpec(true, flat.rests, flat.collections), field, { readOnly, commit: (prop, value) => handlers.onCommit("item", `${collection.key}.${key}`, prop, value) }) : null,
       field && !readOnly ? button({ label: "Remove column", icon: "trash", variant: "btn-danger-text", ariaLabel: `Remove column ${key}`, onclick: () => handlers.onRemove("item", `${collection.key}.${key}`) }) : null,
       readOnly ? null : add
     );

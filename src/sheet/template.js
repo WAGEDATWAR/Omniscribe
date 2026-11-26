@@ -12,7 +12,7 @@ export const KEY_PATTERN = /^[a-z][a-z0-9_]{0,31}$/;
 export const ID_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,63}$/;
 
 export const FIELD_TYPES = Object.freeze(["number", "text", "longtext", "flag", "choice", "list", "derived", "track"]);
-export const ITEM_FIELD_TYPES = Object.freeze([...FIELD_TYPES.filter((type) => type !== "track"), "uses", "roll"]);
+export const ITEM_FIELD_TYPES = Object.freeze([...FIELD_TYPES.filter((type) => type !== "track"), "uses", "roll", "link"]);
 export const TRACK_PARTS = Object.freeze(["crossed", "boxes"]);
 export const TRACK_MAX = 20;
 export const DISPLAY_FORMATS = Object.freeze(["number", "signed", "integer", "percent", "text"]);
@@ -201,7 +201,9 @@ export function indexTemplate(template) {
 }
 
 function itemFieldSet(collection) {
-  return new Set(collection.fields.filter((field) => field.type !== "uses").map((field) => field.key));
+  const set = new Set(collection.fields.filter((field) => field.type !== "uses").map((field) => field.key));
+  set.links = new Map(collection.fields.filter((field) => field.type === "link" && typeof field.to === "string").map((field) => [field.key, field.to]));
+  return set;
 }
 
 function buildEnv(template, index, item = null) {
@@ -291,6 +293,14 @@ function collectDeps(ast, ownCollection, index, add) {
 
       if (field?.type === "derived") {
         add(`c:${rowCollection}.${node.field}`);
+      }
+
+      if (node.via && field?.type === "link") {
+        const target = index.collections.get(field.to)?.fields.find((entry) => entry.key === node.via);
+
+        if (target?.type === "derived") {
+          add(`c:${field.to}.${node.via}`);
+        }
       }
     } else if (node.kind === "call") {
       const aggregated = ["sum", "avg", "count", "min", "max"].includes(node.name) && node.args[0]?.kind === "ref" && index.collections.has(node.args[0].path[0]);
@@ -532,6 +542,10 @@ function checkField(field, path, errors, warnings, { inCollection }) {
     if (!Array.isArray(field.boxes) || field.boxes.length < 1 || field.boxes.length > TRACK_MAX || field.boxes.some((name) => !isString(name, 40) || !name.trim())) {
       err("boxes", `a track needs 1 to ${TRACK_MAX} named boxes, each up to 40 characters`);
     }
+  } else if (field.type === "link") {
+    if (typeof field.to !== "string" || !KEY_PATTERN.test(field.to)) {
+      err("to", "a link needs to: the key of the collection whose rows it points at");
+    }
   } else if (field.type === "uses") {
     if (!(Number.isInteger(field.max) && field.max >= 1) && !(typeof field.max === "string" && field.max.trim())) {
       err("max", "max must be a whole number or a formula");
@@ -566,7 +580,7 @@ function checkField(field, path, errors, warnings, { inCollection }) {
 }
 
 const REF_IN_TEXT = /@([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*)/g;
-const ITEM_IN_TEXT = /\$\.([a-z][a-z0-9_]*)/g;
+const ITEM_IN_TEXT = /\$\.([a-z][a-z0-9_]*)(?:\.([a-z][a-z0-9_]*))?/g;
 
 function checkRollRefs(text, path, env, errors) {
   for (const match of text.matchAll(REF_IN_TEXT)) {
@@ -580,6 +594,8 @@ function checkRollRefs(text, path, env, errors) {
   for (const match of text.matchAll(ITEM_IN_TEXT)) {
     if (!env.item?.has(match[1])) {
       errors.push({ path, message: `The roll refers to $.${match[1]}, which this row does not have` });
+    } else if (match[2] && !env.collectionFields(env.item.links?.get(match[1]) ?? "")?.has(match[2])) {
+      errors.push({ path, message: `The roll refers to $.${match[1]}.${match[2]}, which is not a field of the linked row` });
     }
   }
 }
@@ -734,6 +750,10 @@ export function validateTemplate(template) {
 
       itemKeys.add(field.key);
       checkField(field, itemPath, errors, warnings, { inCollection: true });
+
+      if (field.type === "link" && typeof field.to === "string" && !template.collections.some((entry) => isObject(entry) && entry.key === field.to)) {
+        err(`${itemPath}.to`, `There is no collection named "${field.to}"`);
+      }
 
       if (field.type === "uses" && field.resetOn !== undefined && !restIds.has(field.resetOn)) {
         err(`${itemPath}.resetOn`, `There is no rest named "${field.resetOn}"`);
@@ -935,6 +955,8 @@ export function fieldDefault(field) {
       return Array.from({ length: field.boxes?.length ?? 0 }, () => 0);
     case "roll":
       return typeof field.default === "string" ? field.default : "";
+    case "link":
+      return "";
     default:
       return null;
   }
@@ -976,6 +998,8 @@ export function validateValue(field, raw) {
 
       return raw.length > limit ? { ok: false, reason: `${field.label} is limited to ${limit} characters` } : { ok: true, value: raw };
     }
+    case "link":
+      return typeof raw === "string" && raw.length <= 64 ? { ok: true, value: raw } : { ok: false, reason: `${field.label} must name a row` };
     case "flag":
       return typeof raw === "boolean" ? { ok: true, value: raw } : { ok: false, reason: `${field.label} must be on or off` };
     case "choice":

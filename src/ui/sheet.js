@@ -1,4 +1,5 @@
 import { layoutOf, pageId } from "../sheet/layout.js";
+import { linkOptions } from "../sheet/links.js";
 import { formatValue } from "../sheet/template.js";
 import { resultCard } from "./dice.js";
 import { button, emptyState, h, replace, section } from "./dom.js";
@@ -72,6 +73,11 @@ function createInput(field, { id, label, onCommit }) {
     write = (value) => {
       control.value = value;
     };
+  } else if (field.type === "link") {
+    control = h("select", { ...common, class: "input", onchange: (event) => commit(event.target.value) }, h("option", { value: "", text: "None" }));
+    write = (value) => {
+      control.value = value;
+    };
   } else if (field.type === "list") {
     const tags = createTagInput({ id, label: field.label, onChange: (next) => commit(next) });
     control = tags.input;
@@ -111,10 +117,24 @@ function createInput(field, { id, label, onCommit }) {
 
   focused = () => document.activeElement === control;
 
+  let shownOptions = "";
+
   return {
     element: control,
     error,
     focus: () => control.focus(),
+    setOptions(list) {
+      const signature = list.map((option) => `${option.value}|${option.label}`).join("\n");
+
+      if (signature === shownOptions) {
+        return;
+      }
+
+      shownOptions = signature;
+      const current = control.value;
+      control.replaceChildren(h("option", { value: "", text: "None" }), ...list.map((option) => h("option", { value: option.value, text: option.label })));
+      control.value = current;
+    },
     set(value, message = "") {
       stored = message;
 
@@ -481,7 +501,7 @@ function createTable(collection, handlers) {
     focusRow(rowId) {
       rows.get(rowId)?.tr.querySelector("input, select, textarea")?.focus();
     },
-    update(computedRows, errors) {
+    update(computedRows, errors, template = null, computed = null) {
       const known = new Set(computedRows.map((row) => row.id));
 
       for (const [id, view] of rows) {
@@ -517,6 +537,10 @@ function createTable(collection, handlers) {
             cell.use.disabled = use.max !== null && use.left === 0;
             cell.restore.disabled = use.used === 0;
           } else {
+            if (cell.column.type === "link" && template && computed) {
+              cell.control.setOptions(linkOptions(template, computed, cell.column));
+            }
+
             cell.control.element.setAttribute("aria-label", `${cell.column.label}, ${rowName}`);
             cell.rollButton?.setAttribute("aria-label", `Roll ${cell.column.label}: ${rowName}`);
             cell.control.set(row.values[key], errorOf(errors, `collections.${collection.key}.${row.id}.${key}`));
@@ -870,7 +894,7 @@ export function mountSheetPage(root, handlers) {
       }
 
       for (const [key2, table] of built.tables) {
-        table.update(computed.collections[key2] ?? [], computed.errors);
+        table.update(computed.collections[key2] ?? [], computed.errors, resolution.template, computed);
       }
 
       const active = new Set(computed.conditions.map((entry) => entry.name));

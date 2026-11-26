@@ -90,7 +90,7 @@ impossible value. `display: "boxes"` draws one box per `boxSize` points. A rest 
 ```
 
 An **item field** is a Field (without `subs`) plus two types: `uses` (stored as `{ used }`, with a `max`
-formula and `resetOn`, a rest id) and `roll` (a roll expression string, `docs/DICE.md`). Item formulas read
+formula and `resetOn`, a rest id) and `roll` (a roll expression string, `docs/DICE.md`), plus `link` (the id of one row of the collection named by `to`, chosen from a list of that collection's names). Item formulas read a linked row with `$.link.field` (`$.owner.dots`); a link that is empty, or points at a row that was removed, reads as 0, off or empty text, so a new row never breaks the sheet. A loop through links is found like any other loop. Item formulas read
 their own row with `$.field` and the sheet with `@key`. A row is stored as `{ id: "row_...", field: value }`.
 `defaultRows` are rows a new sheet starts with (a skill list, say); each value is checked like any stored value. `@powers.cost` is the column of that name across all rows, and is only meaningful inside an aggregate
 function.
@@ -233,7 +233,7 @@ impossible value. `display: "boxes"` draws one box per `boxSize` points. A rest 
 ```
 
 An **item field** is a Field (without `subs`) plus two types: `uses` (stored as `{ used }`, with a `max`
-formula and `resetOn`, a rest id) and `roll` (a roll expression string, `docs/DICE.md`). Item formulas read
+formula and `resetOn`, a rest id) and `roll` (a roll expression string, `docs/DICE.md`), plus `link` (the id of one row of the collection named by `to`, chosen from a list of that collection's names). Item formulas read a linked row with `$.link.field` (`$.owner.dots`); a link that is empty, or points at a row that was removed, reads as 0, off or empty text, so a new row never breaks the sheet. A loop through links is found like any other loop. Item formulas read
 their own row with `$.field` and the sheet with `@key`. A row is stored as `{ id: "row_...", field: value }`.
 `defaultRows` are rows a new sheet starts with (a skill list, say); each value is checked like any stored value. `@powers.cost` is the column of that name across all rows, and is only meaningful inside an aggregate
 function.

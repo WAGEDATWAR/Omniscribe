@@ -225,6 +225,8 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | E-4 | **A track is a field type with named boxes that are empty, marked or crossed,** read by formulas as counts (`@track`, `@track.crossed`, `@track.boxes`); it lives on the sheet, not in rows. | locked |
 | E-5 | **Long text is shown through a small markdown subset built only from text nodes;** the stored text stays plain and nothing is ever parsed as markup. | locked |
 
+| E-6 | **A row links to a row of another collection with a `link` field and a formula reads through it with `$.link.field`.** A link is the id of the target row; an empty or dangling link reads as the target field's empty value, never an error. A child table is a table whose rows link to their parent; true nested storage (DEF-095) is not built, and what a child table still lacks is drawing it under its parent row. | locked |
+
 ## Open
 
 | # | Question | Needed by |

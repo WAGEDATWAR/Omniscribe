@@ -75,6 +75,15 @@ const isDigit = (char) => char >= "0" && char <= "9";
 const isNameStart = (char) => (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") || char === "_";
 const isNameChar = (char) => isNameStart(char) || isDigit(char);
 
+function readVia(source, stop) {
+  if (source[stop] === "." && isNameStart(source[stop + 1] ?? "")) {
+    const end = readName(source, stop + 1);
+    return { name: source.slice(stop + 1, end), end };
+  }
+
+  return { name: null, end: stop };
+}
+
 function readName(source, start) {
   let end = start;
 
@@ -179,12 +188,14 @@ function tokenize(source, dice = false) {
       }
 
       const stop = readName(source, index + 2);
-      tokens.push({ type: "item", value: source.slice(index + 2, stop), index });
-      index = stop;
+      const via = readVia(source, stop);
+      tokens.push({ type: "item", value: source.slice(index + 2, stop), via: via.name, index });
+      index = via.end;
     } else if (char === "." && isNameStart(source[index + 1] ?? "")) {
       const stop = readName(source, index + 1);
-      tokens.push({ type: "item", value: source.slice(index + 1, stop), index });
-      index = stop;
+      const via = readVia(source, stop);
+      tokens.push({ type: "item", value: source.slice(index + 1, stop), via: via.name, index });
+      index = via.end;
     } else if (isNameStart(char)) {
       const stop = readName(source, index);
       tokens.push({ type: "name", value: source.slice(index, stop), index });
@@ -607,7 +618,7 @@ class Parser {
     }
 
     if (token.type === "item") {
-      return this.node("item", { field: token.value }, token.index);
+      return this.node("item", token.via ? { field: token.value, via: token.via } : { field: token.value }, token.index);
     }
 
     if (token.type === "name") {
@@ -727,6 +738,14 @@ export function checkFormula(parsed, env) {
         report("$ can only be used inside a collection row formula or a sum, count or avg test", node);
       } else if (!item.has(node.field)) {
         report(`This row has no field named "${node.field}"`, node);
+      } else if (node.via) {
+        const target = item.links?.get(node.field);
+
+        if (!target) {
+          report(`$.${node.field} is not a link, so ${node.via} cannot be read through it`, node);
+        } else if (!env.collectionFields(target)?.has(node.via)) {
+          report(`The row linked by $.${node.field} has no field named "${node.via}"`, node);
+        }
       }
     } else if (node.kind === "ref") {
       const kind = env.ref(node.path);
@@ -897,6 +916,16 @@ function evaluateNode(node, context, budget) {
     case "item": {
       if (!context.item) {
         throw new FormulaError("$ is not available here", node.index);
+      }
+
+      if (node.via) {
+        const through = context.item.via ? context.item.via(node.field, node.via) : undefined;
+
+        if (through === undefined || through === null) {
+          throw new FormulaError(`$.${node.field}.${node.via} has no value`, node.index);
+        }
+
+        return through;
       }
 
       const value = context.item.get(node.field);

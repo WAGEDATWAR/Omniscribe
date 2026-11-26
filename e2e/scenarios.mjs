@@ -974,6 +974,41 @@ export const scenarios = [
     }
   },
   {
+    name: "a row can link to a row of another table and a formula reads through the link",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.setFileInput("#system-import-input", [context.fixture("systems/tolerant.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      await page.click("#system-import-confirm");
+      await page.waitFor('location.hash === "#/systems/tolerant"');
+      await go(page, "#/library", "#library-title");
+      await sampleToSheet(page);
+      await page.click("#system-tolerant");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("#sheet-add-skills")');
+      await page.click("#sheet-add-skills");
+      await page.waitFor('document.querySelector("[data-collection=skills] [data-row] input[type=text]")');
+      await page.evaluate('(() => { const input = document.querySelector("[data-collection=skills] [data-row] input[type=text]"); input.value = "Sneak"; input.dispatchEvent(new Event("input", { bubbles: true })); })()');
+      await saved(page);
+      await page.click("#sheet-add-gear");
+      await page.waitFor('document.querySelector("[data-collection=gear] [data-row] select")');
+      assert.equal(await page.evaluate('document.querySelector("[data-collection=gear] [data-row] select").options.length'), 2);
+      assert.equal(await page.evaluate('document.querySelector("[data-collection=gear] [data-row] select").options[1].textContent'), "Sneak");
+      assert.equal(await page.evaluate('document.querySelector("[data-collection=gear] [data-row] .derived-value").textContent'), "0");
+
+      await page.evaluate('(() => { const select = document.querySelector("[data-collection=gear] [data-row] select"); select.value = select.options[1].value; select.dispatchEvent(new Event("change", { bubbles: true })); })()');
+      const total = await page.evaluate('document.querySelector("[data-collection=skills] [data-row] .derived-value").textContent');
+      await page.waitFor(`document.querySelector("[data-collection=gear] [data-row] .derived-value").textContent === ${JSON.stringify(total)}`);
+      assert.notEqual(total, "0");
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("[data-collection=gear] [data-row] select")?.selectedOptions[0]?.textContent === "Sneak"');
+      assertClean(page);
+    }
+  },
+  {
     name: "long text shows bold, lists and quotes without ever becoming markup",
     async run(page, context) {
       await boot(page, context);
