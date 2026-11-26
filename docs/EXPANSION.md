@@ -12,7 +12,7 @@ finish the sheet and the dice, which every player meets every session; the later
 
 | Slice | Contents | Rows | Status |
 |---|---|---|---|
-| P8-A | **The sheet and dice, finished.** Computed defaults, roll targets with a verdict, search across game systems; then tracks, markdown in long text and a drawn import preview | DEF-099, DEF-100, DEF-104, DEF-097, DEF-103, DEF-101 | first three built |
+| P8-A | **The sheet and dice, finished.** Computed defaults, roll targets with a verdict, search across game systems; then tracks, markdown in long text and a drawn import preview | DEF-099, DEF-100, DEF-104, DEF-097, DEF-103, DEF-101 | built |
 | P8-B | **Richer sheets.** Sub-collections, links between rows, per-character overrides of a system | DEF-095, DEF-096, DEF-098 | designed in SYSTEMS-REVIEW |
 | P8-C | **Moving between systems.** Translation maps, a familiar's sheet editor | DEF-080, DEF-081, DEF-087 | not started |
 | P8-D | **Random tables** as data on the dice engine | DEF-014 | needs `docs/TABLES.md` first |
@@ -33,6 +33,10 @@ finish the sheet and the dice, which every player meets every session; the later
   *Success by 10 (target 60)*. The margin is never negative; the words say which side.
 - **Search across game systems (DEF-104).** The command palette finds an installed system by name, description or
   the label of any of its fields, pools, collections or rolls, and opens it.
+
+- **Tracks (DEF-097).** A top-level field of type `track` has `boxes`: 1 to 20 names. Each box is empty, marked or crossed and a press moves it to the next state; the value is stored as a list of 0, 1 and 2. Formulas read `@track` (the marked boxes), `@track.crossed` and `@track.boxes`, and rolls and the party view read the same numbers. A track cannot sit in a collection row. If a later version of the system changes the number of boxes the stored list is padded or cut to fit.
+- **Markdown in long text (DEF-103).** `src/markdown.js` parses headings, bullet and numbered lists, quotes, paragraphs and bold, italic and code into plain data; the UI builds it from text nodes only, so nothing can carry markup, links or scripts. Journal and ability text and session notes are shown this way; editing stays plain text.
+- **A drawn import preview (DEF-101).** `src/sheet/preview.js` evaluates a fresh sheet and the import review draws each section with its starting values, the tables with their first rows and each tab it would add.
 
 ## 3. Not in P8
 

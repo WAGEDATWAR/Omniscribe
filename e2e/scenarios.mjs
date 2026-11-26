@@ -943,6 +943,54 @@ export const scenarios = [
     }
   },
   {
+    name: "a track's boxes cycle through empty, marked and crossed and feed formulas",
+    async run(page, context) {
+      await boot(page, context);
+      await go(page, "#/systems", "#systems-title");
+      await page.setFileInput("#system-import-input", [context.fixture("systems/tolerant.json")]);
+      await page.waitFor('document.querySelector("#system-import-confirm")');
+      await page.click("#system-import-confirm");
+      await page.waitFor('location.hash === "#/systems/tolerant"');
+      await go(page, "#/library", "#library-title");
+      await sampleToSheet(page);
+      await page.click("#system-tolerant");
+      await page.click("#sheet-picker-confirm");
+      await page.waitFor('document.querySelector("[data-key=harm] .track-box")');
+      assert.equal(await page.evaluate('document.querySelectorAll("[data-key=harm] .track-box").length'), 3);
+
+      await page.click('[data-key=harm] [data-box="0"]');
+      await page.waitFor('document.querySelector("[data-key=harm] [data-box=\\"0\\"]").classList.contains("is-marked")');
+      await page.click('[data-key=harm] [data-box="1"]');
+      await page.click('[data-key=harm] [data-box="1"]');
+      await page.waitFor('document.querySelector("[data-key=harm] [data-box=\\"1\\"]").classList.contains("is-crossed")');
+      assert.match(await page.evaluate('document.querySelector("[data-key=harm] .field-hint").textContent'), /1 marked, 1 crossed of 3/);
+      assert.match(await page.evaluate('document.querySelector("[data-key=harm_load] .derived-value").textContent'), /^33$/);
+      assert.match(await page.evaluate('document.querySelector("[data-key=harm] [data-box=\\"1\\"]").getAttribute("aria-label")'), /Hurt: crossed/);
+      await saved(page);
+
+      await page.reload();
+      await page.waitFor('document.querySelector("[data-key=harm] [data-box=\\"1\\"]")?.classList.contains("is-crossed")');
+      assertClean(page);
+    }
+  },
+  {
+    name: "long text shows bold, lists and quotes without ever becoming markup",
+    async run(page, context) {
+      await boot(page, context);
+      await newCharacter(page, "Scribe");
+      await openRecords(page, "journal");
+      await type(page, "#rec-journal-title", "Night one");
+      await type(page, "#rec-journal-text", "**Brave** act\n\n- one\n- two\n\n<img src=x onerror=alert(1)>");
+      await page.click("#rec-journal-save");
+      await page.waitFor('document.querySelector("#rec-journal-list .record-text")');
+      assert.equal(await page.evaluate('document.querySelector("#rec-journal-list .record-text strong").textContent'), "Brave");
+      assert.equal(await page.evaluate('document.querySelectorAll("#rec-journal-list .record-text li").length'), 2);
+      assert.equal(await page.evaluate('document.querySelector("#rec-journal-list .record-text img")'), null);
+      assert.match(await page.evaluate('document.querySelector("#rec-journal-list .record-text").textContent'), /<img src=x onerror=alert\(1\)>/);
+      assertClean(page);
+    }
+  },
+  {
     name: "a sheet can start with or without the system's suggested rows",
     async run(page, context) {
       await boot(page, context);
@@ -1707,6 +1755,7 @@ export const scenarios = [
       await page.waitFor('document.querySelector("#system-import-confirm")');
       assert.match(await page.evaluate('document.querySelector("#system-import-warnings").textContent'), /read as the formula "3"/);
       assert.match(await page.evaluate('document.querySelector("#system-import-outline").textContent'), /on the Gear tab/);
+      assert.match(await page.evaluate('document.querySelector("#system-import-preview").textContent'), /Level.*3.*Harm.*Bruised \[ \]/);
       await page.click("#system-import-confirm");
       await page.waitFor('location.hash === "#/systems/tolerant"');
 

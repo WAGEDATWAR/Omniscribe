@@ -1,4 +1,5 @@
 import { applyDelta, attunedCount, canContain, carriedWeight, totalValue } from "../inventory.js";
+import { markdownElement } from "../ui/markdown.js";
 import { filterEntries, sortEntries } from "../journal.js";
 import { lastLevel, newestFirst, xpTotal } from "../progression.js";
 import { attitudeWord, reciprocalRelations, targetExists } from "../relations.js";
@@ -196,7 +197,7 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
       summary(record) {
         return [record.kind, record.source, record.summary, record.uses.max === null ? "" : `${record.uses.max - record.uses.used} of ${record.uses.max} uses left`].filter(Boolean).join(" · ");
       },
-      detail: (record) => (record.text ? h("p", { class: "record-text", text: record.text }) : null),
+      detail: (record) => (record.text ? markdownElement(record.text) : null),
       rowControls(record) {
         const controls = [];
 
@@ -243,10 +244,10 @@ export function createKindUi({ store, router, toast, rolling, currentId }) {
       }
     },
     journal: {
-      description: "Session notes, goals, recaps and secrets. Entries are plain text.",
+      description: "Session notes, goals, recaps and secrets. Bold, italics, lists, quotes and headings are shown; the text stays plain.",
       manualOrder: false,
       summary: (record) => [record.date, record.kind[0].toUpperCase() + record.kind.slice(1), record.kind === "goal" ? (record.done ? "done" : "open") : ""].filter(Boolean).join(" · "),
-      detail: (record) => (record.text ? h("p", { class: "record-text", text: record.text }) : null),
+      detail: (record) => (record.text ? markdownElement(record.text) : null),
       rowControls: (record) => (record.kind === "goal" ? toggle(record, "journal", "done", "Done") : null),
       filters: [
         {

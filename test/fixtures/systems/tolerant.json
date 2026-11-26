@@ -35,6 +35,22 @@
       "label": "Bonus",
       "type": "derived",
       "formula": "floor(@level / 2)"
+    },
+    {
+      "key": "harm",
+      "label": "Harm",
+      "type": "track",
+      "boxes": [
+        "Bruised",
+        "Hurt",
+        "Broken"
+      ]
+    },
+    {
+      "key": "harm_load",
+      "label": "Harm load",
+      "type": "derived",
+      "formula": "@harm + @harm.crossed * 2 + @harm.boxes * 10"
     }
   ],
   "pools": [
@@ -101,7 +117,9 @@
       "items": [
         "level",
         "bonus",
-        "luck"
+        "luck",
+        "harm",
+        "harm_load"
       ]
     },
     {

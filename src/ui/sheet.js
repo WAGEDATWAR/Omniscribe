@@ -158,6 +158,10 @@ function createFieldBlock(field, handlers) {
     };
   }
 
+  if (field.type === "track") {
+    return createTrackBlock(field, handlers, subs);
+  }
+
   const control = createInput(field, {
     id,
     label: field.label,
@@ -180,6 +184,51 @@ function createFieldBlock(field, handlers) {
     update(computed, errors) {
       control.set(computed.values[field.key], errorOf(errors, `values.${field.key}`));
       updateSubs(subs, field, computed, errors);
+    }
+  };
+}
+
+const TRACK_STATES = ["empty", "marked", "crossed"];
+const TRACK_MARKS = ["", "X", "/"];
+
+/** A track: a row of named boxes, each empty, marked or crossed. A press moves a box to its next state (DEF-097). */
+function createTrackBlock(field, handlers, subs) {
+  const group = h("div", { class: "track", role: "group", "aria-label": field.label });
+  const readout = h("p", { class: "field-hint", "aria-live": "polite" });
+  let states = field.boxes.map(() => 0);
+
+  const buttons = field.boxes.map((name, position) =>
+    h(
+      "button",
+      {
+        type: "button",
+        class: "track-box",
+        "data-box": String(position),
+        onclick: () => handlers.onValue(field.key, states.map((state, at) => (at === position ? (state + 1) % 3 : state)))
+      },
+      h("span", { class: "track-mark", "aria-hidden": "true" }),
+      h("span", { class: "track-name", text: name })
+    )
+  );
+
+  group.append(...buttons);
+
+  return {
+    element: h("div", { class: "field field-wide", "data-key": field.key }, h("span", { class: "field-label", text: field.label }), group, readout, subs, field.hint ? h("p", { class: "field-hint", text: field.hint }) : null),
+    update(computed) {
+      states = computed.tracks?.[field.key] ?? states;
+
+      buttons.forEach((button, position) => {
+        const state = states[position] ?? 0;
+        button.classList.toggle("is-marked", state === 1);
+        button.classList.toggle("is-crossed", state === 2);
+        button.setAttribute("aria-label", `${field.boxes[position]}: ${TRACK_STATES[state]}. Press to change.`);
+        button.querySelector(".track-mark").textContent = TRACK_MARKS[state];
+      });
+
+      const marked = states.filter((state) => state === 1).length;
+      const crossed = states.filter((state) => state === 2).length;
+      readout.textContent = `${marked} marked${crossed ? `, ${crossed} crossed` : ""} of ${states.length}`;
     }
   };
 }

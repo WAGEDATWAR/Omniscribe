@@ -771,3 +771,33 @@ test("a number field can work its default out when a sheet starts (DEF-099)", as
   const text = createRegistry({}).add(file([{ key: "name", label: "Name", type: "text", defaultFormula: "1" }]));
   assert.match(text.errors[0].message, /only a number field/);
 });
+
+test("a track holds named boxes and formulas read its counts (DEF-097)", async () => {
+  const { createRegistry } = await import("../src/systems.js");
+  const registry = createRegistry({});
+  const file = (fields) => ({
+    format: "omniscribe-system", formatVersion: 1, id: "tracks", version: 1, name: "Tracks", base: null, overlay: [],
+    fields, pools: [], collections: [], tables: {}, conditions: [], rests: [], rolls: [], sections: []
+  });
+  const harm = { key: "harm", label: "Harm", type: "track", boxes: ["Bruised", "Hurt", "Broken"] };
+
+  assert.equal(registry.add(file([harm, { key: "load", label: "Load", type: "derived", formula: "@harm + @harm.crossed * 10 + @harm.boxes * 100" }])).ok, true);
+  const { template } = registry.resolve({ id: "tracks", version: 1 });
+  const sheet = createSheet(template);
+  assert.deepEqual(sheet.values.harm, [0, 0, 0]);
+
+  const computed = evaluateSheet(template, { ...sheet, values: { harm: [1, 2, 1] } });
+  assert.deepEqual(computed.errors, []);
+  assert.deepEqual(computed.tracks.harm, [1, 2, 1]);
+  assert.equal(computed.values.harm, 2);
+  assert.equal(computed.values.load, 2 + 10 + 300);
+
+  assert.deepEqual(evaluateSheet(template, { ...sheet, values: { harm: [1] } }).tracks.harm, [1, 0, 0]);
+  assert.equal(validateValue(harm, [0, 1, 2]).ok, true);
+  assert.equal(validateValue(harm, [0, 3]).ok, false);
+
+  const bad = createRegistry({}).add(file([{ key: "harm", label: "Harm", type: "track", boxes: [] }]));
+  assert.match(bad.errors[0].message, /1 to 20 named boxes/);
+  const inRow = createRegistry({}).add({ ...file([]), collections: [{ key: "rows", label: "Rows", columns: ["a"], fields: [{ key: "a", label: "A", type: "track", boxes: ["x"] }] }] });
+  assert.match(inRow.errors[0].message, /type must be one of/);
+});

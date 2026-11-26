@@ -222,6 +222,9 @@ Most of G, A and P are inherited from Loreweaver on purpose. Where Omniscribe di
 | E-2 | **A number field may work its default out when a sheet starts** (`defaultFormula`, formula or dice, from the fields before it); the plain default is the fallback. | locked |
 | E-3 | **A saved roll may carry a target and a direction** and its record then carries a verdict with a margin; the roll still only produces a number. | locked |
 
+| E-4 | **A track is a field type with named boxes that are empty, marked or crossed,** read by formulas as counts (`@track`, `@track.crossed`, `@track.boxes`); it lives on the sheet, not in rows. | locked |
+| E-5 | **Long text is shown through a small markdown subset built only from text nodes;** the stored text stays plain and nothing is ever parsed as markup. | locked |
+
 ## Open
 
 | # | Question | Needed by |

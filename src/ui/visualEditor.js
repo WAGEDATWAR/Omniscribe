@@ -67,6 +67,14 @@ const fieldSpec = (inCollection, rests) => [
       return parsed.error ? parsed : { value: parsed.pairs.map(([value, choiceLabel]) => ({ value, label: choiceLabel })) };
     }
   },
+  {
+    prop: "boxes",
+    label: "Boxes, one name per line (up to 20)",
+    kind: "lines",
+    showIf: (entry) => entry.type === "track",
+    read: (entry) => (entry.boxes ?? []).join("\n"),
+    write: (text) => ({ value: text.split("\n").map((line) => line.trim()).filter(Boolean) })
+  },
   { prop: "formula", label: "Formula", kind: "text", mono: true, showIf: (entry) => entry.type === "derived" },
   { prop: "format", label: "Show as", kind: "select", options: () => noneFirst(options(DISPLAY_FORMATS)), showIf: (entry) => entry.type === "derived" },
   { prop: "max", label: "Uses (a number or a formula)", kind: "usesMax", showIf: (entry) => inCollection && entry.type === "uses" },

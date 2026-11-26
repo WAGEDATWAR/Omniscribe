@@ -2,6 +2,7 @@ import { createSheet, evaluateSheet } from "../sheet/evaluate.js";
 import { makeOverlay } from "../sheet/overlay.js";
 import { ID_PATTERN, KEY_PATTERN, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION } from "../sheet/template.js";
 import { layoutOf } from "../sheet/layout.js";
+import { sheetPreview } from "../sheet/preview.js";
 import { mountSystemEditor } from "../ui/systemEditor.js";
 import { openSystemImportDialog } from "../ui/systemImportDialog.js";
 import { mountSystemsPage } from "../ui/systems.js";
@@ -128,6 +129,7 @@ export function initSystems(ctx) {
       warnings: result.warnings ?? [],
       evalErrors: computed?.errors ?? [],
       outline,
+      preview: template ? sheetPreview(template) : [],
       summary: result.ok && !taken ? `${counts} A new sheet evaluates with ${computed.errors.length ? `${computed.errors.length} problem${computed.errors.length === 1 ? "" : "s"}` : "no problems"}.` : "Nothing was imported."
     };
   }

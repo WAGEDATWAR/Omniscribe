@@ -147,9 +147,20 @@ function compute(template, sheet) {
   const pools = {};
   const failed = new Set();
   const rows = {};
+  const tracks = {};
 
   for (const field of template.fields) {
     if (field.type === "derived") {
+      continue;
+    }
+
+    if (field.type === "track") {
+      const stored = Array.isArray(sheet.values?.[field.key]) ? sheet.values[field.key] : [];
+      const states = field.boxes.map((_, position) => (stored[position] === 1 || stored[position] === 2 ? stored[position] : 0));
+      tracks[field.key] = states;
+      values[field.key] = states.filter((state) => state === 1).length;
+      values[`${field.key}.crossed`] = states.filter((state) => state === 2).length;
+      values[`${field.key}.boxes`] = states.length;
       continue;
     }
 
@@ -271,7 +282,7 @@ function compute(template, sheet) {
     }));
   }
 
-  return { values, pools, collections, conditions: normalizeConditions(sheet.conditions), errors, orphans: sheet.orphans ?? {} };
+  return { values, tracks, pools, collections, conditions: normalizeConditions(sheet.conditions), errors, orphans: sheet.orphans ?? {} };
 }
 
 const memo = new WeakMap();

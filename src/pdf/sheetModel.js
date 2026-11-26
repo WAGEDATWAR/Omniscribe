@@ -30,6 +30,10 @@ function showValue(field, value) {
   }
 }
 
+function trackText(field, states = []) {
+  return field.boxes.map((name, position) => `${name} ${["[ ]", "[X]", "[/]"][states[position] ?? 0]}`).join("  ");
+}
+
 function poolText(pool, state) {
   if (!state) {
     return "";
@@ -81,7 +85,7 @@ function systemBlocks(template, computed) {
       const pool = template.pools.find((entry) => entry.key === key);
 
       if (field) {
-        const value = computed.values[key];
+        const value = field.type === "track" ? trackText(field, computed.tracks?.[key]) : computed.values[key];
 
         if (field.type === "longtext" || section.layout === "text") {
           const text = String(value ?? "");

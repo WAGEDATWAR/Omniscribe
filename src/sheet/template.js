@@ -11,8 +11,10 @@ export const TEMPLATE_FORMAT_VERSION = 1;
 export const KEY_PATTERN = /^[a-z][a-z0-9_]{0,31}$/;
 export const ID_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,63}$/;
 
-export const FIELD_TYPES = Object.freeze(["number", "text", "longtext", "flag", "choice", "list", "derived"]);
-export const ITEM_FIELD_TYPES = Object.freeze([...FIELD_TYPES, "uses", "roll"]);
+export const FIELD_TYPES = Object.freeze(["number", "text", "longtext", "flag", "choice", "list", "derived", "track"]);
+export const ITEM_FIELD_TYPES = Object.freeze([...FIELD_TYPES.filter((type) => type !== "track"), "uses", "roll"]);
+export const TRACK_PARTS = Object.freeze(["crossed", "boxes"]);
+export const TRACK_MAX = 20;
 export const DISPLAY_FORMATS = Object.freeze(["number", "signed", "integer", "percent", "text"]);
 export const POOL_DISPLAYS = Object.freeze(["number", "boxes"]);
 export const SECTION_LAYOUTS = Object.freeze(["fields", "table", "text"]);
@@ -234,6 +236,10 @@ function buildEnv(template, index, item = null) {
 
       if (path.length === 1) {
         return field.type === "choice" ? "choice" : field.type === "list" ? "list" : "value";
+      }
+
+      if (field.type === "track") {
+        return TRACK_PARTS.includes(tail) ? "value" : null;
       }
 
       return isObject(field.subs) && Object.hasOwn(field.subs, tail) ? "value" : null;
@@ -521,6 +527,10 @@ function checkField(field, path, errors, warnings, { inCollection }) {
 
     if (field.format !== undefined && !DISPLAY_FORMATS.includes(field.format)) {
       err("format", `format must be one of ${DISPLAY_FORMATS.join(", ")}`);
+    }
+  } else if (field.type === "track") {
+    if (!Array.isArray(field.boxes) || field.boxes.length < 1 || field.boxes.length > TRACK_MAX || field.boxes.some((name) => !isString(name, 40) || !name.trim())) {
+      err("boxes", `a track needs 1 to ${TRACK_MAX} named boxes, each up to 40 characters`);
     }
   } else if (field.type === "uses") {
     if (!(Number.isInteger(field.max) && field.max >= 1) && !(typeof field.max === "string" && field.max.trim())) {
@@ -921,6 +931,8 @@ export function fieldDefault(field) {
       return Array.isArray(field.default) ? [...field.default] : [];
     case "uses":
       return { used: 0 };
+    case "track":
+      return Array.from({ length: field.boxes?.length ?? 0 }, () => 0);
     case "roll":
       return typeof field.default === "string" ? field.default : "";
     default:
@@ -977,6 +989,10 @@ export function validateValue(field, raw) {
 
       return { ok: true, value: [...raw] };
     }
+    case "track":
+      return Array.isArray(raw) && raw.length <= TRACK_MAX && raw.every((state) => state === 0 || state === 1 || state === 2)
+        ? { ok: true, value: [...raw] }
+        : { ok: false, reason: `${field.label} must be a list of boxes that are empty (0), marked (1) or crossed (2)` };
     case "uses":
       return isObject(raw) && Number.isInteger(raw.used) && raw.used >= 0
         ? { ok: true, value: { used: raw.used } }

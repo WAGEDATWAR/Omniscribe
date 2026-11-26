@@ -1793,3 +1793,91 @@ textarea.input {
 .is-off-page {
   display: none !important;
 }
+
+.track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.track-box {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.track-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.track-box.is-marked .track-mark {
+  border-color: var(--accent, #8fa8ff);
+  background: var(--accent, #8fa8ff);
+  color: #0b0d12;
+}
+
+.track-box.is-crossed .track-mark {
+  border-style: dashed;
+}
+
+.track-name {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.md .md-p,
+.md .md-list,
+.md .md-quote {
+  margin: 0 0 6px;
+}
+
+.md .md-list {
+  padding-left: 22px;
+}
+
+.md .md-quote {
+  padding-left: 10px;
+  border-left: 3px solid var(--border-strong);
+}
+
+.md .md-heading {
+  margin: 8px 0 4px;
+  font-size: 1rem;
+}
+
+.md code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--surface);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.preview-pairs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 16px;
+  margin: 0;
+}
+
+.preview-pairs dt {
+  color: var(--text-muted, inherit);
+}
+
+.preview-pairs dd {
+  margin: 0;
+  font-weight: 600;
+}

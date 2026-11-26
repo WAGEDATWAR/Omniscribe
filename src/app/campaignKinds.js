@@ -1,4 +1,5 @@
 import { recapText } from "../campaigns.js";
+import { markdownElement } from "../ui/markdown.js";
 import { openViewerDialog } from "../ui/viewerDialog.js";
 import { HEAD_BYTES, checkHandout, cleanFileName } from "../files.js";
 import { evaluateFormulaText } from "../party.js";
@@ -149,7 +150,7 @@ export function createCampaignKindUi({ store, storage, router, toast, bus, blobU
         h(
           "div",
           {},
-          record.notes ? h("p", { class: "record-text", text: record.notes }) : null,
+          record.notes ? markdownElement(record.notes) : null,
           record.secretNotes ? h("p", { class: "record-text", text: `Secret: ${record.secretNotes}` }) : null
         ),
       rowControls: (record, { character: campaign }) =>

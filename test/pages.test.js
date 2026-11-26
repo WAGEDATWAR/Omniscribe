@@ -53,3 +53,28 @@ test("a tab is a character route", () => {
   assert.equal(routeHref("character", "char_0123456789abcdef", "p-equipment"), "#/character/char_0123456789abcdef/p-equipment");
   assert.equal(parseRoute("#/character/char_0123456789abcdef/p-").view, "library");
 });
+
+test("a preview shows a fresh sheet's values section by section (DEF-101)", async () => {
+  const { sheetPreview } = await import("../src/sheet/preview.js");
+  const { seededRng } = await import("../src/dice/rng.js");
+  const registry = createRegistry({});
+  const added = registry.add({
+    format: "omniscribe-system", formatVersion: 1, id: "show", version: 1, name: "Show", base: null, overlay: [],
+    fields: [
+      { key: "level", label: "Level", type: "number", default: 2 },
+      { key: "twice", label: "Twice", type: "derived", formula: "@level * 2", format: "signed" },
+      { key: "harm", label: "Harm", type: "track", boxes: ["A", "B"] },
+      { key: "rank", label: "Rank", type: "choice", choices: [{ value: "lo", label: "Low" }, { value: "hi", label: "High" }], default: "hi" }
+    ],
+    pools: [{ key: "hp", label: "HP", max: "@level * 5" }],
+    collections: [{ key: "gear", label: "Gear", columns: ["name"], defaultRows: [{ name: "Rope" }], fields: [{ key: "name", label: "Name", type: "text" }] }],
+    tables: {}, conditions: [], rests: [], rolls: [],
+    sections: [{ id: "main", title: "Main", layout: "fields", items: ["level", "twice", "harm", "rank", "hp"] }, { id: "gear", title: "Gear", layout: "table", items: ["gear"], page: "Equipment" }]
+  });
+  assert.equal(added.ok, true, JSON.stringify(added.errors));
+
+  const preview = sheetPreview(registry.resolve({ id: "show", version: 1 }).template, { rng: seededRng(1) });
+  assert.deepEqual(preview[0].pairs, [["Level", "2"], ["Twice", "+4"], ["Harm", "A [ ] B [ ]"], ["Rank", "High"], ["HP", "10 / 10"]]);
+  assert.equal(preview[1].page, "Equipment");
+  assert.deepEqual(preview[1].tables[0], { label: "Gear", columns: ["Name"], rows: [["Rope"]], more: 0 });
+});

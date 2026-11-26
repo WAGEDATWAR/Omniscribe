@@ -17,6 +17,39 @@ function problemList(id, title, entries, tone) {
 export function openSystemImportDialog(report) {
   return new Promise((resolve) => {
     let done = false;
+    const preview = (report.preview ?? []).length
+      ? h(
+          "details",
+          { id: "system-import-preview", class: "layout-add" },
+          h("summary", { text: "A new sheet, drawn with its starting values" }),
+          h(
+            "div",
+            { class: "stack" },
+            report.preview.map((section) =>
+              h(
+                "section",
+                { class: "preview-section" },
+                h("h4", { class: "subsection-title", text: `${section.title}${section.page ? ` (${section.page} tab)` : ""}` }),
+                section.pairs.length ? h("dl", { class: "preview-pairs" }, section.pairs.flatMap(([label, value]) => [h("dt", { text: label }), h("dd", { text: value === "" ? "-" : value })])) : null,
+                section.tables.map((table) =>
+                  h(
+                    "div",
+                    { class: "table-wrap" },
+                    h(
+                      "table",
+                      { class: "ref-table" },
+                      h("caption", { class: "visually-hidden", text: table.label }),
+                      h("thead", {}, h("tr", {}, table.columns.map((column) => h("th", { scope: "col", text: column })))),
+                      h("tbody", {}, table.rows.length ? table.rows.map((row) => h("tr", {}, row.map((cell) => h("td", { text: cell })))) : h("tr", {}, h("td", { colspan: String(table.columns.length), text: "No starting rows" })))
+                    ),
+                    table.more ? h("p", { class: "field-hint", text: `and ${table.more} more rows` }) : null
+                  )
+                )
+              )
+            )
+          )
+        )
+      : null;
     const dialog = h(
       "dialog",
       { class: "dialog dialog-wide", "aria-labelledby": "system-import-title", "aria-describedby": "system-import-summary" },
@@ -32,7 +65,8 @@ export function openSystemImportDialog(report) {
             h("summary", { text: `The sheet it would make (${report.outline.length} sections)` }),
             h("ul", { class: "plain-list" }, report.outline.map((entry) => h("li", {}, h("strong", { text: entry.title }), ` ${entry.where}: ${entry.items.join(", ") || "nothing yet"}`)))
           )
-        : null
+        : null,
+      preview
     );
 
     function finish(value) {
